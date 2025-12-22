@@ -1,0 +1,6 @@
+# This file ensures the ui package directory is created
+# UI layer will contain:
+# - Composable screens
+# - Navigation setup
+# - UI components
+# - Theme and styling

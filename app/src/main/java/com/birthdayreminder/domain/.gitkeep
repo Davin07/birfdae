@@ -1,0 +1,6 @@
+# This file ensures the domain package directory is created
+# Domain layer will contain:
+# - Use cases (business logic)
+# - Repository interfaces
+# - Domain models
+# - ViewModels

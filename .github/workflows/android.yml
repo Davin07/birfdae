@@ -1,0 +1,265 @@
+name: Android CI/CD Improved
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - staging
+      - 'feature/**'
+      - 'hotfix/**'
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+      - staging
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Type of build to perform'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+          - both
+      run_tests:
+        description: 'Run tests'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  determine-build-type:
+    name: Determine Build Type
+    runs-on: ubuntu-latest
+    outputs:
+      build_type: ${{ steps.determine-build.outputs.build_type }}
+      run_tests: ${{ steps.determine-build.outputs.run_tests }}
+      upload_artifacts: ${{ steps.determine-build.outputs.upload_artifacts }}
+    steps:
+      - name: Determine build configuration
+        id: determine-build
+        run: |
+          # Determine build type based on branch and inputs
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            BUILD_TYPE="${{ github.event.inputs.build_type }}"
+            RUN_TESTS="${{ github.event.inputs.run_tests }}"
+          else
+            # Branch-based logic
+            if [[ "${{ github.ref_name }}" == "main" ]] || [[ "${{ github.ref_name }}" == "master" ]]; then
+              BUILD_TYPE="both"
+              RUN_TESTS="true"
+            elif [[ "${{ github.ref_name }}" == "develop" ]] || [[ "${{ github.ref_name }}" == "staging" ]]; then
+              BUILD_TYPE="both"
+              RUN_TESTS="true"
+            elif [[ "${{ github.ref_name }}" =~ ^feature/.*$ ]] || [[ "${{ github.ref_name }}" =~ ^hotfix/.*$ ]]; then
+              BUILD_TYPE="debug"
+              RUN_TESTS="false"
+            elif [[ "${{ github.ref_name }}" =~ ^release/.*$ ]]; then
+              BUILD_TYPE="release"
+              RUN_TESTS="true"
+            else
+              BUILD_TYPE="debug"
+              RUN_TESTS="false"
+            fi
+          fi
+          
+          # Determine if artifacts should be uploaded
+          if [[ "${{ github.ref_name }}" == "main" ]] || [[ "${{ github.ref_name }}" == "master" ]] || [[ "${{ github.ref_name }}" == "develop" ]] || [[ "${{ github.ref_name }}" == "staging" ]] || [[ "${{ github.ref_name }}" =~ ^release/.*$ ]]; then
+            UPLOAD_ARTIFACTS="true"
+          else
+            UPLOAD_ARTIFACTS="false"
+          fi
+          
+          echo "build_type=$BUILD_TYPE" >> $GITHUB_OUTPUT
+          echo "run_tests=$RUN_TESTS" >> $GITHUB_OUTPUT
+          echo "upload_artifacts=$UPLOAD_ARTIFACTS" >> $GITHUB_OUTPUT
+
+  build-and-test:
+    name: Build and Test
+    needs: determine-build-type
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [debug, release]
+        include:
+          - build_type: debug
+            task: assembleDebug
+            apk_name: app-debug.apk
+          - build_type: release
+            task: assembleRelease
+            apk_name: app-release-unsigned.apk
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Clean environment variables
+        run: |
+          # Remove any problematic environment variables that might interfere with Gradle
+          unset CLASSPATH
+          unset GRADLE_OPTS
+          unset ANDROID_GRADLE_PLUGIN_VERSION
+          echo "Environment cleaned for Gradle"
+
+      - name: Check if this build type should run
+        id: check-build-type
+        run: |
+          BUILD_TYPE="${{ needs.determine-build-type.outputs.build_type }}"
+          MATRIX_BUILD_TYPE="${{ matrix.build_type }}"
+            
+          if [[ "$BUILD_TYPE" == "both" ]] || [[ "$BUILD_TYPE" == "$MATRIX_BUILD_TYPE" ]]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run linting with Gradle wrapper validation and clean environment
+        if: steps.check-build-type.outputs.should_run == 'true'
+        run: |
+          # Clean environment completely
+          unset CLASSPATH
+          unset GRADLE_OPTS
+          unset ANDROID_GRADLE_PLUGIN_VERSION
+          unset GRADLE_USER_HOME
+          
+          # Verify settings file exists
+          echo "Checking for settings.gradle.kts..."
+          if [ -f "settings.gradle.kts" ]; then
+            echo "settings.gradle.kts found"
+            ls -la settings.gradle.kts
+            echo "Contents of settings.gradle.kts:"
+            cat settings.gradle.kts
+          else
+            echo "ERROR: settings.gradle.kts not found!"
+            ls -la
+            exit 1
+          fi
+          
+          # Try running Gradle with verbose logging to see what's happening
+          echo "Running Gradle lint with debug output..."
+          ./gradlew lint --stacktrace --debug
+
+      - name: Run ktlint
+        if: steps.check-build-type.outputs.should_run == 'true'
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: ktlintCheck
+
+      - name: Run detekt
+        if: steps.check-build-type.outputs.should_run == 'true'
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: detekt
+
+      - name: Build with Gradle
+        if: steps.check-build-type.outputs.should_run == 'true'
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: ${{ matrix.task }}
+
+      - name: Run unit tests
+        if: steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.run_tests == 'true'
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: testDebugUnitTest
+
+      - name: Run instrumented tests
+        if: steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.run_tests == 'true' && matrix.build_type == 'debug'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          script: ./gradlew connectedCheck
+
+      - name: Upload APK artifact
+        if: steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.build_type }}-${{ github.sha }}-${{ github.run_number }}
+          path: app/build/outputs/apk/${{ matrix.build_type }}/${{ matrix.apk_name }}
+          retention-days: 30
+
+  deploy:
+    name: Deploy
+    needs: [determine-build-type, build-and-test]
+    runs-on: ubuntu-latest
+    if: needs.determine-build-type.outputs.upload_artifacts == 'true' && (github.ref_name == 'main' || github.ref_name == 'master' || github.ref_name == 'develop' || github.ref_name == 'staging')
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: List downloaded artifacts
+        run: ls -R artifacts
+
+      - name: Create release (for main/master only)
+        if: github.ref_name == 'main' || github.ref_name == 'master'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: Release v1.0.${{ github.run_number }}
+          body: Automatic release created by GitHub Actions
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+  notify:
+    name: Notify
+    needs: [determine-build-type, build-and-test, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Send notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildType = '${{ needs.determine-build-type.outputs.build_type }}';
+            const branch = '${{ github.ref_name }}';
+            const status = '${{ job.status }}';
+            const workflowUrl = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
+            
+            let message = `🚀 Android CI/CD ${status === 'success' ? '✅ Succeeded' : '❌ Failed'}\n`;
+            message += `📁 Branch: ${branch}\n`;
+            message += `🔧 Build Type: ${buildType}\n`;
+            message += `🔗 Workflow: ${workflowUrl}`;
+            
+            if (status === 'success' && ('${{ needs.determine-build-type.outputs.upload_artifacts }}' === 'true')) {
+              message += '\n\n📦 Artifacts available for download';
+            }
+            
+            console.log(message);
+            
+            // This would be replaced with actual notification logic
+            // For example: Slack, Teams, or Email notifications

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Birthday-themed gradient background -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="135"
+                android:startColor="#FFE91E63"
+                android:centerColor="#FF9C27B0"
+                android:endColor="#FF2196F3"
+                android:type="linear" />
+        </aapt:attr>
+    </path>
+    <!-- Decorative party elements -->
+    <path
+        android:fillColor="#40FFFFFF"
+        android:pathData="M20,17 C21.66,17 23,18.34 23,20 C23,21.66 21.66,23 20,23 C18.34,23 17,21.66 17,20 C17,18.34 18.34,17 20,17 Z" />
+    <path
+        android:fillColor="#40FFFFFF"
+        android:pathData="M88,23 C89.1,23 90,23.9 90,25 C90,26.1 89.1,27 88,27 C86.9,27 86,26.1 86,25 C86,23.9 86.9,23 88,23 Z" />
+    <path
+        android:fillColor="#40FFFFFF"
+        android:pathData="M15,82.5 C16.38,82.5 17.5,83.62 17.5,85 C17.5,86.38 16.38,87.5 15,87.5 C13.62,87.5 12.5,86.38 12.5,85 C12.5,83.62 13.62,82.5 15,82.5 Z" />
+    <path
+        android:fillColor="#40FFFFFF"
+        android:pathData="M90,76.5 C91.93,76.5 93.5,78.07 93.5,80 C93.5,81.93 91.93,83.5 90,83.5 C88.07,83.5 86.5,81.93 86.5,80 C86.5,78.07 88.07,76.5 90,76.5 Z" />
+</vector>

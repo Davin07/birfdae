@@ -1,0 +1,6 @@
+# This file ensures the data package directory is created
+# Data layer will contain:
+# - Room database entities
+# - DAOs (Data Access Objects)
+# - Repository implementations
+# - Local data sources

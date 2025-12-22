@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Birf Dae</string>
+    
+    <!-- Navigation -->
+    <string name="nav_birthdays">Birthdays</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_settings">Settings</string>
+    
+    <!-- Birthday List Screen -->
+    <string name="add_birthday">Add Birthday</string>
+    <string name="edit_birthday">Edit Birthday</string>
+    <string name="delete_birthday">Delete Birthday</string>
+    <string name="no_birthdays_title">No birthdays yet</string>
+    <string name="no_birthdays_message">Add your first birthday to get started!</string>
+    <string name="refresh">Refresh</string>
+    
+    <!-- Add/Edit Birthday Screen -->
+    <string name="birthday_name">Name</string>
+    <string name="birthday_date">Birthday Date</string>
+    <string name="birthday_notes">Notes (optional)</string>
+    <string name="enable_notifications">Enable Notifications</string>
+    <string name="advance_notification">Advance Notification</string>
+    <string name="notification_time">Notification Time</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    
+    <!-- Calendar Screen -->
+    <string name="previous_month">Previous month</string>
+    <string name="next_month">Next month</string>
+    <string name="today">Today</string>
+    <string name="birthdays_on_date">Birthdays on %1$s</string>
+    <string name="close">Close</string>
+    
+    <!-- Notification Settings -->
+    <string name="notification_settings">Notification Settings</string>
+    <string name="global_notifications">Global Notifications</string>
+    <string name="advance_days">Advance Days</string>
+    
+    <!-- Countdown Display -->
+    <string name="birthday_today">🎉 Today!</string>
+    <string name="birthday_tomorrow">Tomorrow!</string>
+    <string name="days_left">%1$d days left</string>
+    <string name="age_display">Age %1$d</string>
+    
+    <!-- Notifications -->
+    <string name="birthday_notification_title">🎉 Birthday Today!</string>
+    <string name="birthday_notification_message">%1$s is turning %2$d today!</string>
+    <string name="birthday_notification_message_no_age">It\'s %1$s\'s birthday today!</string>
+    <string name="advance_notification_title">🎂 Birthday Reminder</string>
+    <string name="advance_notification_message">%1$s\'s birthday is in %2$d day(s)!</string>
+    
+    <!-- Error Messages -->
+    <string name="error_loading_birthdays">Failed to load birthdays</string>
+    <string name="error_saving_birthday">Failed to save birthday</string>
+    <string name="error_deleting_birthday">Failed to delete birthday</string>
+    <string name="error_generic">Something went wrong</string>
+    <string name="try_again">Try Again</string>
+    
+    <!-- Validation Messages -->
+    <string name="validation_name_required">Name is required</string>
+    <string name="validation_name_too_long">Name is too long</string>
+    <string name="validation_date_required">Birthday date is required</string>
+    <string name="validation_date_future">Birthday cannot be in the future</string>
+    <string name="validation_notes_too_long">Notes are too long</string>
+    <string name="validation_invalid_notification_hour">Notification hour must be between 0 and 23</string>
+    <string name="validation_invalid_notification_minute">Notification minute must be between 0 and 59</string>
+    
+    <!-- Confirmation Dialogs -->
+    <string name="delete_birthday_title">Delete Birthday</string>
+    <string name="delete_birthday_message">Are you sure you want to delete %1$s\'s birthday?</string>
+    <string name="delete">Delete</string>
+    
+    <!-- Accessibility -->
+    <string name="content_description_birthday_card">Birthday card for %1$s</string>
+    <string name="content_description_calendar_day">Calendar day %1$d</string>
+    <string name="content_description_birthday_indicator">Has birthdays</string>
+</resources>
