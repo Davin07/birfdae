@@ -3,10 +3,8 @@ package com.birthdayreminder.domain.validation
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNull
 import org.junit.Test
-import java.time.LocalDate
 
 class BirthdayValidatorSimpleTest {
-
     private val validator = BirthdayValidator()
 
     @Test
@@ -22,13 +20,13 @@ class BirthdayValidatorSimpleTest {
         // Test hours below minimum
         assertEquals(
             BirthdayValidator.ERROR_INVALID_NOTIFICATION_HOUR,
-            validator.validateNotificationHour(-1)
+            validator.validateNotificationHour(-1),
         )
 
         // Test hours above maximum
         assertEquals(
             BirthdayValidator.ERROR_INVALID_NOTIFICATION_HOUR,
-            validator.validateNotificationHour(24)
+            validator.validateNotificationHour(24),
         )
     }
 
@@ -50,13 +48,13 @@ class BirthdayValidatorSimpleTest {
         // Test minutes below minimum
         assertEquals(
             BirthdayValidator.ERROR_INVALID_NOTIFICATION_MINUTE,
-            validator.validateNotificationMinute(-1)
+            validator.validateNotificationMinute(-1),
         )
 
         // Test minutes above maximum
         assertEquals(
             BirthdayValidator.ERROR_INVALID_NOTIFICATION_MINUTE,
-            validator.validateNotificationMinute(60)
+            validator.validateNotificationMinute(60),
         )
     }
 

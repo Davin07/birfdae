@@ -13,19 +13,18 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NotificationModule {
-    
     @Provides
     @Singleton
     fun provideNotificationHelper(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): NotificationHelper {
         return NotificationHelper(context)
     }
-    
+
     @Provides
     @Singleton
     fun provideWorkManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): WorkManager {
         return WorkManager.getInstance(context)
     }

@@ -209,8 +209,7 @@ captures/
 */build/tmp/
 
 # Android specific
-!/gradle.properties
-gradle.properties
+
 
 # Android lint
 lint/intermediates/

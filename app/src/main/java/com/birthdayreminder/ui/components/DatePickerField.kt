@@ -1,11 +1,27 @@
 package com.birthdayreminder.ui.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,14 +41,15 @@ fun DatePickerField(
     label: String = "Birthday",
     isError: Boolean = false,
     errorMessage: String? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    
+
     Column(modifier = modifier) {
         OutlinedTextField(
             value = selectedDate?.format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")) ?: "",
-            onValueChange = { }, // Read-only field
+            // Read-only field
+            onValueChange = { },
             label = { Text(label) },
             readOnly = true,
             isError = isError,
@@ -40,25 +57,26 @@ fun DatePickerField(
                 IconButton(onClick = { showDatePicker = true }) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
-                        contentDescription = "Select date"
+                        contentDescription = "Select date",
                     )
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDatePicker = true }
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { showDatePicker = true },
         )
-        
+
         if (isError && errorMessage != null) {
             Text(
                 text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp),
             )
         }
     }
-    
+
     if (showDatePicker) {
         BirthdayDatePickerDialog(
             initialDate = selectedDate,
@@ -66,7 +84,7 @@ fun DatePickerField(
                 onDateSelected(date)
                 showDatePicker = false
             },
-            onDismiss = { showDatePicker = false }
+            onDismiss = { showDatePicker = false },
         )
     }
 }
@@ -79,13 +97,15 @@ fun DatePickerField(
 private fun BirthdayDatePickerDialog(
     initialDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initialDate?.toEpochDay()?.times(24 * 60 * 60 * 1000)
-            ?: System.currentTimeMillis()
-    )
-    
+    val datePickerState =
+        rememberDatePickerState(
+            initialSelectedDateMillis =
+                initialDate?.toEpochDay()?.times(24 * 60 * 60 * 1000)
+                    ?: System.currentTimeMillis(),
+        )
+
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -96,7 +116,7 @@ private fun BirthdayDatePickerDialog(
                         onDateSelected(date)
                     }
                     onDismiss()
-                }
+                },
             ) {
                 Text("OK")
             }
@@ -105,46 +125,46 @@ private fun BirthdayDatePickerDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
     ) {
         DatePicker(
             state = datePickerState,
             title = {
                 Text(
                     text = "Select Birthday",
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
                 )
             },
             dateValidator = { utcTimeMillis ->
                 // Only allow past dates and today for birthdays
                 utcTimeMillis <= System.currentTimeMillis()
-            }
+            },
         )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun DatePickerFieldPreview() {
+fun datePickerFieldPreview() {
     BirthdayReminderAppTheme {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Normal state
             DatePickerField(
                 selectedDate = LocalDate.of(1990, 5, 15),
                 onDateSelected = {},
-                label = "Birthday"
+                label = "Birthday",
             )
-            
+
             // Error state
             DatePickerField(
                 selectedDate = null,
                 onDateSelected = {},
                 label = "Birthday",
                 isError = true,
-                errorMessage = "Please select a birthday"
+                errorMessage = "Please select a birthday",
             )
         }
     }

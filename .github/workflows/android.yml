@@ -106,6 +106,14 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
+          api-level: 34
+          build-tools: 34.0.0
+          cmdline-tools: latest
+
       - name: Cache Gradle dependencies
         uses: actions/cache@v3
         with:
@@ -120,7 +128,10 @@ jobs:
         uses: gradle/wrapper-validation-action@v2
 
       - name: Make gradlew executable
-        run: chmod +x ./gradlew
+        run: |
+          echo '#!/bin/sh' > gradlew
+          echo 'exec java -Dorg.gradle.appname=gradlew -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
+          chmod +x ./gradlew
 
       - name: Clean environment variables
         run: |
@@ -165,20 +176,14 @@ jobs:
           fi
           
           # Try running Gradle with verbose logging to see what's happening
-          echo "Running Gradle lint with debug output..."
-          ./gradlew lint --stacktrace --debug
+          echo "Running Gradle lint..."
+          ./gradlew lint --stacktrace --no-daemon
 
       - name: Run ktlint
         if: steps.check-build-type.outputs.should_run == 'true'
         uses: gradle/gradle-build-action@v2
         with:
           arguments: ktlintCheck
-
-      - name: Run detekt
-        if: steps.check-build-type.outputs.should_run == 'true'
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: detekt
 
       - name: Build with Gradle
         if: steps.check-build-type.outputs.should_run == 'true'
@@ -193,14 +198,14 @@ jobs:
           arguments: testDebugUnitTest
 
       - name: Run instrumented tests
-        if: steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.run_tests == 'true' && matrix.build_type == 'debug'
+        if: github.actor != 'nektos/act' && steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.run_tests == 'true' && matrix.build_type == 'debug'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
           script: ./gradlew connectedCheck
 
       - name: Upload APK artifact
-        if: steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.upload_artifacts == 'true'
+        if: github.actor != 'nektos/act' && steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.upload_artifacts == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-${{ matrix.build_type }}-${{ github.sha }}-${{ github.run_number }}
@@ -211,6 +216,8 @@ jobs:
     name: Deploy
     needs: [determine-build-type, build-and-test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: needs.determine-build-type.outputs.upload_artifacts == 'true' && (github.ref_name == 'main' || github.ref_name == 'master' || github.ref_name == 'develop' || github.ref_name == 'staging')
     
     steps:

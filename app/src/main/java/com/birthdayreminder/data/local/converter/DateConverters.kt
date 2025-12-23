@@ -10,10 +10,9 @@ import java.time.format.DateTimeFormatter
  * Converts between Java 8 time objects and String representations for database storage.
  */
 class DateConverters {
-    
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
     private val dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-    
+
     /**
      * Converts LocalDate to String for database storage.
      */
@@ -21,7 +20,7 @@ class DateConverters {
     fun fromLocalDate(date: LocalDate?): String? {
         return date?.format(dateFormatter)
     }
-    
+
     /**
      * Converts String from database to LocalDate.
      */
@@ -29,7 +28,7 @@ class DateConverters {
     fun toLocalDate(dateString: String?): LocalDate? {
         return dateString?.let { LocalDate.parse(it, dateFormatter) }
     }
-    
+
     /**
      * Converts LocalDateTime to String for database storage.
      */
@@ -37,7 +36,7 @@ class DateConverters {
     fun fromLocalDateTime(dateTime: LocalDateTime?): String? {
         return dateTime?.format(dateTimeFormatter)
     }
-    
+
     /**
      * Converts String from database to LocalDateTime.
      */

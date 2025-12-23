@@ -4,7 +4,18 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -14,11 +25,24 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +62,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.*
+import java.util.Locale
 
 /**
  * Calendar screen that displays birthdays in a monthly calendar grid format.
@@ -48,29 +72,32 @@ import java.util.*
 @Composable
 fun CalendarScreen(
     viewModel: CalendarViewModel = hiltViewModel(),
-    onBirthdayClick: (BirthdayWithCountdown) -> Unit = {}
+    onBirthdayClick: (BirthdayWithCountdown) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
-    
+
     // Initialize PagerState with a large enough page count to allow scrolling in both directions
     // We'll use a fixed large number and adjust the displayed month based on the current page
-    val pagerState = rememberPagerState(
-        initialPage = 1000,
-        pageCount = { 2001 } // 2001 pages centered around the current month
-    )
-    
+    val pagerState =
+        rememberPagerState(
+            initialPage = 1000,
+            // 2001 pages centered around the current month
+            pageCount = { 2001 },
+        )
+
     // Update the view model when the page changes
     LaunchedEffect(pagerState.currentPage) {
         val initialMonth = YearMonth.now()
         val targetMonth = initialMonth.plusMonths((pagerState.currentPage - 1000).toLong())
         viewModel.navigateToMonth(targetMonth)
     }
-    
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp),
     ) {
         // Month navigation header
         CalendarHeader(
@@ -89,63 +116,64 @@ fun CalendarScreen(
                 coroutineScope.launch {
                     pagerState.animateScrollToPage(1000)
                 }
-            }
+            },
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Calendar grid with horizontal pager
         CalendarPager(
             pagerState = pagerState,
             birthdaysInMonth = uiState.birthdaysInMonth,
             selectedDate = uiState.selectedDate,
             onDateClick = viewModel::selectDate,
-            isLoading = uiState.isLoading
+            isLoading = uiState.isLoading,
         )
-        
+
         // Selected date details
         if (uiState.hasSelectedDate && uiState.selectedDateHasBirthdays) {
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             SelectedDateDetails(
                 selectedDate = uiState.selectedDate!!,
                 birthdays = uiState.selectedDateBirthdays,
                 onBirthdayClick = onBirthdayClick,
-                onDismiss = viewModel::clearSelectedDate
+                onDismiss = viewModel::clearSelectedDate,
             )
         }
-        
+
         // Error handling
         if (uiState.hasError) {
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                    ),
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
                 ) {
                     Text(
                         text = "Error loading calendar",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
+                        color = MaterialTheme.colorScheme.onErrorContainer,
                     )
                     Text(
                         text = uiState.errorMessage ?: "Unknown error occurred",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
+                        color = MaterialTheme.colorScheme.onErrorContainer,
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     Button(
                         onClick = {
                             viewModel.clearError()
                             viewModel.refresh()
-                        }
+                        },
                     ) {
                         Text("Retry")
                     }
@@ -165,20 +193,21 @@ private fun CalendarPager(
     birthdaysInMonth: Map<LocalDate, List<BirthdayWithCountdown>>,
     selectedDate: LocalDate?,
     onDateClick: (LocalDate) -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
 ) {
     Column {
         // Day of week headers
         DayOfWeekHeaders()
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         if (isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(300.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator()
             }
@@ -187,16 +216,16 @@ private fun CalendarPager(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.Top,
             ) { page ->
                 val initialMonth = YearMonth.now()
                 val currentMonth = initialMonth.plusMonths((page - 1000).toLong())
-                
+
                 CalendarDaysGrid(
                     currentMonth = currentMonth,
                     birthdaysInMonth = birthdaysInMonth,
                     selectedDate = selectedDate,
-                    onDateClick = onDateClick
+                    onDateClick = onDateClick,
                 )
             }
         }
@@ -211,54 +240,54 @@ private fun CalendarHeader(
     currentMonth: YearMonth,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
-    onTodayClick: () -> Unit
+    onTodayClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         // Previous month button
         IconButton(onClick = onPreviousMonth) {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowLeft,
-                contentDescription = "Previous month"
+                contentDescription = "Previous month",
             )
         }
-        
+
         // Current month and year
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
         }
-        
+
         // Next month button
         IconButton(onClick = onNextMonth) {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowRight,
-                contentDescription = "Next month"
+                contentDescription = "Next month",
             )
         }
     }
-    
+
     // Today button (centered below month/year)
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.Center,
     ) {
         TextButton(
             onClick = onTodayClick,
-            modifier = Modifier.padding(top = 4.dp)
+            modifier = Modifier.padding(top = 4.dp),
         ) {
             Icon(
                 imageVector = Icons.Default.DateRange,
                 contentDescription = null,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(16.dp),
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text("Today")
@@ -273,7 +302,7 @@ private fun CalendarHeader(
 private fun DayOfWeekHeaders() {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
         DayOfWeek.values().forEach { dayOfWeek ->
             Text(
@@ -282,7 +311,7 @@ private fun DayOfWeekHeaders() {
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -296,36 +325,36 @@ private fun CalendarDaysGrid(
     currentMonth: YearMonth,
     birthdaysInMonth: Map<LocalDate, List<BirthdayWithCountdown>>,
     selectedDate: LocalDate?,
-    onDateClick: (LocalDate) -> Unit
+    onDateClick: (LocalDate) -> Unit,
 ) {
     val firstDayOfMonth = currentMonth.atDay(1)
     val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // Convert to 0-6 (Sunday = 0)
     val daysInMonth = currentMonth.lengthOfMonth()
-    
+
     // Calculate total cells needed (6 weeks max)
     val totalCells = 42
     val dates = mutableListOf<LocalDate?>()
-    
+
     // Add empty cells for days before the first day of the month
     repeat(firstDayOfWeek) {
         dates.add(null)
     }
-    
+
     // Add all days of the current month
     for (day in 1..daysInMonth) {
         dates.add(currentMonth.atDay(day))
     }
-    
+
     // Fill remaining cells with nulls
     while (dates.size < totalCells) {
         dates.add(null)
     }
-    
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         items(dates) { date ->
             CalendarDayCell(
@@ -333,7 +362,7 @@ private fun CalendarDaysGrid(
                 birthdays = date?.let { birthdaysInMonth[it] } ?: emptyList(),
                 isSelected = date == selectedDate,
                 isToday = date == LocalDate.now(),
-                onClick = { date?.let(onDateClick) }
+                onClick = { date?.let(onDateClick) },
             )
         }
     }
@@ -348,78 +377,88 @@ private fun CalendarDayCell(
     birthdays: List<BirthdayWithCountdown>,
     isSelected: Boolean,
     isToday: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val hasBirthdays = birthdays.isNotEmpty()
-    
+
     Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                when {
-                    isSelected -> MaterialTheme.colorScheme.primaryContainer
-                    isToday -> MaterialTheme.colorScheme.secondaryContainer
-                    else -> Color.Transparent
-                }
-            )
-            .border(
-                width = if (isSelected) 2.dp else 0.dp,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .clickable(enabled = date != null) { onClick() }
-            .padding(4.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    when {
+                        isSelected -> MaterialTheme.colorScheme.primaryContainer
+                        isToday -> MaterialTheme.colorScheme.secondaryContainer
+                        else -> Color.Transparent
+                    },
+                )
+                .border(
+                    width = if (isSelected) 2.dp else 0.dp,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    shape = RoundedCornerShape(8.dp),
+                )
+                .clickable(enabled = date != null) { onClick() }
+                .padding(4.dp),
+        contentAlignment = Alignment.Center,
     ) {
         if (date != null) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 // Day number
                 Text(
                     text = date.dayOfMonth.toString(),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                    color = when {
-                        isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
-                        isToday -> MaterialTheme.colorScheme.onSecondaryContainer
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
+                    color =
+                        when {
+                            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+                            isToday -> MaterialTheme.colorScheme.onSecondaryContainer
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
                 )
-                
+
                 // Birthday indicator
                 if (hasBirthdays) {
                     Spacer(modifier = Modifier.height(2.dp))
-                    
+
                     Row(
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Center,
                     ) {
                         // Show up to 3 dots for birthdays
                         repeat(minOf(birthdays.size, 3)) {
                             Box(
-                                modifier = Modifier
-                                    .size(4.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (isSelected) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.tertiary
-                                    )
+                                modifier =
+                                    Modifier
+                                        .size(4.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isSelected) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.tertiary
+                                            },
+                                        ),
                             )
                             if (it < minOf(birthdays.size, 3) - 1) {
                                 Spacer(modifier = Modifier.width(2.dp))
                             }
                         }
-                        
+
                         // Show "+" if more than 3 birthdays
                         if (birthdays.size > 3) {
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(
                                 text = "+",
                                 fontSize = 8.sp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.tertiary
+                                color =
+                                    if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.tertiary
+                                    },
                             )
                         }
                     }
@@ -437,40 +476,40 @@ private fun SelectedDateDetails(
     selectedDate: LocalDate,
     birthdays: List<BirthdayWithCountdown>,
     onBirthdayClick: (BirthdayWithCountdown) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Birthdays on ${selectedDate.format(DateTimeFormatter.ofPattern("MMM d"))}",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
-                
+
                 TextButton(onClick = onDismiss) {
                     Text("Close")
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             birthdays.forEach { birthday ->
                 BirthdayCard(
                     birthday = birthday,
                     onClick = { onBirthdayClick(birthday) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                
+
                 if (birthday != birthdays.last()) {
                     Spacer(modifier = Modifier.height(8.dp))
                 }

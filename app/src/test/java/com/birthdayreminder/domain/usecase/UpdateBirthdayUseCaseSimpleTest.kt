@@ -4,7 +4,6 @@ import junit.framework.TestCase.assertTrue
 import org.junit.Test
 
 class UpdateBirthdayUseCaseSimpleTest {
-
     @Test
     fun `UpdateBirthdayResult types are correctly defined`() {
         // Test that the result types can be instantiated

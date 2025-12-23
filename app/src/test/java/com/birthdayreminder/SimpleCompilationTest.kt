@@ -1,13 +1,12 @@
 package com.birthdayreminder
 
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.Assert.*
 
 /**
  * Simple test to verify basic compilation works
  */
 class SimpleCompilationTest {
-    
     @Test
     fun testBasicFunctionality() {
         // Simple test to verify compilation

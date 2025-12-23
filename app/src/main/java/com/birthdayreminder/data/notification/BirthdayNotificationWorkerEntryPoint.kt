@@ -10,6 +10,8 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface BirthdayNotificationWorkerEntryPoint {
     fun birthdayRepository(): BirthdayRepository
+
     fun calculateCountdownUseCase(): CalculateCountdownUseCase
+
     fun notificationHelper(): NotificationHelper
 }

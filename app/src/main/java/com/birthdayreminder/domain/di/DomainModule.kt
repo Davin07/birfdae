@@ -26,7 +26,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DomainModule {
-    
     /**
      * Provides the GetAllBirthdaysUseCase.
      */
@@ -34,11 +33,11 @@ object DomainModule {
     @Singleton
     fun provideGetAllBirthdaysUseCase(
         repository: BirthdayRepository,
-        calculateCountdownUseCase: CalculateCountdownUseCase
+        calculateCountdownUseCase: CalculateCountdownUseCase,
     ): GetAllBirthdaysUseCase {
         return GetAllBirthdaysUseCase(repository, calculateCountdownUseCase)
     }
-    
+
     /**
      * Provides the AddBirthdayUseCase.
      */
@@ -48,11 +47,16 @@ object DomainModule {
         repository: BirthdayRepository,
         scheduleNotificationUseCase: ScheduleNotificationUseCase,
         birthdayValidator: BirthdayValidator,
-        errorHandler: ErrorHandler
+        errorHandler: ErrorHandler,
     ): AddBirthdayUseCase {
-        return AddBirthdayUseCase(repository, scheduleNotificationUseCase, birthdayValidator, errorHandler)
+        return AddBirthdayUseCase(
+            repository,
+            scheduleNotificationUseCase,
+            birthdayValidator,
+            errorHandler,
+        )
     }
-    
+
     /**
      * Provides the UpdateBirthdayUseCase.
      */
@@ -63,11 +67,17 @@ object DomainModule {
         scheduleNotificationUseCase: ScheduleNotificationUseCase,
         cancelNotificationUseCase: CancelNotificationUseCase,
         birthdayValidator: BirthdayValidator,
-        errorHandler: ErrorHandler
+        errorHandler: ErrorHandler,
     ): UpdateBirthdayUseCase {
-        return UpdateBirthdayUseCase(repository, scheduleNotificationUseCase, cancelNotificationUseCase, birthdayValidator, errorHandler)
+        return UpdateBirthdayUseCase(
+            repository,
+            scheduleNotificationUseCase,
+            cancelNotificationUseCase,
+            birthdayValidator,
+            errorHandler,
+        )
     }
-    
+
     /**
      * Provides the DeleteBirthdayUseCase.
      */
@@ -75,33 +85,29 @@ object DomainModule {
     @Singleton
     fun provideDeleteBirthdayUseCase(
         repository: BirthdayRepository,
-        cancelNotificationUseCase: CancelNotificationUseCase
+        cancelNotificationUseCase: CancelNotificationUseCase,
     ): DeleteBirthdayUseCase {
         return DeleteBirthdayUseCase(repository, cancelNotificationUseCase)
     }
-    
+
     /**
      * Provides the CalculateCountdownUseCase.
      */
     @Provides
     @Singleton
-    fun provideCalculateCountdownUseCase(
-        safeDateCalculator: SafeDateCalculator
-    ): CalculateCountdownUseCase {
+    fun provideCalculateCountdownUseCase(safeDateCalculator: SafeDateCalculator): CalculateCountdownUseCase {
         return CalculateCountdownUseCase(safeDateCalculator)
     }
-    
+
     /**
      * Provides the ScheduleNotificationUseCase.
      */
     @Provides
     @Singleton
-    fun provideScheduleNotificationUseCase(
-        workManager: WorkManager
-    ): ScheduleNotificationUseCase {
+    fun provideScheduleNotificationUseCase(workManager: WorkManager): ScheduleNotificationUseCase {
         return ScheduleNotificationUseCase(workManager)
     }
-    
+
     /**
      * Provides the CancelNotificationUseCase.
      */
@@ -109,11 +115,11 @@ object DomainModule {
     @Singleton
     fun provideCancelNotificationUseCase(
         workManager: WorkManager,
-        notificationHelper: NotificationHelper
+        notificationHelper: NotificationHelper,
     ): CancelNotificationUseCase {
         return CancelNotificationUseCase(workManager, notificationHelper)
     }
-    
+
     /**
      * Provides the BirthdayValidator.
      */
@@ -122,7 +128,7 @@ object DomainModule {
     fun provideBirthdayValidator(): BirthdayValidator {
         return BirthdayValidator()
     }
-    
+
     /**
      * Provides the ErrorHandler.
      */
@@ -131,15 +137,13 @@ object DomainModule {
     fun provideErrorHandler(): ErrorHandler {
         return ErrorHandler()
     }
-    
+
     /**
      * Provides the SafeDateCalculator.
      */
     @Provides
     @Singleton
-    fun provideSafeDateCalculator(
-        errorHandler: ErrorHandler
-    ): SafeDateCalculator {
+    fun provideSafeDateCalculator(errorHandler: ErrorHandler): SafeDateCalculator {
         return SafeDateCalculator(errorHandler)
     }
 }

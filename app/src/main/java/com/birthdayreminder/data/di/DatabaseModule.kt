@@ -21,34 +21,32 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DatabaseModule {
-    
     /**
      * Binds the BirthdayRepositoryImpl to the BirthdayRepository interface.
      */
     @Binds
     @Singleton
-    abstract fun bindBirthdayRepository(
-        birthdayRepositoryImpl: BirthdayRepositoryImpl
-    ): BirthdayRepository
-    
+    abstract fun bindBirthdayRepository(birthdayRepositoryImpl: BirthdayRepositoryImpl): BirthdayRepository
+
     companion object {
-        
         /**
          * Provides the Room database instance.
          * Configures the database with proper settings and migrations.
          */
         @Provides
         @Singleton
-        fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+        fun provideAppDatabase(
+            @ApplicationContext context: Context,
+        ): AppDatabase {
             return Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
-                AppDatabase.DATABASE_NAME
+                AppDatabase.DATABASE_NAME,
             ).let { builder ->
                 AppDatabase.create(builder)
             }
         }
-        
+
         /**
          * Provides the BirthdayDao from the database.
          */

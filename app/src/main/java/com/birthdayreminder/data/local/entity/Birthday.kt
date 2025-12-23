@@ -16,54 +16,46 @@ import java.time.LocalDateTime
 data class Birthday(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    
     /**
      * Name of the person whose birthday this is.
      * Required field for birthday identification.
      */
     val name: String,
-    
     /**
      * The birth date of the person.
      * Used for calculating countdowns and next occurrence.
      */
     @Contextual
     val birthDate: LocalDate,
-    
     /**
      * Optional notes about the birthday or person.
      * Can include gift ideas, relationship info, etc.
      */
     val notes: String? = null,
-    
     /**
      * Whether notifications are enabled for this specific birthday.
      * Allows per-birthday notification control.
      */
     val notificationsEnabled: Boolean = true,
-    
     /**
      * Number of days before the birthday to send advance notification.
      * 0 = day of birthday only, 1 = 1 day before, 3 = 3 days before, 7 = 7 days before
      */
     val advanceNotificationDays: Int = 0,
-    
     /**
      * Hour of the day to send notifications (0-23).
      * If null, defaults to 9 AM.
      */
     val notificationHour: Int? = null,
-    
     /**
      * Minute of the hour to send notifications (0-59).
      * If null, defaults to 0 minutes.
      */
     val notificationMinute: Int? = null,
-    
     /**
      * Timestamp when this birthday entry was created.
      * Used for sorting and data management.
      */
     @Contextual
-    val createdAt: LocalDateTime = java.time.Instant.now().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
+    val createdAt: LocalDateTime = java.time.Instant.now().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
 )

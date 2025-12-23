@@ -1,6 +1,9 @@
 package com.birthdayreminder.ui.components
 
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
@@ -17,33 +20,34 @@ fun ConfirmationDialog(
     dismissButtonText: String = "Cancel",
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    isDestructive: Boolean = false
+    isDestructive: Boolean = false,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
             )
         },
         text = {
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
         },
         confirmButton = {
             TextButton(
-                onClick = onConfirm
+                onClick = onConfirm,
             ) {
                 Text(
                     text = confirmButtonText,
-                    color = if (isDestructive) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    }
+                    color =
+                        if (isDestructive) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
                 )
             }
         },
@@ -51,7 +55,7 @@ fun ConfirmationDialog(
             TextButton(onClick = onDismiss) {
                 Text(dismissButtonText)
             }
-        }
+        },
     )
 }
 
@@ -63,7 +67,7 @@ fun ConfirmationDialog(
 fun DeleteBirthdayDialog(
     birthdayName: String,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     ConfirmationDialog(
         title = "Delete Birthday",
@@ -72,7 +76,7 @@ fun DeleteBirthdayDialog(
         dismissButtonText = "Cancel",
         onConfirm = onConfirm,
         onDismiss = onDismiss,
-        isDestructive = true
+        isDestructive = true,
     )
 }
 
@@ -83,20 +87,20 @@ fun DeleteBirthdayDialog(
 fun UnsavedChangesDialog(
     onSave: () -> Unit,
     onDiscard: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onCancel,
         title = {
             Text(
                 text = "Unsaved Changes",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
             )
         },
         text = {
             Text(
                 text = "You have unsaved changes. What would you like to do?",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
         },
         confirmButton = {
@@ -108,33 +112,33 @@ fun UnsavedChangesDialog(
             TextButton(onClick = onDiscard) {
                 Text(
                     text = "Discard",
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
-        }
+        },
     )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun ConfirmationDialogPreview() {
+fun confirmationDialogPreview() {
     BirthdayReminderAppTheme {
         DeleteBirthdayDialog(
             birthdayName = "John Doe",
             onConfirm = {},
-            onDismiss = {}
+            onDismiss = {},
         )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun UnsavedChangesDialogPreview() {
+fun unsavedChangesDialogPreview() {
     BirthdayReminderAppTheme {
         UnsavedChangesDialog(
             onSave = {},
             onDiscard = {},
-            onCancel = {}
+            onCancel = {},
         )
     }
 }

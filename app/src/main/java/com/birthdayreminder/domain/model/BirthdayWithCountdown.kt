@@ -12,7 +12,7 @@ data class BirthdayWithCountdown(
     val daysUntilNext: Int,
     val nextOccurrence: LocalDate,
     val isToday: Boolean,
-    val age: Int
+    val age: Int,
 ) {
     // Convenience properties for easier access
     val id: Long get() = birthday.id
@@ -21,19 +21,20 @@ data class BirthdayWithCountdown(
     val notes: String? get() = birthday.notes
     val notificationsEnabled: Boolean get() = birthday.notificationsEnabled
     val advanceNotificationDays: Int get() = birthday.advanceNotificationDays
-    
+
     /**
      * Returns a formatted countdown string for display.
      */
     val countdownText: String
-        get() = when {
-            isToday -> "Today!"
-            daysUntilNext == 1 -> "Tomorrow"
-            daysUntilNext < 7 -> "In $daysUntilNext days"
-            daysUntilNext < 30 -> "In ${daysUntilNext / 7} weeks"
-            else -> "In ${daysUntilNext / 30} months"
-        }
-    
+        get() =
+            when {
+                isToday -> "Today!"
+                daysUntilNext == 1 -> "Tomorrow"
+                daysUntilNext < 7 -> "In $daysUntilNext days"
+                daysUntilNext < 30 -> "In ${daysUntilNext / 7} weeks"
+                else -> "In ${daysUntilNext / 30} months"
+            }
+
     /**
      * Returns the age they will turn on their next birthday.
      */

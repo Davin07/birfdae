@@ -2,16 +2,23 @@ package com.birthdayreminder.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange // Changed from CalendarMonth
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-// import androidx.navigation.NavDestination.Companion.hierarchy // Removed unused import
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -30,34 +37,35 @@ import com.birthdayreminder.ui.screens.NotificationSettingsScreen
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BirthdayApp(
-    navController: NavHostController = rememberNavController()
-) {
+fun BirthdayApp(navController: NavHostController = rememberNavController()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             // Only show bottom navigation on main screens
-            if (currentDestination?.route in listOf(
-                BirthdayNavigation.BIRTHDAY_LIST,
-                BirthdayNavigation.CALENDAR,
-                BirthdayNavigation.NOTIFICATION_SETTINGS
-            )) {
+            if (currentDestination?.route in
+                listOf(
+                    BirthdayNavigation.BIRTHDAY_LIST,
+                    BirthdayNavigation.CALENDAR,
+                    BirthdayNavigation.NOTIFICATION_SETTINGS,
+                )
+            ) {
                 BirthdayBottomNavigation(
                     navController = navController,
-                    currentDestination = currentDestination?.route
+                    currentDestination = currentDestination?.route,
                 )
             }
-        }
+        },
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = BirthdayNavigation.BIRTHDAY_LIST,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             composable(BirthdayNavigation.BIRTHDAY_LIST) {
                 BirthdayListScreen(
@@ -66,43 +74,43 @@ fun BirthdayApp(
                     },
                     onNavigateToEditBirthday = { birthdayId ->
                         navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthdayId))
-                    }
+                    },
                 )
             }
-            
+
             composable(BirthdayNavigation.CALENDAR) {
                 CalendarScreen(
                     onBirthdayClick = { birthday ->
                         navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthday.id))
-                    }
+                    },
                 )
             }
-            
+
             composable(BirthdayNavigation.ADD_EDIT_BIRTHDAY) {
                 AddEditBirthdayScreen(
                     birthdayId = null,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
                 )
             }
-            
+
             composable(BirthdayNavigation.ADD_EDIT_BIRTHDAY_WITH_ID) { backStackEntry ->
                 val birthdayId = backStackEntry.arguments?.getString("birthdayId")?.toLongOrNull()
                 AddEditBirthdayScreen(
                     birthdayId = birthdayId,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
                 )
             }
-            
+
             composable(BirthdayNavigation.NOTIFICATION_SETTINGS) {
                 NotificationSettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    navController = navController
+                    navController = navController,
                 )
             }
-            
+
             composable(BirthdayNavigation.BACKUP) {
                 BackupScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
                 )
             }
         }
@@ -115,26 +123,28 @@ fun BirthdayApp(
 @Composable
 private fun BirthdayBottomNavigation(
     navController: NavHostController,
-    currentDestination: String?
+    currentDestination: String?,
 ) {
-    val items = listOf(
-        BottomNavItem(
-            route = BirthdayNavigation.BIRTHDAY_LIST,
-            icon = Icons.Default.List,
-            label = "List"
-        ),
-        BottomNavItem(
-            route = BirthdayNavigation.CALENDAR,
-            icon = Icons.Default.DateRange, // Changed from CalendarMonth
-            label = "Calendar"
-        ),
-        BottomNavItem(
-            route = BirthdayNavigation.NOTIFICATION_SETTINGS,
-            icon = Icons.Default.Settings,
-            label = "Settings"
+    val items =
+        listOf(
+            BottomNavItem(
+                route = BirthdayNavigation.BIRTHDAY_LIST,
+                icon = Icons.Default.List,
+                label = "List",
+            ),
+            BottomNavItem(
+                route = BirthdayNavigation.CALENDAR,
+                // Changed from CalendarMonth
+                icon = Icons.Default.DateRange,
+                label = "Calendar",
+            ),
+            BottomNavItem(
+                route = BirthdayNavigation.NOTIFICATION_SETTINGS,
+                icon = Icons.Default.Settings,
+                label = "Settings",
+            ),
         )
-    )
-    
+
     NavigationBar {
         items.forEach { item ->
             NavigationBarItem(
@@ -154,7 +164,7 @@ private fun BirthdayBottomNavigation(
                         // Restore state when reselecting a previously selected item
                         restoreState = true
                     }
-                }
+                },
             )
         }
     }
@@ -166,7 +176,7 @@ private fun BirthdayBottomNavigation(
 private data class BottomNavItem(
     val route: String,
     val icon: ImageVector,
-    val label: String
+    val label: String,
 )
 
 /**
@@ -176,12 +186,12 @@ private data class BottomNavItem(
 private fun PlaceholderScreen(title: String) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.background,
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         )
     }
 }

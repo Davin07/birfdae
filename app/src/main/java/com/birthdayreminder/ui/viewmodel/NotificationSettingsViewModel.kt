@@ -12,30 +12,32 @@ import javax.inject.Inject
 
 data class NotificationSettingsUiState(
     val areNotificationsEnabled: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
 )
 
 @HiltViewModel
-class NotificationSettingsViewModel @Inject constructor(
-    private val notificationHelper: NotificationHelper
-) : ViewModel() {
-    
-    private val _uiState = MutableStateFlow(NotificationSettingsUiState())
-    val uiState: StateFlow<NotificationSettingsUiState> = _uiState.asStateFlow()
-    
-    init {
-        checkNotificationPermission()
-    }
-    
-    private fun checkNotificationPermission() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                areNotificationsEnabled = notificationHelper.areNotificationsEnabled()
-            )
+class NotificationSettingsViewModel
+    @Inject
+    constructor(
+        private val notificationHelper: NotificationHelper,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(NotificationSettingsUiState())
+        val uiState: StateFlow<NotificationSettingsUiState> = _uiState.asStateFlow()
+
+        init {
+            checkNotificationPermission()
+        }
+
+        private fun checkNotificationPermission() {
+            viewModelScope.launch {
+                _uiState.value =
+                    _uiState.value.copy(
+                        areNotificationsEnabled = notificationHelper.areNotificationsEnabled(),
+                    )
+            }
+        }
+
+        fun refreshNotificationStatus() {
+            checkNotificationPermission()
         }
     }
-    
-    fun refreshNotificationStatus() {
-        checkNotificationPermission()
-    }
-}

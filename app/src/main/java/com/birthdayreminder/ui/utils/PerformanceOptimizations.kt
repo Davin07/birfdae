@@ -9,7 +9,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
-/**
+/*
  * Performance optimization utilities for the Birthday Reminder app.
  * These utilities help prevent memory leaks and improve UI performance.
  */
@@ -22,10 +22,10 @@ import kotlinx.coroutines.flow.collectLatest
 fun <T> Flow<T>.collectAsStateWithLifecycle(
     initialValue: T,
     lifecycle: Lifecycle = LocalLifecycleOwner.current.lifecycle,
-    minActiveState: Lifecycle.State = Lifecycle.State.STARTED
+    minActiveState: Lifecycle.State = Lifecycle.State.STARTED,
 ): androidx.compose.runtime.State<T> {
     val state = remember { androidx.compose.runtime.mutableStateOf(initialValue) }
-    
+
     LaunchedEffect(this, lifecycle, minActiveState) {
         lifecycle.repeatOnLifecycle(minActiveState) {
             this@collectAsStateWithLifecycle.collectLatest {
@@ -33,13 +33,13 @@ fun <T> Flow<T>.collectAsStateWithLifecycle(
             }
         }
     }
-    
+
     return state
 }
 
-/**
+/*
  * Memory optimization tips for the Birthday Reminder app:
- * 
+ *
  * 1. Use LazyColumn instead of Column for large lists
  * 2. Use remember() for expensive calculations
  * 3. Use derivedStateOf for computed values
@@ -56,19 +56,21 @@ fun <T> Flow<T>.collectAsStateWithLifecycle(
  * Performance monitoring utilities for debugging
  */
 object PerformanceMonitor {
-    
     /**
      * Logs the time taken to execute a block of code.
      * Useful for identifying performance bottlenecks during development.
      */
-    inline fun <T> measureTime(tag: String, block: () -> T): T {
+    inline fun <T> measureTime(
+        tag: String,
+        block: () -> T,
+    ): T {
         val startTime = System.currentTimeMillis()
         val result = block()
         val endTime = System.currentTimeMillis()
         println("[$tag] Execution time: ${endTime - startTime}ms")
         return result
     }
-    
+
     /**
      * Logs memory usage information.
      * Useful for monitoring memory consumption during development.
@@ -78,7 +80,7 @@ object PerformanceMonitor {
         val usedMemory = runtime.totalMemory() - runtime.freeMemory()
         val maxMemory = runtime.maxMemory()
         val availableMemory = maxMemory - usedMemory
-        
+
         println("[$tag] Memory Usage:")
         println("  Used: ${usedMemory / 1024 / 1024}MB")
         println("  Available: ${availableMemory / 1024 / 1024}MB")

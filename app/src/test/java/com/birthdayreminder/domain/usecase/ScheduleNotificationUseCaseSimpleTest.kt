@@ -2,10 +2,8 @@ package com.birthdayreminder.domain.usecase
 
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
-import java.time.LocalDate
 
 class ScheduleNotificationUseCaseSimpleTest {
-
     @Test
     fun `ScheduleNotificationResult types are correctly defined`() {
         // Test that the result types can be instantiated

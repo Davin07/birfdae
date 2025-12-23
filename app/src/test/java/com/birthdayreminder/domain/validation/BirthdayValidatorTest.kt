@@ -6,7 +6,6 @@ import org.junit.Test
 import java.time.LocalDate
 
 class BirthdayValidatorTest {
-
     private val validator = BirthdayValidator()
 
     @Test
@@ -64,30 +63,41 @@ class BirthdayValidatorTest {
     @Test
     fun `validateBirthday includes notification time validation`() {
         // Valid case
-        val validResult = validator.validateBirthday(
-            name = "John Doe",
-            birthDate = LocalDate.now().minusYears(25),
-            notificationHour = 9,
-            notificationMinute = 30
-        )
+        val validResult =
+            validator.validateBirthday(
+                name = "John Doe",
+                birthDate = LocalDate.now().minusYears(25),
+                notificationHour = 9,
+                notificationMinute = 30,
+            )
         assertTrue(validResult.isValid)
 
         // Invalid hour
-        val invalidHourResult = validator.validateBirthday(
-            name = "John Doe",
-            birthDate = LocalDate.now().minusYears(25),
-            notificationHour = 25
-        )
+        val invalidHourResult =
+            validator.validateBirthday(
+                name = "John Doe",
+                birthDate = LocalDate.now().minusYears(25),
+                notificationHour = 25,
+            )
         assertTrue(invalidHourResult.isInvalid)
-        assertTrue((invalidHourResult as ValidationResult.Invalid).errors.contains(BirthdayValidator.ERROR_INVALID_NOTIFICATION_HOUR))
+        assertTrue(
+            (invalidHourResult as ValidationResult.Invalid).errors.contains(
+                BirthdayValidator.ERROR_INVALID_NOTIFICATION_HOUR,
+            ),
+        )
 
         // Invalid minute
-        val invalidMinuteResult = validator.validateBirthday(
-            name = "John Doe",
-            birthDate = LocalDate.now().minusYears(25),
-            notificationMinute = 65
-        )
+        val invalidMinuteResult =
+            validator.validateBirthday(
+                name = "John Doe",
+                birthDate = LocalDate.now().minusYears(25),
+                notificationMinute = 65,
+            )
         assertTrue(invalidMinuteResult.isInvalid)
-        assertTrue((invalidMinuteResult as ValidationResult.Invalid).errors.contains(BirthdayValidator.ERROR_INVALID_NOTIFICATION_MINUTE))
+        assertTrue(
+            (invalidMinuteResult as ValidationResult.Invalid).errors.contains(
+                BirthdayValidator.ERROR_INVALID_NOTIFICATION_MINUTE,
+            ),
+        )
     }
 }
