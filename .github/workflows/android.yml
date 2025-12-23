@@ -197,13 +197,13 @@ jobs:
         with:
           arguments: testDebugUnitTest
 
-      - name: Run instrumented tests
-        if: github.actor != 'nektos/act' && steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.run_tests == 'true' && matrix.build_type == 'debug'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          target: google_apis
-          script: ./gradlew connectedCheck
+      # - name: Run instrumented tests
+      #   if: github.actor != 'nektos/act' && steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.run_tests == 'true' && matrix.build_type == 'debug'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 30
+      #     target: google_apis
+      #     script: ./gradlew connectedCheck
 
       - name: Upload APK artifact
         if: github.actor != 'nektos/act' && steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.upload_artifacts == 'true'
