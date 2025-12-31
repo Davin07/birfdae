@@ -112,6 +112,9 @@ dependencies {
     // Material Icons Extended
     implementation("androidx.compose.material:material-icons-extended")
 
+    // Timber for logging
+    implementation("com.jakewharton.timber:timber:5.0.1")
+
     // Testing dependencies
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.room:room-testing:2.6.1")

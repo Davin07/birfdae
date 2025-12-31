@@ -196,9 +196,8 @@ class AddEditBirthdayViewModel
                 _uiState.value = currentState.copy(isSaving = true, errorMessage = null)
 
                 try {
-                    val result =
-                        if (currentState.isEditMode && currentState.birthdayId != null) {
-                            // Update existing birthday
+                    if (currentState.isEditMode && currentState.birthdayId != null) {
+                        val result =
                             updateBirthdayUseCase.updateBirthday(
                                 birthdayId = currentState.birthdayId,
                                 name = currentState.name,
@@ -209,8 +208,35 @@ class AddEditBirthdayViewModel
                                 notificationHour = currentState.notificationHour,
                                 notificationMinute = currentState.notificationMinute,
                             )
-                        } else {
-                            // Add new birthday
+
+                        when (result) {
+                            is UpdateBirthdayResult.Success -> {
+                                _uiState.value =
+                                    currentState.copy(
+                                        isSaving = false,
+                                        saveSuccess = true,
+                                    )
+                            }
+                            is UpdateBirthdayResult.ValidationError -> {
+                                handleValidationErrors(result.errors)
+                            }
+                            is UpdateBirthdayResult.DatabaseError -> {
+                                _uiState.value =
+                                    currentState.copy(
+                                        isSaving = false,
+                                        errorMessage = result.message,
+                                    )
+                            }
+                            is UpdateBirthdayResult.NotFound -> {
+                                _uiState.value =
+                                    currentState.copy(
+                                        isSaving = false,
+                                        errorMessage = result.message,
+                                    )
+                            }
+                        }
+                    } else {
+                        val result =
                             addBirthdayUseCase.addBirthday(
                                 name = currentState.name,
                                 birthDate = birthDate,
@@ -220,49 +246,25 @@ class AddEditBirthdayViewModel
                                 notificationHour = currentState.notificationHour,
                                 notificationMinute = currentState.notificationMinute,
                             )
-                        }
 
-                    when (result) {
-                        is AddBirthdayResult.Success -> {
-                            _uiState.value =
-                                currentState.copy(
-                                    isSaving = false,
-                                    saveSuccess = true,
-                                )
-                        }
-                        is UpdateBirthdayResult.Success -> {
-                            _uiState.value =
-                                currentState.copy(
-                                    isSaving = false,
-                                    saveSuccess = true,
-                                )
-                        }
-                        is AddBirthdayResult.ValidationError -> {
-                            handleValidationErrors(result.errors)
-                        }
-                        is UpdateBirthdayResult.ValidationError -> {
-                            handleValidationErrors(result.errors)
-                        }
-                        is AddBirthdayResult.DatabaseError -> {
-                            _uiState.value =
-                                currentState.copy(
-                                    isSaving = false,
-                                    errorMessage = result.message,
-                                )
-                        }
-                        is UpdateBirthdayResult.DatabaseError -> {
-                            _uiState.value =
-                                currentState.copy(
-                                    isSaving = false,
-                                    errorMessage = result.message,
-                                )
-                        }
-                        is UpdateBirthdayResult.NotFound -> {
-                            _uiState.value =
-                                currentState.copy(
-                                    isSaving = false,
-                                    errorMessage = result.message,
-                                )
+                        when (result) {
+                            is AddBirthdayResult.Success -> {
+                                _uiState.value =
+                                    currentState.copy(
+                                        isSaving = false,
+                                        saveSuccess = true,
+                                    )
+                            }
+                            is AddBirthdayResult.ValidationError -> {
+                                handleValidationErrors(result.errors)
+                            }
+                            is AddBirthdayResult.DatabaseError -> {
+                                _uiState.value =
+                                    currentState.copy(
+                                        isSaving = false,
+                                        errorMessage = result.message,
+                                    )
+                            }
                         }
                     }
                 } catch (e: Exception) {

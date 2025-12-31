@@ -2,7 +2,6 @@ package com.birthdayreminder.data.backup
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.data.repository.BirthdayRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,6 +19,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -51,7 +51,6 @@ class BackupManager
             }
 
         companion object {
-            private const val TAG = "BackupManager"
             private const val BACKUP_FILE_PREFIX = "birthday_reminder_backup_"
             private const val BACKUP_FILE_EXTENSION = ".json"
         }
@@ -95,7 +94,7 @@ class BackupManager
 
                     Result.success(Unit)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error exporting birthdays", e)
+                    Timber.e(e, "Error exporting birthdays")
                     Result.failure(e)
                 }
             }
@@ -177,7 +176,7 @@ class BackupManager
 
                     Result.success(importedCount)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error importing birthdays", e)
+                    Timber.e(e, "Error importing birthdays")
                     Result.failure(e)
                 }
             }
@@ -214,7 +213,7 @@ class BackupManager
 
                     Result.success(true)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error validating backup file", e)
+                    Timber.e(e, "Error validating backup file")
                     Result.success(false)
                 }
             }

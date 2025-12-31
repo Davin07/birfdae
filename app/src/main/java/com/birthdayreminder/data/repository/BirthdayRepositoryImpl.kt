@@ -6,6 +6,7 @@ import com.birthdayreminder.domain.error.ErrorHandler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -25,7 +26,7 @@ class BirthdayRepositoryImpl
         override fun getAllBirthdays(): Flow<List<Birthday>> {
             return birthdayDao.getAllBirthdays()
                 .catch { exception ->
-                    // Log the error and emit empty list as fallback
+                    Timber.e(exception, "Failed to get all birthdays")
                     emit(emptyList())
                 }
         }
@@ -41,7 +42,7 @@ class BirthdayRepositoryImpl
                     }
                 }
                 .catch { exception ->
-                    // Log the error and emit empty list as fallback
+                    Timber.e(exception, "Failed to get birthdays sorted by next occurrence")
                     emit(emptyList())
                 }
         }
