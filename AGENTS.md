@@ -4,8 +4,11 @@
 
 ### Build Commands
 - **Full build**: `./gradlew build` (includes compilation, tests, and linting)
+  - On Windows: `./gradlew.bat build`
 - **Assemble only**: `./gradlew assemble` (compiles without running tests)
+  - On Windows: `./gradlew.bat assemble`
 - **Clean build**: `./gradlew clean build`
+  - On Windows: `./gradlew.bat clean build`
 
 ### Lint Commands
 - **Kotlin linting**: `./gradlew ktlintCheck`

@@ -2,7 +2,6 @@ package com.birthdayreminder.domain.usecase
 
 import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.data.repository.BirthdayRepository
-import com.birthdayreminder.domain.error.ErrorHandler
 import com.birthdayreminder.domain.validation.BirthdayValidator
 import java.time.LocalDate
 import javax.inject.Inject
@@ -19,7 +18,6 @@ class AddBirthdayUseCase
         private val birthdayRepository: BirthdayRepository,
         private val scheduleNotificationUseCase: ScheduleNotificationUseCase,
         private val birthdayValidator: BirthdayValidator,
-        private val errorHandler: ErrorHandler,
     ) {
         /**
          * Adds a new birthday after validation.
@@ -80,8 +78,7 @@ class AddBirthdayUseCase
 
                 AddBirthdayResult.Success(birthdayId)
             } catch (e: Exception) {
-                val errorMessage = errorHandler.handleDatabaseError(e)
-                AddBirthdayResult.DatabaseError(errorMessage)
+                AddBirthdayResult.DatabaseError(e)
             }
         }
     }
@@ -94,5 +91,5 @@ sealed class AddBirthdayResult {
 
     data class ValidationError(val errors: List<String>) : AddBirthdayResult()
 
-    data class DatabaseError(val message: String) : AddBirthdayResult()
+    data class DatabaseError(val exception: Throwable) : AddBirthdayResult()
 }

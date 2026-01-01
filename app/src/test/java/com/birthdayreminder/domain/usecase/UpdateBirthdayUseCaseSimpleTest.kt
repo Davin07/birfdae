@@ -10,7 +10,7 @@ class UpdateBirthdayUseCaseSimpleTest {
         val success = UpdateBirthdayResult.Success
         val validationError = UpdateBirthdayResult.ValidationError(listOf("Error 1", "Error 2"))
         val notFound = UpdateBirthdayResult.NotFound("Not found")
-        val databaseError = UpdateBirthdayResult.DatabaseError("Database error")
+        val databaseError = UpdateBirthdayResult.DatabaseError(Exception("Database error"))
 
         // Just verify that these objects can be created
         assertTrue(success is UpdateBirthdayResult)

@@ -2,8 +2,8 @@ package com.birthdayreminder.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.birthdayreminder.domain.error.ErrorResult
 import com.birthdayreminder.domain.error.ErrorHandler
+import com.birthdayreminder.domain.error.ErrorResult
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
 import com.birthdayreminder.domain.usecase.AddBirthdayResult
 import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
@@ -174,7 +174,7 @@ class BirthdayListViewModel
                         is AddBirthdayResult.DatabaseError -> {
                             val errorResult =
                                 errorHandler.createErrorResult(
-                                    Exception(result.message),
+                                    result.exception,
                                     "add birthday",
                                 )
                             _uiState.value =
@@ -253,7 +253,7 @@ class BirthdayListViewModel
                         is UpdateBirthdayResult.DatabaseError -> {
                             val errorResult =
                                 errorHandler.createErrorResult(
-                                    Exception(result.message),
+                                    result.exception,
                                     "update birthday",
                                 )
                             _uiState.value =
@@ -365,7 +365,7 @@ class BirthdayListViewModel
                         is UpdateBirthdayResult.DatabaseError -> {
                             val errorResult =
                                 errorHandler.createErrorResult(
-                                    Exception(result.message),
+                                    result.exception,
                                     "toggle notifications",
                                 )
                             _uiState.value =

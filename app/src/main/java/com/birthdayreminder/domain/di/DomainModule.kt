@@ -47,13 +47,11 @@ object DomainModule {
         repository: BirthdayRepository,
         scheduleNotificationUseCase: ScheduleNotificationUseCase,
         birthdayValidator: BirthdayValidator,
-        errorHandler: ErrorHandler,
     ): AddBirthdayUseCase {
         return AddBirthdayUseCase(
             repository,
             scheduleNotificationUseCase,
             birthdayValidator,
-            errorHandler,
         )
     }
 
@@ -67,14 +65,12 @@ object DomainModule {
         scheduleNotificationUseCase: ScheduleNotificationUseCase,
         cancelNotificationUseCase: CancelNotificationUseCase,
         birthdayValidator: BirthdayValidator,
-        errorHandler: ErrorHandler,
     ): UpdateBirthdayUseCase {
         return UpdateBirthdayUseCase(
             repository,
             scheduleNotificationUseCase,
             cancelNotificationUseCase,
             birthdayValidator,
-            errorHandler,
         )
     }
 

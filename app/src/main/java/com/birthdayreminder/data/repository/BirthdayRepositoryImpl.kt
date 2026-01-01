@@ -49,25 +49,43 @@ class BirthdayRepositoryImpl
 
         override fun getBirthdaysForDate(monthDay: String): Flow<List<Birthday>> {
             return birthdayDao.getBirthdaysForDate(monthDay)
+                .catch { exception ->
+                    Timber.e(exception, "Failed to get birthdays for date $monthDay")
+                    emit(emptyList())
+                }
         }
 
         override fun getBirthdaysForMonth(month: String): Flow<List<Birthday>> {
             return birthdayDao.getBirthdaysForMonth(month)
+                .catch { exception ->
+                    Timber.e(exception, "Failed to get birthdays for month $month")
+                    emit(emptyList())
+                }
         }
 
         override suspend fun getBirthdayById(id: Long): Birthday? {
-            return birthdayDao.getBirthdayById(id)
+            return try {
+                birthdayDao.getBirthdayById(id)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to get birthday by id $id")
+                null
+            }
         }
 
         override fun getBirthdaysWithNotificationsEnabled(): Flow<List<Birthday>> {
             return birthdayDao.getBirthdaysWithNotificationsEnabled()
+                .catch { exception ->
+                    Timber.e(exception, "Failed to get birthdays with notifications")
+                    emit(emptyList())
+                }
         }
 
         override suspend fun addBirthday(birthday: Birthday): Long {
             return try {
                 birthdayDao.insertBirthday(birthday)
             } catch (e: Exception) {
-                throw Exception(errorHandler.handleDatabaseError(e), e)
+                Timber.e(e, "Failed to add birthday: ${birthday.name}")
+                throw Exception(errorHandler.handleDatabaseError(e))
             }
         }
 
@@ -75,7 +93,8 @@ class BirthdayRepositoryImpl
             try {
                 birthdayDao.updateBirthday(birthday)
             } catch (e: Exception) {
-                throw Exception(errorHandler.handleDatabaseError(e), e)
+                Timber.e(e, "Failed to update birthday: ${birthday.id}")
+                throw Exception(errorHandler.handleDatabaseError(e))
             }
         }
 
@@ -83,7 +102,8 @@ class BirthdayRepositoryImpl
             try {
                 birthdayDao.deleteBirthday(birthday)
             } catch (e: Exception) {
-                throw Exception(errorHandler.handleDatabaseError(e), e)
+                Timber.e(e, "Failed to delete birthday: ${birthday.id}")
+                throw Exception(errorHandler.handleDatabaseError(e))
             }
         }
 
@@ -91,7 +111,8 @@ class BirthdayRepositoryImpl
             try {
                 birthdayDao.deleteBirthdayById(id)
             } catch (e: Exception) {
-                throw Exception(errorHandler.handleDatabaseError(e), e)
+                Timber.e(e, "Failed to delete birthday by id: $id")
+                throw Exception(errorHandler.handleDatabaseError(e))
             }
         }
 
@@ -101,6 +122,10 @@ class BirthdayRepositoryImpl
 
         override fun searchBirthdaysByName(searchQuery: String): Flow<List<Birthday>> {
             return birthdayDao.searchBirthdaysByName(searchQuery)
+                .catch { exception ->
+                    Timber.e(exception, "Failed to search birthdays for query: $searchQuery")
+                    emit(emptyList())
+                }
         }
 
         /**

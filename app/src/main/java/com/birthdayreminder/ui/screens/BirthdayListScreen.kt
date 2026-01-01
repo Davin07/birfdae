@@ -112,7 +112,12 @@ fun BirthdayListScreen(
         // Error dialog for operation failures
         if (uiState.hasError && !uiState.isLoading && uiState.birthdays.isNotEmpty()) {
             uiState.errorResult?.let { error ->
-                val onRetryAction = if (error.canRetry) { { viewModel.refresh() } } else null
+                val onRetryAction =
+                    if (error.canRetry) {
+                        { viewModel.refresh() }
+                    } else {
+                        null
+                    }
                 ErrorDialog(
                     error = error,
                     onRetry = onRetryAction,
