@@ -9,10 +9,13 @@ import com.birthdayreminder.domain.usecase.AddBirthdayResult
 import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
 import com.birthdayreminder.domain.usecase.UpdateBirthdayResult
 import com.birthdayreminder.domain.usecase.UpdateBirthdayUseCase
+import com.birthdayreminder.domain.validation.BirthdayValidator
+import com.birthdayreminder.domain.validation.ValidationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -29,6 +32,7 @@ class AddEditBirthdayViewModel
         private val updateBirthdayUseCase: UpdateBirthdayUseCase,
         private val birthdayRepository: BirthdayRepository,
         private val errorHandler: ErrorHandler,
+        private val birthdayValidator: BirthdayValidator,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(AddEditBirthdayUiState())
         val uiState: StateFlow<AddEditBirthdayUiState> = _uiState.asStateFlow()
@@ -97,7 +101,7 @@ class AddEditBirthdayViewModel
         /**
          * Updates the birth date field and clears related validation errors.
          */
-        fun updateBirthDate(birthDate: LocalDate) {
+        fun updateBirthDate(birthDate: LocalDate?) {
             _uiState.value =
                 _uiState.value.copy(
                     birthDate = birthDate,
@@ -145,63 +149,19 @@ class AddEditBirthdayViewModel
         }
 
         /**
-         * Validates the current form state and returns true if valid.
+         * Clears the error message.
          */
-        private fun validateForm(): Boolean {
-            val currentState = _uiState.value
-            var isValid = true
-            var nameError: String? = null
-            var birthDateError: String? = null
-            var notesError: String? = null
 
-            // Validate name
-            if (currentState.name.isBlank()) {
-                nameError = "Name is required"
-                isValid = false
-            } else if (currentState.name.trim().length > 100) {
-                nameError = "Name must be 100 characters or less"
-                isValid = false
-            }
-
-            // Validate birth date
-            if (currentState.birthDate == null) {
-                birthDateError = "Birth date is required"
-                isValid = false
-            } else if (currentState.birthDate.isAfter(LocalDate.now())) {
-                birthDateError = "Birth date cannot be in the future"
-                isValid = false
-            }
-
-            // Validate notes
-            if (currentState.notes.length > 500) {
-                notesError = "Notes must be 500 characters or less"
-                isValid = false
-            }
-
-            // Update state with validation errors
-            _uiState.value =
-                currentState.copy(
-                    nameError = nameError,
-                    birthDateError = birthDateError,
-                    notesError = notesError,
-                )
-
-            return isValid
-        }
 
         /**
          * Saves the birthday (either creates new or updates existing).
          */
         fun saveBirthday() {
-            if (!validateForm()) {
-                return
-            }
-
             val currentState = _uiState.value
             val birthDate = currentState.birthDate ?: return
 
             viewModelScope.launch {
-                _uiState.value = currentState.copy(isSaving = true, errorResult = null)
+                _uiState.update { it.copy(isSaving = true, errorResult = null) }
 
                 try {
                     if (currentState.isEditMode && currentState.birthdayId != null) {
@@ -252,6 +212,18 @@ class AddEditBirthdayViewModel
                                         errorResult = errorResult,
                                     )
                             }
+                            is UpdateBirthdayResult.ExactAlarmPermissionNotGranted -> {
+                                val errorResult =
+                                    errorHandler.createErrorResult(
+                                        SecurityException("Exact alarm permission is required for notifications"),
+                                        "schedule notification",
+                                    )
+                                _uiState.value =
+                                    currentState.copy(
+                                        isSaving = false,
+                                        errorResult = errorResult,
+                                    )
+                            }
                         }
                     } else {
                         val result =
@@ -281,6 +253,18 @@ class AddEditBirthdayViewModel
                                     errorHandler.createErrorResult(
                                         result.exception,
                                         "add birthday",
+                                    )
+                                _uiState.value =
+                                    currentState.copy(
+                                        isSaving = false,
+                                        errorResult = errorResult,
+                                    )
+                            }
+                            is AddBirthdayResult.ExactAlarmPermissionNotGranted -> {
+                                val errorResult =
+                                    errorHandler.createErrorResult(
+                                        SecurityException("Exact alarm permission is required for notifications"),
+                                        "schedule notification",
                                     )
                                 _uiState.value =
                                     currentState.copy(

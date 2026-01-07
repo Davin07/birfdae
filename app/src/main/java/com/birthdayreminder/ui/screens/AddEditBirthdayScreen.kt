@@ -145,10 +145,10 @@ fun AddEditBirthdayScreen(
  * Form content for adding/editing birthdays.
  */
 @Composable
-private fun AddEditBirthdayForm(
+fun AddEditBirthdayForm(
     uiState: AddEditBirthdayUiState,
     onNameChange: (String) -> Unit,
-    onBirthDateChange: (LocalDate) -> Unit,
+    onBirthDateChange: (LocalDate?) -> Unit,
     onNotesChange: (String) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
     onAdvanceNotificationDaysChange: (Int) -> Unit,

@@ -15,12 +15,6 @@ interface BirthdayRepository {
     fun getAllBirthdays(): Flow<List<Birthday>>
 
     /**
-     * Retrieves all birthdays sorted by their next occurrence date.
-     * The sorting logic handles year transitions and calculates next birthday dates.
-     */
-    fun getAllBirthdaysSortedByNextOccurrence(): Flow<List<Birthday>>
-
-    /**
      * Retrieves birthdays for a specific date (month and day).
      * Used for finding birthdays on a particular calendar date.
      */

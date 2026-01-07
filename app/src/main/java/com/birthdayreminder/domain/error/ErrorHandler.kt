@@ -1,7 +1,6 @@
 package com.birthdayreminder.domain.error
 
 import java.io.IOException
-import java.sql.SQLException
 import java.time.DateTimeException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,32 +33,17 @@ class ErrorHandler
          * @return A user-friendly error message appropriate for the exception type
          */
         fun handleDatabaseError(exception: Throwable): String {
-            return when (exception) {
-                is android.database.sqlite.SQLiteConstraintException -> ERROR_DATABASE_CONSTRAINT
-                is android.database.sqlite.SQLiteException -> {
-                    when {
-                        exception.message?.contains("database is locked", ignoreCase = true) == true ->
-                            "Database is busy. Please try again in a moment."
-                        exception.message?.contains("no such table", ignoreCase = true) == true ->
-                            "Database structure error. Please restart the app."
-                        exception.message?.contains("disk I/O error", ignoreCase = true) == true ->
-                            "Storage error. Please check available space and try again."
-                        else -> ERROR_DATABASE_GENERIC
-                    }
-                }
-                is SQLException -> {
-                    when {
-                        exception.message?.contains("database is locked", ignoreCase = true) == true ->
-                            "Database is busy. Please try again in a moment."
-                        exception.message?.contains("no such table", ignoreCase = true) == true ->
-                            "Database structure error. Please restart the app."
-                        exception.message?.contains("disk I/O error", ignoreCase = true) == true ->
-                            "Storage error. Please check available space and try again."
-                        else -> ERROR_DATABASE_GENERIC
-                    }
-                }
-                is IOException -> "Storage access error. Please check permissions and try again."
-                else -> exception.message ?: ERROR_DATABASE_GENERIC
+            val message = exception.message
+            return when {
+                exception is android.database.sqlite.SQLiteConstraintException -> ERROR_DATABASE_CONSTRAINT
+                message?.contains("database is locked", ignoreCase = true) == true ->
+                    "Database is busy. Please try again in a moment."
+                message?.contains("no such table", ignoreCase = true) == true ->
+                    "Database structure error. Please restart the app."
+                message?.contains("disk I/O error", ignoreCase = true) == true ->
+                    "Storage error. Please check available space and try again."
+                exception is IOException -> "Storage access error. Please check permissions and try again."
+                else -> message ?: ERROR_DATABASE_GENERIC
             }
         }
 
@@ -112,16 +96,15 @@ class ErrorHandler
          * @return True if the error is recoverable and operation can be retried
          */
         fun isRecoverableError(exception: Throwable): Boolean {
-            return when (exception) {
-                is SQLException -> {
-                    exception.message?.contains("database is locked", ignoreCase = true) == true ||
-                        exception.message?.contains("disk I/O error", ignoreCase = true) == true
-                }
-                is IOException -> true
-                is DateTimeException -> false
-                is OutOfMemoryError -> false
-                is SecurityException -> false
-                is IllegalArgumentException -> false
+            val message = exception.message
+            return when {
+                message?.contains("database is locked", ignoreCase = true) == true ||
+                    message?.contains("disk I/O error", ignoreCase = true) == true -> true
+                exception is IOException -> true
+                exception is DateTimeException -> false
+                exception is OutOfMemoryError -> false
+                exception is SecurityException -> false
+                exception is IllegalArgumentException -> false
                 else -> true
             }
         }
@@ -155,9 +138,11 @@ class ErrorHandler
          * Checks if the exception is a database-related error.
          */
         private fun isDatabaseError(exception: Throwable): Boolean {
+            val message = exception.message
             return exception is android.database.sqlite.SQLiteException ||
-                exception is SQLException ||
-                exception is IOException
+                exception is IOException ||
+                message?.contains("database", ignoreCase = true) == true ||
+                message?.contains("disk", ignoreCase = true) == true
         }
 
         /**

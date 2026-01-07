@@ -1,6 +1,6 @@
 package com.birthdayreminder.domain.di
 
-import androidx.work.WorkManager
+import com.birthdayreminder.data.notification.AlarmScheduler
 import com.birthdayreminder.data.notification.NotificationHelper
 import com.birthdayreminder.data.repository.BirthdayRepository
 import com.birthdayreminder.domain.error.ErrorHandler
@@ -100,8 +100,8 @@ object DomainModule {
      */
     @Provides
     @Singleton
-    fun provideScheduleNotificationUseCase(workManager: WorkManager): ScheduleNotificationUseCase {
-        return ScheduleNotificationUseCase(workManager)
+    fun provideScheduleNotificationUseCase(alarmScheduler: AlarmScheduler): ScheduleNotificationUseCase {
+        return ScheduleNotificationUseCase(alarmScheduler)
     }
 
     /**
@@ -110,10 +110,10 @@ object DomainModule {
     @Provides
     @Singleton
     fun provideCancelNotificationUseCase(
-        workManager: WorkManager,
+        alarmScheduler: AlarmScheduler,
         notificationHelper: NotificationHelper,
     ): CancelNotificationUseCase {
-        return CancelNotificationUseCase(workManager, notificationHelper)
+        return CancelNotificationUseCase(alarmScheduler, notificationHelper)
     }
 
     /**

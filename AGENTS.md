@@ -71,7 +71,7 @@
 - **Composables**: Small, reusable components with clear single responsibility
 - **Parameters**: Default modifiers first, then required parameters
 - **State**: Prefer `remember` and `mutableStateOf`, hoist state to ViewModel when needed
-- **Previews**: Include `@Preview` composibles with showBackground=true
+- **Previews**: Include `@Preview` composables with showBackground=true
 - **Performance**: Mark stable functions with `@Stable`, use `derivedStateOf` for computed values
 
 ### Database & Room

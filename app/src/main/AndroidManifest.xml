@@ -8,6 +8,12 @@
     <!-- Exact alarm permissions for precise notification timing -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    
+    <!-- Boot completed permission for rescheduling alarms after reboot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <!-- Wake lock for alarm processing -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".BirthdayReminderApplication"
@@ -31,6 +37,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <!-- Boot Receiver for rescheduling alarms after device restart -->
+        <receiver
+            android:name=".data.notification.BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+        
+        <!-- Alarm Receiver for handling scheduled notifications -->
+        <receiver
+            android:name=".data.notification.AlarmReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.birthdayreminder.ACTION_BIRTHDAY_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
         
     </application>
 

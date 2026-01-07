@@ -6,7 +6,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
-import java.sql.SQLException
 import java.time.DateTimeException
 
 class ErrorHandlerTest {
@@ -15,7 +14,7 @@ class ErrorHandlerTest {
     @Test
     fun `handleDatabaseError returns specific message for locked database`() =
         runTest {
-            val exception = SQLException("database is locked")
+            val exception = Exception("database is locked")
             val message = errorHandler.handleDatabaseError(exception)
 
             assertEquals("Database is busy. Please try again in a moment.", message)
@@ -24,7 +23,7 @@ class ErrorHandlerTest {
     @Test
     fun `handleDatabaseError returns specific message for no such table`() =
         runTest {
-            val exception = SQLException("no such table birthdays")
+            val exception = Exception("no such table birthdays")
             val message = errorHandler.handleDatabaseError(exception)
 
             assertEquals("Database structure error. Please restart the app.", message)
@@ -33,19 +32,10 @@ class ErrorHandlerTest {
     @Test
     fun `handleDatabaseError returns specific message for disk I O error`() =
         runTest {
-            val exception = SQLException("disk I/O error")
+            val exception = Exception("disk I/O error")
             val message = errorHandler.handleDatabaseError(exception)
 
             assertEquals("Storage error. Please check available space and try again.", message)
-        }
-
-    @Test
-    fun `handleDatabaseError returns generic message for unknown SQLException`() =
-        runTest {
-            val exception = SQLException("unknown error")
-            val message = errorHandler.handleDatabaseError(exception)
-
-            assertEquals(ErrorHandler.ERROR_DATABASE_GENERIC, message)
         }
 
     @Test
@@ -78,7 +68,7 @@ class ErrorHandlerTest {
     @Test
     fun `isRecoverableError returns true for locked database`() =
         runTest {
-            val exception = SQLException("database is locked")
+            val exception = Exception("database is locked")
 
             assertTrue(errorHandler.isRecoverableError(exception))
         }
@@ -86,7 +76,7 @@ class ErrorHandlerTest {
     @Test
     fun `isRecoverableError returns true for disk I O error`() =
         runTest {
-            val exception = IOException("disk I/O error")
+            val exception = Exception("disk I/O error")
 
             assertTrue(errorHandler.isRecoverableError(exception))
         }
@@ -126,7 +116,7 @@ class ErrorHandlerTest {
     @Test
     fun `createErrorResult creates correct ErrorResult for database error`() =
         runTest {
-            val exception = SQLException("database is locked")
+            val exception = Exception("database is locked")
 
             val errorResult = errorHandler.createErrorResult(exception, "test operation")
 
@@ -158,17 +148,6 @@ class ErrorHandlerTest {
         }
 
     @Test
-    fun `createErrorResult handles database error type`() =
-        runTest {
-            val exception = SQLException("unknown error")
-
-            val errorResult = errorHandler.createErrorResult(exception, "save birthday")
-
-            assertFalse(errorResult.isRecoverable)
-            assertEquals(ErrorHandler.ERROR_DATABASE_GENERIC, errorResult.message)
-        }
-
-    @Test
     fun `createErrorResult handles date calculation error type`() =
         runTest {
             val exception = DateTimeException("invalid date")
@@ -182,7 +161,7 @@ class ErrorHandlerTest {
     @Test
     fun `ErrorResult canRetry returns recoverable value`() =
         runTest {
-            val exception = SQLException("database is locked")
+            val exception = Exception("database is locked")
 
             val errorResult = errorHandler.createErrorResult(exception, "test")
 

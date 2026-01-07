@@ -183,6 +183,18 @@ class BirthdayListViewModel
                                     errorResult = errorResult,
                                 )
                         }
+                        is AddBirthdayResult.ExactAlarmPermissionNotGranted -> {
+                            val errorResult =
+                                errorHandler.createErrorResult(
+                                    SecurityException("Exact alarm permission is required for notifications"),
+                                    "add birthday",
+                                )
+                            _uiState.value =
+                                _uiState.value.copy(
+                                    isLoading = false,
+                                    errorResult = errorResult,
+                                )
+                        }
                     }
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to add birthday")
@@ -254,6 +266,18 @@ class BirthdayListViewModel
                             val errorResult =
                                 errorHandler.createErrorResult(
                                     result.exception,
+                                    "update birthday",
+                                )
+                            _uiState.value =
+                                _uiState.value.copy(
+                                    isLoading = false,
+                                    errorResult = errorResult,
+                                )
+                        }
+                        is UpdateBirthdayResult.ExactAlarmPermissionNotGranted -> {
+                            val errorResult =
+                                errorHandler.createErrorResult(
+                                    SecurityException("Exact alarm permission is required for notifications"),
                                     "update birthday",
                                 )
                             _uiState.value =
@@ -366,6 +390,15 @@ class BirthdayListViewModel
                             val errorResult =
                                 errorHandler.createErrorResult(
                                     result.exception,
+                                    "toggle notifications",
+                                )
+                            _uiState.value =
+                                _uiState.value.copy(errorResult = errorResult)
+                        }
+                        is UpdateBirthdayResult.ExactAlarmPermissionNotGranted -> {
+                            val errorResult =
+                                errorHandler.createErrorResult(
+                                    SecurityException("Exact alarm permission is required for notifications"),
                                     "toggle notifications",
                                 )
                             _uiState.value =

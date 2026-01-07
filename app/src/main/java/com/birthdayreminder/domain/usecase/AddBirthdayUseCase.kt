@@ -55,17 +55,21 @@ class AddBirthdayUseCase
                 return AddBirthdayResult.ValidationError(validationResult.errorMessages)
             }
 
-            return try {
+            try {
+                // Check permission first if notifications are requested
+                if (notificationsEnabled && !scheduleNotificationUseCase.canScheduleExactAlarms()) {
+                    return AddBirthdayResult.ExactAlarmPermissionNotGranted
+                }
+
                 val birthday =
                     Birthday(
-                        name = birthdayValidator.sanitizeName(name),
+                        name = name,
                         birthDate = birthDate,
-                        notes = birthdayValidator.sanitizeNotes(notes),
+                        notes = notes,
                         notificationsEnabled = notificationsEnabled,
                         advanceNotificationDays = advanceNotificationDays,
                         notificationHour = notificationHour,
                         notificationMinute = notificationMinute,
-                        createdAt = java.time.Instant.now().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
                     )
 
                 val birthdayId = birthdayRepository.addBirthday(birthday)
@@ -73,12 +77,17 @@ class AddBirthdayUseCase
                 // Schedule notifications if enabled
                 if (notificationsEnabled) {
                     val savedBirthday = birthday.copy(id = birthdayId)
-                    scheduleNotificationUseCase(savedBirthday)
+                    val notificationResult = scheduleNotificationUseCase.scheduleNotification(savedBirthday)
+                    if (notificationResult is ScheduleNotificationResult.ExactAlarmPermissionNotGranted) {
+                        // This technically shouldn't happen if the check above passes,
+                        // but handle it just in case permissions changed in the milliseconds between check and schedule
+                        return AddBirthdayResult.ExactAlarmPermissionNotGranted
+                    }
                 }
 
-                AddBirthdayResult.Success(birthdayId)
+                return AddBirthdayResult.Success(birthdayId)
             } catch (e: Exception) {
-                AddBirthdayResult.DatabaseError(e)
+                return AddBirthdayResult.DatabaseError(e)
             }
         }
     }
@@ -92,4 +101,6 @@ sealed class AddBirthdayResult {
     data class ValidationError(val errors: List<String>) : AddBirthdayResult()
 
     data class DatabaseError(val exception: Throwable) : AddBirthdayResult()
+
+    object ExactAlarmPermissionNotGranted : AddBirthdayResult()
 }

@@ -144,7 +144,7 @@ fun BirthdayListScreen(
 }
 
 @Composable
-private fun BirthdayListContent(
+fun BirthdayListContent(
     uiState: BirthdayListUiState,
     onRefresh: () -> Unit,
     onEditBirthday: (Long) -> Unit,
