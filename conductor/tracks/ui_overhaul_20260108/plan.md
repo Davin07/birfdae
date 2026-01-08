@@ -13,7 +13,7 @@ This phase updates the database schema and implements the necessary logic for Zo
     - [ ] Write unit tests for `ZodiacUtils` and `AgeUtils`.
     - [ ] Implement `ZodiacUtils` to determine sign from Day/Month.
     - [ ] Implement `AgeUtils` to calculate current and upcoming age.
-- [ ] Task: Refactor Notification Scheduler for Multiple Alarms
+- [x] Task: Refactor Notification Scheduler for Multiple Alarms 4f8e75c
     - [ ] Write tests for scheduling multiple notifications per birthday based on offsets.
     - [ ] Update `AlarmScheduler` and `WorkManager` logic to handle the new `notificationOffsets`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Layer' (Protocol in workflow.md)
