@@ -28,7 +28,7 @@ Establishing the visual identity (colors, typography) and global UI components (
     - [ ] Redesign the bottom navigation bar matching the Calendar View reference.
     - [ ] Integrate the "faux FAB" center button for adding birthdays.
     - [ ] Write UI tests for navigation between top-level destinations.
-- [ ] Task: Proactive Permission & Haptic/Animation Utilities
+- [x] Task: Proactive Permission & Haptic/Animation Utilities 35d25e1
     - [ ] Implement immediate notification permission prompt on app launch.
     - [ ] Create utility for "force feedback" (haptics).
     - [ ] Set up global transition animations between screens.
