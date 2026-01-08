@@ -5,7 +5,7 @@ This plan outlines the steps for a comprehensive UI redesign and functional expa
 ## Phase 1: Data Layer & Core Utilities
 This phase updates the database schema and implements the necessary logic for Zodiac signs, age calculations, and multi-notification scheduling.
 
-- [~] Task: Update Room Database Schema (Image URI, Relationship, Pinned Status, Multi-notification config)
+- [x] Task: Update Room Database Schema (Image URI, Relationship, Pinned Status, Multi-notification config) dbf43f0
     - [ ] Create a migration for `BirthdayEntity` to include `imageUri` (String?), `relationship` (String), `isPinned` (Boolean), `notificationOffsets` (List<Int>), and `notificationTime` (String).
     - [ ] Update `BirthdayEntity` and `BirthdayRepository` to support new fields.
     - [ ] Write migration tests to ensure data persistence.
