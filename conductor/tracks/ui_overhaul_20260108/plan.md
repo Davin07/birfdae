@@ -24,7 +24,7 @@ Establishing the visual identity (colors, typography) and global UI components (
 - [x] Task: Define Unified Theme & Design System 475ea33
     - [ ] Create `LuminaTheme` with color palette and typography derived from `reference/`.
     - [ ] Implement reusable components (Cards, Buttons, Inputs) matching the reference style.
-- [ ] Task: Implement Standardized Bottom Navigation
+- [x] Task: Implement Standardized Bottom Navigation dfb28a2
     - [ ] Redesign the bottom navigation bar matching the Calendar View reference.
     - [ ] Integrate the "faux FAB" center button for adding birthdays.
     - [ ] Write UI tests for navigation between top-level destinations.
