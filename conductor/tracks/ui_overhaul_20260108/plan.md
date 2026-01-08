@@ -18,7 +18,7 @@ This phase updates the database schema and implements the necessary logic for Zo
     - [ ] Update `AlarmScheduler` and `WorkManager` logic to handle the new `notificationOffsets`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Layer' (Protocol in workflow.md)
 
-## Phase 2: Design System & Foundation
+## Phase 2: Design System & Foundation [checkpoint: ef9045b]
 Establishing the visual identity (colors, typography) and global UI components (Bottom Nav, Permissions).
 
 - [x] Task: Define Unified Theme & Design System 475ea33
