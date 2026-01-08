@@ -9,7 +9,7 @@ This phase updates the database schema and implements the necessary logic for Zo
     - [ ] Create a migration for `BirthdayEntity` to include `imageUri` (String?), `relationship` (String), `isPinned` (Boolean), `notificationOffsets` (List<Int>), and `notificationTime` (String).
     - [ ] Update `BirthdayEntity` and `BirthdayRepository` to support new fields.
     - [ ] Write migration tests to ensure data persistence.
-- [ ] Task: Implement Zodiac and Age Calculation Logic
+- [x] Task: Implement Zodiac and Age Calculation Logic 6a84da8
     - [ ] Write unit tests for `ZodiacUtils` and `AgeUtils`.
     - [ ] Implement `ZodiacUtils` to determine sign from Day/Month.
     - [ ] Implement `AgeUtils` to calculate current and upcoming age.
