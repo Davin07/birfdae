@@ -2,7 +2,7 @@
 
 This plan outlines the steps for a comprehensive UI redesign and functional expansion of the Birthday Reminder app, adhering to the project's TDD workflow and Material Design 3 principles.
 
-## Phase 1: Data Layer & Core Utilities
+## Phase 1: Data Layer & Core Utilities [checkpoint: 91cac4f]
 This phase updates the database schema and implements the necessary logic for Zodiac signs, age calculations, and multi-notification scheduling.
 
 - [x] Task: Update Room Database Schema (Image URI, Relationship, Pinned Status, Multi-notification config) dbf43f0
