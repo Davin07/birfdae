@@ -64,10 +64,12 @@ data class Birthday(
     /**
      * Whether this birthday is pinned to the top of the list.
      */
+    @androidx.room.ColumnInfo(defaultValue = "0")
     val isPinned: Boolean = false,
     /**
      * List of day offsets for notifications (e.g., [0, 3] for on-day and 3 days before).
      */
+    @androidx.room.ColumnInfo(defaultValue = "")
     val notificationOffsets: List<Int> = emptyList(),
     /**
      * Specific time to send the notification.
