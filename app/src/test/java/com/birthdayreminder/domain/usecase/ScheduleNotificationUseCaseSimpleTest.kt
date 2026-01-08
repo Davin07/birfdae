@@ -10,11 +10,13 @@ class ScheduleNotificationUseCaseSimpleTest {
         val success = ScheduleNotificationResult.Success
         val notificationsDisabled = ScheduleNotificationResult.NotificationsDisabled
         val error = ScheduleNotificationResult.Error("Test error")
+        val exactAlarmNotGranted = ScheduleNotificationResult.ExactAlarmPermissionNotGranted
 
         // Just verify that these objects can be created
         assertTrue(success is ScheduleNotificationResult)
         assertTrue(notificationsDisabled is ScheduleNotificationResult)
         assertTrue(error is ScheduleNotificationResult)
+        assertTrue(exactAlarmNotGranted is ScheduleNotificationResult)
     }
 
     @Test

@@ -1,7 +1,7 @@
 package com.birthdayreminder.data.di
 
 import android.content.Context
-import androidx.work.WorkManager
+import com.birthdayreminder.data.notification.AlarmScheduler
 import com.birthdayreminder.data.notification.NotificationHelper
 import dagger.Module
 import dagger.Provides
@@ -23,9 +23,9 @@ object NotificationModule {
 
     @Provides
     @Singleton
-    fun provideWorkManager(
+    fun provideAlarmScheduler(
         @ApplicationContext context: Context,
-    ): WorkManager {
-        return WorkManager.getInstance(context)
+    ): AlarmScheduler {
+        return AlarmScheduler(context)
     }
 }

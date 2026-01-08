@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.first
+import timber.log.Timber
 import java.time.LocalDate
 
 class BirthdayNotificationWorker(
@@ -86,8 +87,7 @@ class BirthdayNotificationWorker(
 
             Result.success()
         } catch (e: Exception) {
-            // Log the exception for debugging
-            e.printStackTrace()
+            Timber.e(e, "Error in BirthdayNotificationWorker")
             Result.retry()
         }
     }

@@ -37,12 +37,12 @@ abstract class AppDatabase : RoomDatabase() {
          */
         val MIGRATION_1_2 =
             object : Migration(1, 2) {
-                override fun migrate(database: SupportSQLiteDatabase) {
+                override fun migrate(db: SupportSQLiteDatabase) {
                     // Add notificationHour column (nullable integer)
-                    database.execSQL("ALTER TABLE birthdays ADD COLUMN notificationHour INTEGER")
+                    db.execSQL("ALTER TABLE birthdays ADD COLUMN notificationHour INTEGER")
 
                     // Add notificationMinute column (nullable integer)
-                    database.execSQL("ALTER TABLE birthdays ADD COLUMN notificationMinute INTEGER")
+                    db.execSQL("ALTER TABLE birthdays ADD COLUMN notificationMinute INTEGER")
                 }
             }
 

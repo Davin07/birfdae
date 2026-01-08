@@ -235,3 +235,4 @@ lint/baseline.xml
 QWEN.md
 *.notes
 output.json
+docs/Improvements.md

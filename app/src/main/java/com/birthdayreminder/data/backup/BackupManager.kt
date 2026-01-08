@@ -2,8 +2,8 @@ package com.birthdayreminder.data.backup
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.birthdayreminder.data.local.entity.Birthday
+import com.birthdayreminder.data.notification.AlarmScheduler
 import com.birthdayreminder.data.repository.BirthdayRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +20,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -38,6 +39,7 @@ class BackupManager
     constructor(
         @ApplicationContext private val context: Context,
         private val birthdayRepository: BirthdayRepository,
+        private val alarmScheduler: AlarmScheduler,
     ) {
         private val json =
             Json {
@@ -51,7 +53,6 @@ class BackupManager
             }
 
         companion object {
-            private const val TAG = "BackupManager"
             private const val BACKUP_FILE_PREFIX = "birthday_reminder_backup_"
             private const val BACKUP_FILE_EXTENSION = ".json"
         }
@@ -95,7 +96,7 @@ class BackupManager
 
                     Result.success(Unit)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error exporting birthdays", e)
+                    Timber.e(e, "Error exporting birthdays")
                     Result.failure(e)
                 }
             }
@@ -134,7 +135,11 @@ class BackupManager
                                 if (existing == null) {
                                     // Add new birthday with a new ID
                                     val newBirthday = birthday.copy(id = 0)
-                                    birthdayRepository.addBirthday(newBirthday)
+                                    val newId = birthdayRepository.addBirthday(newBirthday)
+
+                                    if (newBirthday.notificationsEnabled) {
+                                        alarmScheduler.scheduleNotification(newBirthday.copy(id = newId))
+                                    }
                                     importedCount++
                                 }
                             }
@@ -143,9 +148,14 @@ class BackupManager
                                 val existing = birthdayRepository.getBirthdayById(birthday.id)
                                 if (existing != null) {
                                     birthdayRepository.deleteBirthdayById(birthday.id)
+                                    alarmScheduler.cancelNotification(birthday.id)
                                 }
                                 // Add the imported birthday (with original ID)
                                 birthdayRepository.addBirthday(birthday)
+
+                                if (birthday.notificationsEnabled) {
+                                    alarmScheduler.scheduleNotification(birthday)
+                                }
                                 importedCount++
                             }
                             ConflictStrategy.MERGE -> {
@@ -154,7 +164,11 @@ class BackupManager
                                 if (existing == null) {
                                     // Add new birthday with a new ID
                                     val newBirthday = birthday.copy(id = 0)
-                                    birthdayRepository.addBirthday(newBirthday)
+                                    val newId = birthdayRepository.addBirthday(newBirthday)
+
+                                    if (newBirthday.notificationsEnabled) {
+                                        alarmScheduler.scheduleNotification(newBirthday.copy(id = newId))
+                                    }
                                     importedCount++
                                 } else {
                                     // Update existing with imported data (except ID)
@@ -169,6 +183,12 @@ class BackupManager
                                             notificationMinute = birthday.notificationMinute,
                                         )
                                     birthdayRepository.updateBirthday(updatedBirthday)
+
+                                    // Re-schedule notification
+                                    alarmScheduler.cancelNotification(updatedBirthday.id)
+                                    if (updatedBirthday.notificationsEnabled) {
+                                        alarmScheduler.scheduleNotification(updatedBirthday)
+                                    }
                                     importedCount++
                                 }
                             }
@@ -177,7 +197,7 @@ class BackupManager
 
                     Result.success(importedCount)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error importing birthdays", e)
+                    Timber.e(e, "Error importing birthdays")
                     Result.failure(e)
                 }
             }
@@ -214,7 +234,7 @@ class BackupManager
 
                     Result.success(true)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error validating backup file", e)
+                    Timber.e(e, "Error validating backup file")
                     Result.success(false)
                 }
             }

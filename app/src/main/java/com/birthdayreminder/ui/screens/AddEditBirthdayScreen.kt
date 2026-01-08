@@ -43,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.birthdayreminder.domain.error.ErrorResult
 import com.birthdayreminder.ui.components.DatePickerField
 import com.birthdayreminder.ui.components.NotificationTimePicker
 import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
@@ -130,7 +131,7 @@ fun AddEditBirthdayScreen(
                 onAdvanceNotificationDaysChange = viewModel::updateAdvanceNotificationDays,
                 onNotificationHourChange = viewModel::updateNotificationHour,
                 onNotificationMinuteChange = viewModel::updateNotificationMinute,
-                onErrorDismiss = viewModel::clearErrorMessage,
+                onErrorDismiss = viewModel::clearError,
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -144,10 +145,10 @@ fun AddEditBirthdayScreen(
  * Form content for adding/editing birthdays.
  */
 @Composable
-private fun AddEditBirthdayForm(
+fun AddEditBirthdayForm(
     uiState: AddEditBirthdayUiState,
     onNameChange: (String) -> Unit,
-    onBirthDateChange: (LocalDate) -> Unit,
+    onBirthDateChange: (LocalDate?) -> Unit,
     onNotesChange: (String) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
     onAdvanceNotificationDaysChange: (Int) -> Unit,
@@ -377,7 +378,11 @@ fun addEditBirthdayScreenErrorPreview() {
                     name = "",
                     nameError = "Name is required",
                     birthDateError = "Birth date cannot be in the future",
-                    errorMessage = "Please fix the errors above",
+                    errorResult =
+                        ErrorResult(
+                            message = "Please fix the errors above",
+                            isRecoverable = true,
+                        ),
                     notificationsEnabled = false,
                 ),
             onNameChange = {},

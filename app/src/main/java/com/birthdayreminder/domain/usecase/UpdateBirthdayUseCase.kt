@@ -1,7 +1,6 @@
 package com.birthdayreminder.domain.usecase
 
 import com.birthdayreminder.data.repository.BirthdayRepository
-import com.birthdayreminder.domain.error.ErrorHandler
 import com.birthdayreminder.domain.validation.BirthdayValidator
 import java.time.LocalDate
 import javax.inject.Inject
@@ -19,7 +18,6 @@ class UpdateBirthdayUseCase
         private val scheduleNotificationUseCase: ScheduleNotificationUseCase,
         private val cancelNotificationUseCase: CancelNotificationUseCase,
         private val birthdayValidator: BirthdayValidator,
-        private val errorHandler: ErrorHandler,
     ) {
         /**
          * Updates an existing birthday after validation.
@@ -59,7 +57,12 @@ class UpdateBirthdayUseCase
                 return UpdateBirthdayResult.ValidationError(validationResult.errorMessages)
             }
 
-            return try {
+            try {
+                // Check permission first if notifications are requested
+                if (notificationsEnabled && !scheduleNotificationUseCase.canScheduleExactAlarms()) {
+                    return UpdateBirthdayResult.ExactAlarmPermissionNotGranted
+                }
+
                 // Check if birthday exists
                 val existingBirthday =
                     birthdayRepository.getBirthdayById(birthdayId)
@@ -81,15 +84,17 @@ class UpdateBirthdayUseCase
 
                 // Update notifications
                 if (updatedBirthday.notificationsEnabled) {
-                    scheduleNotificationUseCase(updatedBirthday)
+                    val notificationResult = scheduleNotificationUseCase.scheduleNotification(updatedBirthday)
+                    if (notificationResult is ScheduleNotificationResult.ExactAlarmPermissionNotGranted) {
+                        return UpdateBirthdayResult.ExactAlarmPermissionNotGranted
+                    }
                 } else {
                     cancelNotificationUseCase(updatedBirthday.id)
                 }
 
-                UpdateBirthdayResult.Success
+                return UpdateBirthdayResult.Success
             } catch (e: Exception) {
-                val errorMessage = errorHandler.handleDatabaseError(e)
-                UpdateBirthdayResult.DatabaseError(errorMessage)
+                return UpdateBirthdayResult.DatabaseError(e)
             }
         }
 
@@ -107,7 +112,7 @@ class UpdateBirthdayUseCase
             notificationHour: Int? = null,
             notificationMinute: Int? = null,
         ): UpdateBirthdayResult {
-            return try {
+            try {
                 // Get existing birthday
                 val existingBirthday =
                     birthdayRepository.getBirthdayById(birthdayId)
@@ -140,19 +145,26 @@ class UpdateBirthdayUseCase
                     return UpdateBirthdayResult.ValidationError(validationResult.errorMessages)
                 }
 
+                // Check permission first if notifications are requested
+                if (updatedBirthday.notificationsEnabled && !scheduleNotificationUseCase.canScheduleExactAlarms()) {
+                    return UpdateBirthdayResult.ExactAlarmPermissionNotGranted
+                }
+
                 birthdayRepository.updateBirthday(updatedBirthday)
 
                 // Update notifications
                 if (updatedBirthday.notificationsEnabled) {
-                    scheduleNotificationUseCase(updatedBirthday)
+                    val notificationResult = scheduleNotificationUseCase.scheduleNotification(updatedBirthday)
+                    if (notificationResult is ScheduleNotificationResult.ExactAlarmPermissionNotGranted) {
+                        return UpdateBirthdayResult.ExactAlarmPermissionNotGranted
+                    }
                 } else {
                     cancelNotificationUseCase(updatedBirthday.id)
                 }
 
-                UpdateBirthdayResult.Success
+                return UpdateBirthdayResult.Success
             } catch (e: Exception) {
-                val errorMessage = errorHandler.handleDatabaseError(e)
-                UpdateBirthdayResult.DatabaseError(errorMessage)
+                return UpdateBirthdayResult.DatabaseError(e)
             }
         }
     }
@@ -167,5 +179,7 @@ sealed class UpdateBirthdayResult {
 
     data class NotFound(val message: String) : UpdateBirthdayResult()
 
-    data class DatabaseError(val message: String) : UpdateBirthdayResult()
+    data class DatabaseError(val exception: Throwable) : UpdateBirthdayResult()
+
+    object ExactAlarmPermissionNotGranted : UpdateBirthdayResult()
 }

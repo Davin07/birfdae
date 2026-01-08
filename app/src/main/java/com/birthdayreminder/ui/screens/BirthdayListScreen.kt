@@ -42,6 +42,7 @@ import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
 import com.birthdayreminder.ui.components.BirthdayCard
 import com.birthdayreminder.ui.components.ConfirmationDialog
+import com.birthdayreminder.ui.components.ErrorDialog
 import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
 import com.birthdayreminder.ui.viewmodel.BirthdayListUiState
 import com.birthdayreminder.ui.viewmodel.BirthdayListViewModel
@@ -108,6 +109,23 @@ fun BirthdayListScreen(
                     .padding(paddingValues),
         )
 
+        // Error dialog for operation failures
+        if (uiState.hasError && !uiState.isLoading && uiState.birthdays.isNotEmpty()) {
+            uiState.errorResult?.let { error ->
+                val onRetryAction =
+                    if (error.canRetry) {
+                        { viewModel.refresh() }
+                    } else {
+                        null
+                    }
+                ErrorDialog(
+                    error = error,
+                    onRetry = onRetryAction,
+                    onDismiss = { viewModel.clearError() },
+                )
+            }
+        }
+
         // Delete confirmation dialog
         birthdayToDelete?.let { birthday ->
             ConfirmationDialog(
@@ -126,7 +144,7 @@ fun BirthdayListScreen(
 }
 
 @Composable
-private fun BirthdayListContent(
+fun BirthdayListContent(
     uiState: BirthdayListUiState,
     onRefresh: () -> Unit,
     onEditBirthday: (Long) -> Unit,
@@ -324,7 +342,7 @@ fun birthdayListScreenPreview() {
                     birthdays = sampleBirthdays,
                     isLoading = false,
                     isRefreshing = false,
-                    errorMessage = null,
+                    errorResult = null,
                 ),
             onRefresh = {},
             onEditBirthday = {},

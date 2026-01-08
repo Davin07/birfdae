@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.birthdayreminder.data.local.dao.BirthdayDao
 import com.birthdayreminder.data.local.database.AppDatabase
 import com.birthdayreminder.data.local.entity.Birthday
+import com.birthdayreminder.domain.error.ErrorHandler
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -35,7 +36,7 @@ class BirthdayRepositoryImplTest {
             ).allowMainThreadQueries().build()
 
         birthdayDao = database.birthdayDao()
-        repository = BirthdayRepositoryImpl(birthdayDao)
+        repository = BirthdayRepositoryImpl(birthdayDao, ErrorHandler())
     }
 
     @After
