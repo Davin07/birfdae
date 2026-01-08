@@ -6,6 +6,7 @@ package com.birthdayreminder.ui.navigation
 object BirthdayNavigation {
     const val BIRTHDAY_LIST = "birthday_list"
     const val CALENDAR = "calendar"
+    const val SEARCH = "search"
     const val ADD_EDIT_BIRTHDAY = "add_edit_birthday"
     const val NOTIFICATION_SETTINGS = "notification_settings"
     const val BACKUP = "backup"
