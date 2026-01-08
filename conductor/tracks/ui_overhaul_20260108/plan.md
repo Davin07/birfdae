@@ -21,7 +21,7 @@ This phase updates the database schema and implements the necessary logic for Zo
 ## Phase 2: Design System & Foundation
 Establishing the visual identity (colors, typography) and global UI components (Bottom Nav, Permissions).
 
-- [ ] Task: Define Unified Theme & Design System
+- [x] Task: Define Unified Theme & Design System 475ea33
     - [ ] Create `LuminaTheme` with color palette and typography derived from `reference/`.
     - [ ] Implement reusable components (Cards, Buttons, Inputs) matching the reference style.
 - [ ] Task: Implement Standardized Bottom Navigation
