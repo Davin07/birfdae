@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -93,28 +94,32 @@ fun BirthdayApp(navController: NavHostController = rememberNavController()) {
                     .fillMaxSize()
                     .padding(innerPadding),
             enterTransition = {
-                fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(300)
-                )
+                val fromIndex = getRouteIndex(initialState.destination.route)
+                val toIndex = getRouteIndex(targetState.destination.route)
+                val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                
+                slideIntoContainer(direction, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
             },
             exitTransition = {
-                fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(300)
-                )
+                val fromIndex = getRouteIndex(initialState.destination.route)
+                val toIndex = getRouteIndex(targetState.destination.route)
+                val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                
+                slideOutOfContainer(direction, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(300)
-                )
+                val fromIndex = getRouteIndex(initialState.destination.route)
+                val toIndex = getRouteIndex(targetState.destination.route)
+                val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                
+                slideIntoContainer(direction, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
             },
             popExitTransition = {
-                fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(300)
-                )
+                val fromIndex = getRouteIndex(initialState.destination.route)
+                val toIndex = getRouteIndex(targetState.destination.route)
+                val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                
+                slideOutOfContainer(direction, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
             }
         ) {
             composable(BirthdayNavigation.BIRTHDAY_LIST) {
@@ -175,6 +180,17 @@ fun BirthdayApp(navController: NavHostController = rememberNavController()) {
     }
 }
 
+private fun getRouteIndex(route: String?): Int {
+    return when (route) {
+        BirthdayNavigation.BIRTHDAY_LIST -> 0
+        BirthdayNavigation.CALENDAR -> 1
+        BirthdayNavigation.ADD_EDIT_BIRTHDAY -> 2
+        BirthdayNavigation.SEARCH -> 3
+        BirthdayNavigation.NOTIFICATION_SETTINGS -> 4
+        else -> 5
+    }
+}
+
 /**
  * Bottom navigation bar for main app screens - Redesigned as a floating glass bar
  */
@@ -189,26 +205,20 @@ private fun BirthdayBottomNavigation(
             .padding(horizontal = 16.dp, vertical = 24.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
+        // Glass Background
         LuminaGlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Calendar
-                BottomNavItem(
-                    icon = Icons.Rounded.CalendarMonth,
-                    label = "Calendar",
-                    selected = currentDestination == BirthdayNavigation.CALENDAR,
-                    onClick = { navigateTo(navController, BirthdayNavigation.CALENDAR) },
-                    modifier = Modifier.weight(1f)
-                )
-
-                // Upcoming (Home)
+                // Upcoming (First)
                 BottomNavItem(
                     icon = Icons.Rounded.Upcoming,
                     label = "Upcoming",
@@ -217,40 +227,19 @@ private fun BirthdayBottomNavigation(
                     modifier = Modifier.weight(1f)
                 )
 
-                // Add (Faux FAB)
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.TopCenter
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.offset(y = (-20).dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(Brush.linearGradient(LuminaPrimaryGradient))
-                                .clickable { navigateTo(navController, BirthdayNavigation.ADD_EDIT_BIRTHDAY) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = "Add",
-                                tint = Color.Black,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                        Text(
-                            text = "Add",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
+                // Calendar (Second)
+                BottomNavItem(
+                    icon = Icons.Rounded.CalendarMonth,
+                    label = "Calendar",
+                    selected = currentDestination == BirthdayNavigation.CALENDAR,
+                    onClick = { navigateTo(navController, BirthdayNavigation.CALENDAR) },
+                    modifier = Modifier.weight(1f)
+                )
 
-                // Search
+                // Spacer for FAB (Center)
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Search (Fourth)
                 BottomNavItem(
                     icon = Icons.Rounded.Search,
                     label = "Search",
@@ -259,13 +248,36 @@ private fun BirthdayBottomNavigation(
                     modifier = Modifier.weight(1f)
                 )
 
-                // Settings
+                // Settings (Fifth)
                 BottomNavItem(
                     icon = Icons.Rounded.Settings,
                     label = "Settings",
                     selected = currentDestination == BirthdayNavigation.NOTIFICATION_SETTINGS,
                     onClick = { navigateTo(navController, BirthdayNavigation.NOTIFICATION_SETTINGS) },
                     modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        // FAB (Floating on top, centered)
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = (-30).dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(LuminaPrimaryGradient))
+                    .clickable { navigateTo(navController, BirthdayNavigation.ADD_EDIT_BIRTHDAY) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = "Add",
+                    tint = Color.Black,
+                    modifier = Modifier.size(36.dp)
                 )
             }
         }

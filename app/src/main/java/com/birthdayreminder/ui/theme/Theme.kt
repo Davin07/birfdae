@@ -35,7 +35,7 @@ private val LightColorScheme = lightColorScheme(
     surface = LuminaSurfaceLight,
     onBackground = LuminaOnBackgroundLight,
     onSurface = LuminaOnSurfaceLight,
-    surfaceVariant = LuminaSurfaceLight,
+    surfaceVariant = LuminaCardGlassLight,
     onSurfaceVariant = LuminaOnSurfaceLight
 )
 
@@ -53,7 +53,40 @@ fun BirthdayReminderAppTheme(
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            val dynamic = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            
+            // Apply Material You accents while preserving Lumina backgrounds/surfaces
+            if (darkTheme) {
+                DarkColorScheme.copy(
+                    primary = dynamic.primary,
+                    onPrimary = dynamic.onPrimary,
+                    primaryContainer = dynamic.primaryContainer,
+                    onPrimaryContainer = dynamic.onPrimaryContainer,
+                    secondary = dynamic.secondary,
+                    onSecondary = dynamic.onSecondary,
+                    secondaryContainer = dynamic.secondaryContainer,
+                    onSecondaryContainer = dynamic.onSecondaryContainer,
+                    tertiary = dynamic.tertiary,
+                    onTertiary = dynamic.onTertiary,
+                    tertiaryContainer = dynamic.tertiaryContainer,
+                    onTertiaryContainer = dynamic.onTertiaryContainer
+                )
+            } else {
+                LightColorScheme.copy(
+                    primary = dynamic.primary,
+                    onPrimary = dynamic.onPrimary,
+                    primaryContainer = dynamic.primaryContainer,
+                    onPrimaryContainer = dynamic.onPrimaryContainer,
+                    secondary = dynamic.secondary,
+                    onSecondary = dynamic.onSecondary,
+                    secondaryContainer = dynamic.secondaryContainer,
+                    onSecondaryContainer = dynamic.onSecondaryContainer,
+                    tertiary = dynamic.tertiary,
+                    onTertiary = dynamic.onTertiary,
+                    tertiaryContainer = dynamic.tertiaryContainer,
+                    onTertiaryContainer = dynamic.onTertiaryContainer
+                )
+            }
         }
         darkTheme -> DarkColorScheme
         else -> LightColorScheme

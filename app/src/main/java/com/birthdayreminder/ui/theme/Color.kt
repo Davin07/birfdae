@@ -18,6 +18,7 @@ val LuminaSurfaceDark = Color(0xFF1A1D1C)
 val LuminaOnBackgroundDark = Color(0xFFE2E2E2)
 val LuminaOnSurfaceDark = Color(0xFFE2E2E2)
 val LuminaCardGlass = Color(0xA61E2321) // rgba(30, 35, 33, 0.65)
+val LuminaCardGlassLight = Color(0xCCFFFFFF) // White with opacity for Light mode
 
 // Light Theme Colors (Inferred)
 val LuminaBackgroundLight = Color(0xFFF5F7F6)

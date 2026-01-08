@@ -186,6 +186,36 @@ fun NotificationSettingsScreen(
                 Text("Refresh Status")
             }
 
+            // Appearance Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Material You Theme",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = "Use system colors for accent",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = uiState.isMaterialYouEnabled,
+                        onCheckedChange = { viewModel.toggleMaterialYou(it) },
+                    )
+                }
+            }
+
             // Backup Card
             Card(
                 modifier =

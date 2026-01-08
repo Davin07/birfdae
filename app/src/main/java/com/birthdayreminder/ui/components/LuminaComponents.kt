@@ -30,7 +30,7 @@ fun LuminaGlassCard(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
-            .background(LuminaCardGlass)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .border(
                 width = 1.dp,
                 brush = Brush.linearGradient(

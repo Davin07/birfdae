@@ -21,13 +21,22 @@ import com.birthdayreminder.ui.BirthdayApp
 import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.birthdayreminder.data.settings.SettingsRepository
+import javax.inject.Inject
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var settingsRepository: SettingsRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            BirthdayReminderAppTheme {
+            val isMaterialYouEnabled by settingsRepository.isMaterialYouEnabled.collectAsState(initial = false)
+
+            BirthdayReminderAppTheme(dynamicColor = isMaterialYouEnabled) {
                 // Request notification permission on launch for Android 13+
                 RequestNotificationPermission()
 
