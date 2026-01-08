@@ -15,7 +15,7 @@ import com.birthdayreminder.data.local.entity.Birthday
  */
 @Database(
     entities = [Birthday::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(DateConverters::class)
@@ -47,12 +47,27 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
         /**
+         * Migration from version 2 to version 3.
+         * Adds imageUri, relationship, isPinned, notificationOffsets, notificationTime.
+         */
+        val MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE birthdays ADD COLUMN imageUri TEXT")
+                    db.execSQL("ALTER TABLE birthdays ADD COLUMN relationship TEXT")
+                    db.execSQL("ALTER TABLE birthdays ADD COLUMN isPinned INTEGER NOT NULL DEFAULT 0")
+                    db.execSQL("ALTER TABLE birthdays ADD COLUMN notificationOffsets TEXT NOT NULL DEFAULT ''")
+                    db.execSQL("ALTER TABLE birthdays ADD COLUMN notificationTime TEXT")
+                }
+            }
+
+        /**
          * Creates and configures the Room database instance.
          * This method should be called from the Hilt module.
          */
         fun create(builder: RoomDatabase.Builder<AppDatabase>): AppDatabase {
             return builder
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .fallbackToDestructiveMigration() // For development - remove in production
                 .build()
         }
