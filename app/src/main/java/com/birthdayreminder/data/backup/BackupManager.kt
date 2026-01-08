@@ -136,7 +136,7 @@ class BackupManager
                                     // Add new birthday with a new ID
                                     val newBirthday = birthday.copy(id = 0)
                                     val newId = birthdayRepository.addBirthday(newBirthday)
-                                    
+
                                     if (newBirthday.notificationsEnabled) {
                                         alarmScheduler.scheduleNotification(newBirthday.copy(id = newId))
                                     }
@@ -152,7 +152,7 @@ class BackupManager
                                 }
                                 // Add the imported birthday (with original ID)
                                 birthdayRepository.addBirthday(birthday)
-                                
+
                                 if (birthday.notificationsEnabled) {
                                     alarmScheduler.scheduleNotification(birthday)
                                 }
@@ -165,7 +165,7 @@ class BackupManager
                                     // Add new birthday with a new ID
                                     val newBirthday = birthday.copy(id = 0)
                                     val newId = birthdayRepository.addBirthday(newBirthday)
-                                    
+
                                     if (newBirthday.notificationsEnabled) {
                                         alarmScheduler.scheduleNotification(newBirthday.copy(id = newId))
                                     }
@@ -183,7 +183,7 @@ class BackupManager
                                             notificationMinute = birthday.notificationMinute,
                                         )
                                     birthdayRepository.updateBirthday(updatedBirthday)
-                                    
+
                                     // Re-schedule notification
                                     alarmScheduler.cancelNotification(updatedBirthday.id)
                                     if (updatedBirthday.notificationsEnabled) {

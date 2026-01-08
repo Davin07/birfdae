@@ -4,7 +4,6 @@ import com.birthdayreminder.data.local.dao.BirthdayDao
 import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.domain.error.ErrorHandler
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

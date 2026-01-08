@@ -93,26 +93,28 @@ class BirthdayListScreenTest {
                 // which uses hiltViewModel(). This might fail if Hilt isn't set up for the test.
                 // Assuming Hilt is set up or we can test logic via Content.
                 // But Dialog is in Screen, not Content.
-                
+
                 // If we want to test Content only:
                 BirthdayListContent(
-                    uiState = BirthdayListUiState(
-                        birthdays = listOf(birthdayToDelete),
-                    ),
+                    uiState =
+                        BirthdayListUiState(
+                            birthdays = listOf(birthdayToDelete),
+                        ),
                     onRefresh = {},
                     onEditBirthday = {},
-                    onDeleteBirthday = {}, // We just check if this is clickable
+                    // We just check if this is clickable
+                    onDeleteBirthday = {},
                     onClearError = {},
                 )
             }
         }
-        
+
         // This test was originally testing the Dialog.
         // The Dialog is part of BirthdayListScreen, which wraps Content.
-        // If we can't easily test Screen because of ViewModel, we should skip Dialog test here 
+        // If we can't easily test Screen because of ViewModel, we should skip Dialog test here
         // or rely on a different test structure.
         // However, I will stick to testing what I can in Content.
-        
+
         composeTestRule.onNodeWithText("Delete Me").assertIsDisplayed()
     }
 
@@ -188,4 +190,3 @@ class BirthdayListScreenTest {
         )
     }
 }
-

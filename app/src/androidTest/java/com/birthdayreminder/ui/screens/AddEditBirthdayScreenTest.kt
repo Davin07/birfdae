@@ -149,42 +149,46 @@ class AddEditBirthdayScreenTest {
     fun addEditBirthdayScreen_displaysLoadingIndicator_whenIsLoadingIsTrue() {
         composeTestRule.setContent {
             BirthdayReminderAppTheme {
-                // When loading, AddEditBirthdayScreen shows progress indicator, 
+                // When loading, AddEditBirthdayScreen shows progress indicator,
                 // but AddEditBirthdayForm doesn't handle loading state directly (parent does).
                 // So we test AddEditBirthdayScreen logic indirectly or skip this if we test Form only.
                 // However, the test was testing AddEditBirthdayForm with loading state?
                 // Looking at AddEditBirthdayScreen implementation: if (uiState.isLoading) { ... } else { AddEditBirthdayForm(...) }
                 // So AddEditBirthdayForm is NOT shown when loading.
-                
+
                 // Let's test AddEditBirthdayScreen directly or mock the loading state behavior if we can.
                 // Since we can't easily inject viewModel, let's stick to testing Form behavior or skip loading test if it's outside Form.
+
                 // But wait, the test was:
+
                 /*
                 AddEditBirthdayForm(
                     uiState = AddEditBirthdayUiState(isLoading = true),
                     ...
                 )
-                */
+                 */
+
                 // If I pass isLoading=true to Form, it just renders the form because Form doesn't check isLoading.
                 // The check is in AddEditBirthdayScreen.
                 // So this test is invalid for AddEditBirthdayForm.
                 // I will remove this test or adapt it to test that Form is displayed (it always is if called).
-                
+
                 // Better: Test that specific fields are hidden/shown based on state.
                 AddEditBirthdayForm(
-                     uiState = AddEditBirthdayUiState(isLoading = true), // Form doesn't care about loading
-                     onNameChange = {},
-                     onBirthDateChange = {},
-                     onNotesChange = {},
-                     onNotificationsToggle = {},
-                     onAdvanceNotificationDaysChange = {},
-                     onNotificationHourChange = {},
-                     onNotificationMinuteChange = {},
-                     onErrorDismiss = {},
+                    // Form doesn't care about loading
+                    uiState = AddEditBirthdayUiState(isLoading = true),
+                    onNameChange = {},
+                    onBirthDateChange = {},
+                    onNotesChange = {},
+                    onNotificationsToggle = {},
+                    onAdvanceNotificationDaysChange = {},
+                    onNotificationHourChange = {},
+                    onNotificationMinuteChange = {},
+                    onErrorDismiss = {},
                 )
             }
         }
-        
+
         // Since Form doesn't handle loading, it WILL display the name field.
         // The original test assertion was .assertIsNotDisplayed(), which would fail now if I use Form directly.
         // I will update the test to check that the form renders correctly given the state.
@@ -200,7 +204,11 @@ class AddEditBirthdayScreenTest {
                         AddEditBirthdayUiState(
                             name = "John Doe",
                             birthDate = LocalDate.now().minusYears(1),
-                            errorResult = com.birthdayreminder.domain.error.ErrorResult("Failed to save birthday", true),
+                            errorResult =
+                                com.birthdayreminder.domain.error.ErrorResult(
+                                    "Failed to save birthday",
+                                    true,
+                                ),
                         ),
                     onNameChange = {},
                     onBirthDateChange = {},

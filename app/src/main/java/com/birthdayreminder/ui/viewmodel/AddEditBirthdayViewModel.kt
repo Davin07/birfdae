@@ -10,7 +10,6 @@ import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
 import com.birthdayreminder.domain.usecase.UpdateBirthdayResult
 import com.birthdayreminder.domain.usecase.UpdateBirthdayUseCase
 import com.birthdayreminder.domain.validation.BirthdayValidator
-import com.birthdayreminder.domain.validation.ValidationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -147,11 +146,6 @@ class AddEditBirthdayViewModel
         fun updateNotificationMinute(minute: Int) {
             _uiState.value = _uiState.value.copy(notificationMinute = minute)
         }
-
-        /**
-         * Clears the error message.
-         */
-
 
         /**
          * Saves the birthday (either creates new or updates existing).
