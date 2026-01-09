@@ -9,18 +9,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,26 +33,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
-import com.birthdayreminder.ui.components.BirthdayCard
 import com.birthdayreminder.ui.components.ConfirmationDialog
 import com.birthdayreminder.ui.components.ErrorDialog
-import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
+import com.birthdayreminder.ui.components.LuminaBackground
+import com.birthdayreminder.ui.components.LuminaBirthdayCard
+import com.birthdayreminder.ui.components.LuminaGlassCard
+import com.birthdayreminder.ui.components.LuminaTitle
 import com.birthdayreminder.ui.viewmodel.BirthdayListUiState
 import com.birthdayreminder.ui.viewmodel.BirthdayListViewModel
-import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
-/**
- * Screen displaying the chronological list of birthdays with countdowns.
- * Satisfies requirements 4.1, 4.2, 4.3, 4.4 for birthday list functionality.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BirthdayListScreen(
@@ -63,82 +61,46 @@ fun BirthdayListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var birthdayToDelete by remember { mutableStateOf<BirthdayWithCountdown?>(null) }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "Birthdays",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
+    LuminaBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            modifier = modifier,
+        ) { paddingValues ->
+            BirthdayListContent(
+                uiState = uiState,
+                onRefresh = viewModel::refresh,
+                onEditBirthday = onNavigateToEditBirthday,
+                onDeleteBirthday = { birthday ->
+                    birthdayToDelete = birthday
                 },
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNavigateToAddBirthday,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                    )
-                },
-                text = {
-                    Text("Add Birthday")
-                },
-                modifier =
-                    Modifier
-                        .padding(16.dp)
-                        .navigationBarsPadding(),
-            )
-        },
-        modifier = modifier,
-    ) { paddingValues ->
-        BirthdayListContent(
-            uiState = uiState,
-            onRefresh = viewModel::refresh,
-            onEditBirthday = onNavigateToEditBirthday,
-            onDeleteBirthday = { birthday ->
-                birthdayToDelete = birthday
-            },
-            onClearError = viewModel::clearError,
-            modifier =
-                Modifier
+                onClearError = viewModel::clearError,
+                modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-        )
+            )
 
-        // Error dialog for operation failures
-        if (uiState.hasError && !uiState.isLoading && uiState.birthdays.isNotEmpty()) {
-            uiState.errorResult?.let { error ->
-                val onRetryAction =
-                    if (error.canRetry) {
-                        { viewModel.refresh() }
-                    } else {
-                        null
-                    }
-                ErrorDialog(
-                    error = error,
-                    onRetry = onRetryAction,
-                    onDismiss = { viewModel.clearError() },
+            // Dialogs
+            if (uiState.hasError && !uiState.isLoading && uiState.birthdays.isNotEmpty()) {
+                uiState.errorResult?.let { error ->
+                    ErrorDialog(
+                        error = error,
+                        onRetry = { viewModel.refresh() },
+                        onDismiss = { viewModel.clearError() },
+                    )
+                }
+            }
+
+            birthdayToDelete?.let { birthday ->
+                ConfirmationDialog(
+                    title = "Delete Birthday",
+                    message = "Are you sure you want to delete ${birthday.name}'s birthday?",
+                    onConfirm = {
+                        viewModel.deleteBirthday(birthday.id)
+                        birthdayToDelete = null
+                    },
+                    onDismiss = { birthdayToDelete = null },
                 )
             }
-        }
-
-        // Delete confirmation dialog
-        birthdayToDelete?.let { birthday ->
-            ConfirmationDialog(
-                title = "Delete Birthday",
-                message = "Are you sure you want to delete ${birthday.name}'s birthday?",
-                onConfirm = {
-                    viewModel.deleteBirthday(birthday.id)
-                    birthdayToDelete = null
-                },
-                onDismiss = {
-                    birthdayToDelete = null
-                },
-            )
         }
     }
 }
@@ -152,61 +114,137 @@ fun BirthdayListContent(
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        // Refresh button when not loading
-        if (!uiState.isLoading && !uiState.isRefreshing) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.End,
-            ) {
+    Column(
+        modifier = modifier.padding(horizontal = 16.dp)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LuminaTitle(text = "Birthdays")
+            if (!uiState.isLoading) {
                 TextButton(onClick = onRefresh) {
-                    Text("Refresh")
+                    Text("Refresh", color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
+
         when {
-            uiState.isLoading && uiState.birthdays.isEmpty() -> {
-                LoadingState(modifier = Modifier.fillMaxSize())
-            }
-
-            uiState.hasError -> {
-                ErrorState(
-                    message = uiState.errorMessage ?: "An error occurred",
-                    onRetry = {
-                        onClearError()
-                        onRefresh()
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-
-            uiState.showEmptyState -> {
-                EmptyState(modifier = Modifier.fillMaxSize())
-            }
-
+            uiState.isLoading && uiState.birthdays.isEmpty() -> LoadingState(Modifier.fillMaxSize())
+            uiState.hasError -> ErrorState(uiState.errorMessage ?: "Error", { onClearError(); onRefresh() }, Modifier.fillMaxSize())
+            uiState.showEmptyState -> EmptyState(Modifier.fillMaxSize())
             else -> {
+                // Determine Pinned / Hero
+                val sorted = uiState.birthdays
+                val pinned = sorted.find { it.birthday.isPinned } ?: sorted.firstOrNull()
+                val others = if (pinned != null) sorted.filter { it.id != pinned.id } else sorted
+
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
-                    items(
-                        items = uiState.birthdays,
-                        key = { it.id },
-                    ) { birthday ->
-                        BirthdayCard(
-                            birthday = birthday,
-                            onEditClick = { onEditBirthday(birthday.id) },
-                            onDeleteClick = { onDeleteBirthday(birthday) },
+                    if (pinned != null) {
+                        item {
+                            HeroBirthdayCard(
+                                birthday = pinned,
+                                isPinned = pinned.birthday.isPinned,
+                                onEditClick = { onEditBirthday(pinned.id) }
+                            )
+                        }
+                        item {
+                            Text(
+                                "Upcoming",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+                            )
+                        }
+                    }
+
+                    items(others, key = { it.id }) { birthday ->
+                        LuminaBirthdayCard(
+                            name = birthday.name,
+                            dateString = birthday.birthDate.format(DateTimeFormatter.ofPattern("MMM dd")),
+                            age = birthday.age,
+                            daysUntil = birthday.daysUntilNext,
+                            onClick = { onEditBirthday(birthday.id) }
                         )
                     }
+                }
+            }
+        }
+    }
+}
 
-                    // Add some bottom padding for the FAB
-                    item {
-                        Spacer(modifier = Modifier.height(80.dp))
+@Composable
+fun HeroBirthdayCard(
+    birthday: BirthdayWithCountdown,
+    isPinned: Boolean,
+    onEditClick: () -> Unit
+) {
+    Column {
+        if (isPinned) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Icon(Icons.Default.PushPin, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("PINNED", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+
+        LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column {
+                        Text(
+                            text = birthday.name,
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = birthday.birthDate.format(DateTimeFormatter.ofPattern("MMM dd")),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "• Turning ${birthday.age}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    IconButton(onClick = onEditClick) {
+                        Icon(Icons.Rounded.Edit, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    // Countdown Badge
+                    LuminaGlassCard {
+                        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("COUNT DOWN", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                Text("${birthday.daysUntilNext} Days", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            }
+                        }
                     }
                 }
             }
@@ -215,155 +253,29 @@ fun BirthdayListContent(
 }
 
 @Composable
-private fun LoadingState(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            CircularProgressIndicator()
-            Text(
-                text = "Loading birthdays...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+private fun LoadingState(modifier: Modifier) {
+    Box(modifier, contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+@Composable
+private fun ErrorState(message: String, onRetry: () -> Unit, modifier: Modifier) {
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Oops!", style = MaterialTheme.typography.headlineMedium, color = Color.White)
+            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Button(onClick = onRetry) { Text("Retry") }
         }
     }
 }
 
 @Composable
-private fun ErrorState(
-    message: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(32.dp),
-        ) {
-            Text(
-                text = "😕",
-                style = MaterialTheme.typography.displayMedium,
-            )
-            Text(
-                text = "Oops! Something went wrong",
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-            Button(onClick = onRetry) {
-                Text("Try Again")
-            }
+private fun EmptyState(modifier: Modifier) {
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("No Birthdays", style = MaterialTheme.typography.headlineMedium, color = Color.White)
+            Text("Add your first birthday!", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-    }
-}
-
-@Composable
-private fun EmptyState(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(32.dp),
-        ) {
-            Text(
-                text = "🎂",
-                style = MaterialTheme.typography.displayLarge,
-            )
-            Text(
-                text = "No birthdays yet",
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = "Add your first birthday to get started!",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun birthdayListScreenPreview() {
-    BirthdayReminderAppTheme {
-        // Preview with sample data
-        val sampleBirthdays =
-            listOf(
-                BirthdayWithCountdown(
-                    birthday =
-                        Birthday(
-                            id = 1,
-                            name = "John Doe",
-                            birthDate = LocalDate.now().minusYears(30),
-                            notes = "Best friend",
-                        ),
-                    daysUntilNext = 0,
-                    isToday = true,
-                    nextOccurrence = LocalDate.now(),
-                    age = 30,
-                ),
-                BirthdayWithCountdown(
-                    birthday =
-                        Birthday(
-                            id = 2,
-                            name = "Jane Smith",
-                            birthDate = LocalDate.now().plusDays(5).minusYears(25),
-                            notes = null,
-                        ),
-                    daysUntilNext = 5,
-                    isToday = false,
-                    nextOccurrence = LocalDate.now().plusDays(5),
-                    age = 25,
-                ),
-            )
-
-        BirthdayListContent(
-            uiState =
-                BirthdayListUiState(
-                    birthdays = sampleBirthdays,
-                    isLoading = false,
-                    isRefreshing = false,
-                    errorResult = null,
-                ),
-            onRefresh = {},
-            onEditBirthday = {},
-            onDeleteBirthday = {},
-            onClearError = {},
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun emptyStatePreview() {
-    BirthdayReminderAppTheme {
-        EmptyState()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun loadingStatePreview() {
-    BirthdayReminderAppTheme {
-        LoadingState()
     }
 }
