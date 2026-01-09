@@ -64,12 +64,12 @@ Implementing the new Search screen and the redirection to Edit flow.
 ## Phase 5: Home Screen Redesign & Pinned Logic
 Updating the main list and implementing the "Pinned Birthday" hero feature.
 
-- [ ] Task: Redesign Birthday List Cards
-    - [ ] Implement the new card design from `reference/upcoming_birthdays_list_*`.
-    - [ ] Add haptic feedback and "fun" animations on card interactions.
-- [ ] Task: Implement Pinned Birthday Logic
-    - [ ] Write tests for the "Pinned > Next Upcoming" sorting/priority logic.
-    - [ ] Implement the Hero card at the top of the list for Pinned/Upcoming.
+- [x] Task: Redesign Birthday List Cards db72867
+    - [x] Implement the new card design from `reference/upcoming_birthdays_list_*`.
+    - [x] Add haptic feedback and "fun" animations on card interactions.
+- [x] Task: Implement Pinned Birthday Logic db72867
+    - [x] Write tests for the "Pinned > Next Upcoming" sorting/priority logic.
+    - [x] Implement the Hero card at the top of the list for Pinned/Upcoming.
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Home Screen' (Protocol in workflow.md)
 
 ## Phase 6: Notification Settings & Final Polish
