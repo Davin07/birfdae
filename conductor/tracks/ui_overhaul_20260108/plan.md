@@ -53,12 +53,12 @@ Implementing the multi-step wizard for adding and editing birthdays.
 ## Phase 4: Search & Navigation
 Implementing the new Search screen and the redirection to Edit flow.
 
-- [ ] Task: Implement Search Screen UI & Logic
-    - [ ] Create Search screen with bottom-positioned search bar.
-    - [ ] Implement filtering logic for Name and Month.
-    - [ ] Write tests for search results and filtering.
-- [ ] Task: Integrate Edit Flow via Search
-    - [ ] Update navigation to open the Add Birthday Wizard in "Edit mode" when clicking a search result.
+- [x] Task: Implement Search Screen UI & Logic d872cb7
+    - [x] Create Search screen with bottom-positioned search bar.
+    - [x] Implement filtering logic for Name and Month.
+    - [x] Write tests for search results and filtering.
+- [x] Task: Integrate Edit Flow via Search d872cb7
+    - [x] Update navigation to open the Add Birthday Wizard in "Edit mode" when clicking a search result.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Search' (Protocol in workflow.md)
 
 ## Phase 5: Home Screen Redesign & Pinned Logic
