@@ -1,5 +1,10 @@
 package com.birthdayreminder.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,51 +15,34 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.birthdayreminder.domain.error.ErrorResult
-import com.birthdayreminder.ui.components.DatePickerField
-import com.birthdayreminder.ui.components.NotificationTimePicker
-import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
+import coil.compose.AsyncImage
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayUiState
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayViewModel
-import java.time.LocalDate
 
-/**
- * Screen for adding new birthdays or editing existing ones.
- * Satisfies requirements 1.1, 1.2, 1.3, 1.4, and 6.5.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditBirthdayScreen(
@@ -64,12 +52,10 @@ fun AddEditBirthdayScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Initialize form when screen loads
     LaunchedEffect(birthdayId) {
         viewModel.initializeForm(birthdayId)
     }
 
-    // Handle save success
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
             onNavigateBack()
@@ -86,313 +72,152 @@ fun AddEditBirthdayScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        if (uiState.step > 1) {
+                            viewModel.previousStep()
+                        } else {
+                            onNavigateBack()
+                        }
+                    }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
                         )
                     }
                 },
-                actions = {
-                    TextButton(
-                        onClick = { viewModel.saveBirthday() },
-                        enabled = uiState.canSave,
-                    ) {
-                        if (uiState.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Text("Save")
-                        }
-                    }
-                },
             )
         },
-    ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                contentAlignment = Alignment.Center,
+        bottomBar = {
+            Button(
+                onClick = {
+                    if (uiState.step < 3) {
+                        viewModel.nextStep()
+                    } else {
+                        viewModel.saveBirthday()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                enabled = canProceed(uiState)
             ) {
-                CircularProgressIndicator()
+                Text(if (uiState.step < 3) "Next" else "Save")
             }
-        } else {
-            AddEditBirthdayForm(
-                uiState = uiState,
-                onNameChange = viewModel::updateName,
-                onBirthDateChange = viewModel::updateBirthDate,
-                onNotesChange = viewModel::updateNotes,
-                onNotificationsToggle = viewModel::toggleNotifications,
-                onAdvanceNotificationDaysChange = viewModel::updateAdvanceNotificationDays,
-                onNotificationHourChange = viewModel::updateNotificationHour,
-                onNotificationMinuteChange = viewModel::updateNotificationMinute,
-                onErrorDismiss = viewModel::clearError,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Step ${uiState.step} of 3",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
             )
+
+            when (uiState.step) {
+                1 -> Step1Identity(uiState, viewModel)
+                2 -> Text("Date Selection (Coming Soon)")
+                3 -> Text("Personalization (Coming Soon)")
+            }
         }
     }
 }
 
-/**
- * Form content for adding/editing birthdays.
- */
+private fun canProceed(uiState: AddEditBirthdayUiState): Boolean {
+    return when (uiState.step) {
+        1 -> uiState.name.isNotBlank()
+        2 -> uiState.birthDate != null
+        else -> true
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditBirthdayForm(
+fun Step1Identity(
     uiState: AddEditBirthdayUiState,
-    onNameChange: (String) -> Unit,
-    onBirthDateChange: (LocalDate?) -> Unit,
-    onNotesChange: (String) -> Unit,
-    onNotificationsToggle: (Boolean) -> Unit,
-    onAdvanceNotificationDaysChange: (Int) -> Unit,
-    onNotificationHourChange: (Int) -> Unit,
-    onNotificationMinuteChange: (Int) -> Unit,
-    onErrorDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
+    viewModel: AddEditBirthdayViewModel
 ) {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.updateImageUri(uri.toString())
+        }
+    }
+
     Column(
-        modifier =
-            modifier
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        // Error message display
-        uiState.errorMessage?.let { errorMessage ->
-            Card(
-                colors =
-                    CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                    ),
-            ) {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f),
+        // Image Picker
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable {
+                    launcher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
-                    TextButton(onClick = onErrorDismiss) {
-                        Text("Dismiss")
-                    }
-                }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            if (uiState.imageUri != null) {
+                AsyncImage(
+                    model = uiState.imageUri,
+                    contentDescription = "Profile Photo",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Rounded.Person,
+                    contentDescription = "Add Photo",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
+        Text(
+            text = "Add Photo",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
 
-        // Name input field
+        // Name
         OutlinedTextField(
             value = uiState.name,
-            onValueChange = onNameChange,
-            label = { Text("Name *") },
-            isError = uiState.nameError != null,
-            supportingText = uiState.nameError?.let { { Text(it) } },
+            onValueChange = { viewModel.updateName(it) },
+            label = { Text("Name") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            isError = uiState.nameError != null,
+            supportingText = uiState.nameError?.let { { Text(it) } }
         )
 
-        // Birth date picker
-        DatePickerField(
-            selectedDate = uiState.birthDate,
-            onDateSelected = onBirthDateChange,
-            label = "Birth Date *",
-            isError = uiState.birthDateError != null,
-            errorMessage = uiState.birthDateError,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        // Notes input field
-        OutlinedTextField(
-            value = uiState.notes,
-            onValueChange = onNotesChange,
-            label = { Text("Notes (optional)") },
-            isError = uiState.notesError != null,
-            supportingText = uiState.notesError?.let { { Text(it) } },
-            maxLines = 3,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        // Notification settings section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+        // Relationship
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "Relationship",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp) // Wrap flow needed for many items
             ) {
-                Text(
-                    text = "Notification Settings",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                )
-
-                // Enable notifications toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Enable Notifications",
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            text = "Get reminded about this birthday",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(
-                        checked = uiState.notificationsEnabled,
-                        onCheckedChange = onNotificationsToggle,
+                // Using simple Row for now, might need FlowRow if many items
+                val relationships = listOf("Family", "Friend", "Work", "Other")
+                relationships.forEach { rel ->
+                    FilterChip(
+                        selected = uiState.relationship == rel,
+                        onClick = { viewModel.updateRelationship(rel) },
+                        label = { Text(rel) }
                     )
-                }
-
-                // Notification time picker (only shown if notifications are enabled)
-                if (uiState.notificationsEnabled) {
-                    Divider()
-
-                    NotificationTimePicker(
-                        hour = uiState.notificationHour,
-                        minute = uiState.notificationMinute,
-                        onTimeChange = { hour, minute ->
-                            onNotificationHourChange(hour)
-                            onNotificationMinuteChange(minute)
-                        },
-                    )
-                }
-
-                // Advance notification options (only shown if notifications are enabled)
-                if (uiState.notificationsEnabled) {
-                    Divider()
-
-                    Text(
-                        text = "Advance Notification",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                    )
-
-                    Text(
-                        text = "When would you like to be reminded?",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-
-                    val notificationOptions =
-                        listOf(
-                            0 to "On the day",
-                            1 to "1 day before",
-                            3 to "3 days before",
-                            7 to "1 week before",
-                        )
-
-                    notificationOptions.forEach { (days, label) ->
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .selectable(
-                                        selected = uiState.advanceNotificationDays == days,
-                                        onClick = { onAdvanceNotificationDaysChange(days) },
-                                        role = Role.RadioButton,
-                                    )
-                                    .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = uiState.advanceNotificationDays == days,
-                                // handled by selectable modifier
-                                onClick = null,
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        }
-                    }
                 }
             }
         }
-
-        // Required fields note
-        Text(
-            text = "* Required fields",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        // Add some bottom padding for better scrolling experience
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun addEditBirthdayScreenPreview() {
-    BirthdayReminderAppTheme {
-        AddEditBirthdayForm(
-            uiState =
-                AddEditBirthdayUiState(
-                    name = "John Doe",
-                    birthDate = LocalDate.of(1990, 5, 15),
-                    notes = "Best friend from college",
-                    notificationsEnabled = true,
-                    advanceNotificationDays = 1,
-                    notificationHour = 9,
-                    notificationMinute = 30,
-                ),
-            onNameChange = {},
-            onBirthDateChange = {},
-            onNotesChange = {},
-            onNotificationsToggle = {},
-            onAdvanceNotificationDaysChange = {},
-            onNotificationHourChange = {},
-            onNotificationMinuteChange = {},
-            onErrorDismiss = {},
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun addEditBirthdayScreenErrorPreview() {
-    BirthdayReminderAppTheme {
-        AddEditBirthdayForm(
-            uiState =
-                AddEditBirthdayUiState(
-                    name = "",
-                    nameError = "Name is required",
-                    birthDateError = "Birth date cannot be in the future",
-                    errorResult =
-                        ErrorResult(
-                            message = "Please fix the errors above",
-                            isRecoverable = true,
-                        ),
-                    notificationsEnabled = false,
-                ),
-            onNameChange = {},
-            onBirthDateChange = {},
-            onNotesChange = {},
-            onNotificationsToggle = {},
-            onAdvanceNotificationDaysChange = {},
-            onNotificationHourChange = {},
-            onNotificationMinuteChange = {},
-            onErrorDismiss = {},
-        )
     }
 }

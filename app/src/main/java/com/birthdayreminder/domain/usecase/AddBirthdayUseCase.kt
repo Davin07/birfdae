@@ -39,6 +39,11 @@ class AddBirthdayUseCase
             advanceNotificationDays: Int = 0,
             notificationHour: Int? = null,
             notificationMinute: Int? = null,
+            imageUri: String? = null,
+            relationship: String? = null,
+            isPinned: Boolean = false,
+            notificationOffsets: List<Int> = emptyList(),
+            notificationTime: java.time.LocalTime? = null,
         ): AddBirthdayResult {
             // Validate input using centralized validator
             val validationResult =
@@ -70,6 +75,11 @@ class AddBirthdayUseCase
                         advanceNotificationDays = advanceNotificationDays,
                         notificationHour = notificationHour,
                         notificationMinute = notificationMinute,
+                        imageUri = imageUri,
+                        relationship = relationship,
+                        isPinned = isPinned,
+                        notificationOffsets = notificationOffsets,
+                        notificationTime = notificationTime,
                     )
 
                 val birthdayId = birthdayRepository.addBirthday(birthday)

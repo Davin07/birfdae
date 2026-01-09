@@ -41,6 +41,11 @@ class UpdateBirthdayUseCase
             advanceNotificationDays: Int = 0,
             notificationHour: Int? = null,
             notificationMinute: Int? = null,
+            imageUri: String? = null,
+            relationship: String? = null,
+            isPinned: Boolean = false,
+            notificationOffsets: List<Int> = emptyList(),
+            notificationTime: java.time.LocalTime? = null,
         ): UpdateBirthdayResult {
             // Validate input using centralized validator
             val validationResult =
@@ -78,6 +83,11 @@ class UpdateBirthdayUseCase
                         advanceNotificationDays = advanceNotificationDays,
                         notificationHour = notificationHour,
                         notificationMinute = notificationMinute,
+                        imageUri = imageUri,
+                        relationship = relationship,
+                        isPinned = isPinned,
+                        notificationOffsets = notificationOffsets,
+                        notificationTime = notificationTime,
                     )
 
                 birthdayRepository.updateBirthday(updatedBirthday)
@@ -111,6 +121,11 @@ class UpdateBirthdayUseCase
             advanceNotificationDays: Int? = null,
             notificationHour: Int? = null,
             notificationMinute: Int? = null,
+            imageUri: String? = null,
+            relationship: String? = null,
+            isPinned: Boolean? = null,
+            notificationOffsets: List<Int>? = null,
+            notificationTime: java.time.LocalTime? = null,
         ): UpdateBirthdayResult {
             try {
                 // Get existing birthday
@@ -128,6 +143,11 @@ class UpdateBirthdayUseCase
                         advanceNotificationDays = advanceNotificationDays ?: existingBirthday.advanceNotificationDays,
                         notificationHour = notificationHour ?: existingBirthday.notificationHour,
                         notificationMinute = notificationMinute ?: existingBirthday.notificationMinute,
+                        imageUri = imageUri ?: existingBirthday.imageUri,
+                        relationship = relationship ?: existingBirthday.relationship,
+                        isPinned = isPinned ?: existingBirthday.isPinned,
+                        notificationOffsets = notificationOffsets ?: existingBirthday.notificationOffsets,
+                        notificationTime = notificationTime ?: existingBirthday.notificationTime,
                     )
 
                 // Validate the updated birthday

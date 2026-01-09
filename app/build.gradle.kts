@@ -111,6 +111,7 @@ dependencies {
 
     // Material Icons Extended
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Timber for logging
     implementation("com.jakewharton.timber:timber:5.0.1")
