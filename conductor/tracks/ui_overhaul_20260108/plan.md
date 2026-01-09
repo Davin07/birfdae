@@ -37,14 +37,14 @@ Establishing the visual identity (colors, typography) and global UI components (
 ## Phase 3: Add Birthday Wizard
 Implementing the multi-step wizard for adding and editing birthdays.
 
-- [x] Task: Wizard Step 1 - Identity (Name, Tabbed Relationship, Image) d4a74cd
+- [x] Task: Wizard Step 1 - Identity (Name, Tabbed Relationship, Image) dfe5a64
     - [ ] Write tests for Relationship selection (tabs only).
     - [ ] Implement UI for Name input and Relationship tabs (Family, Friend, Work, Acquaintance).
     - [ ] Integrate Image Picker for celebrant avatar.
-- [x] Task: Wizard Step 2 - Date (Selection, Zodiac, Age) 31a06ea
+- [x] Task: Wizard Step 2 - Date (Selection, Zodiac, Age) dfe5a64
     - [ ] Implement Date Picker matching reference.
     - [ ] Integrate dynamic Zodiac and Age display logic.
-- [x] Task: Wizard Step 3 - Personalization (Notes, Multi-Notifications, Preview) ffff622
+- [x] Task: Wizard Step 3 - Personalization (Notes, Multi-Notifications, Preview) dfe5a64
     - [ ] Implement multi-select checkboxes for notification offsets (On day, 3 days prior, etc.).
     - [ ] Implement specific time selector for notifications.
     - [ ] Create the "Notification Preview" card as per references.
