@@ -39,7 +39,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
+import com.birthdayreminder.domain.util.AgeUtils
+import com.birthdayreminder.domain.util.ZodiacUtils
+import com.birthdayreminder.ui.components.DatePickerField
+import com.birthdayreminder.ui.components.LuminaGlassCard
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayUiState
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayViewModel
 
@@ -118,7 +124,7 @@ fun AddEditBirthdayScreen(
 
             when (uiState.step) {
                 1 -> Step1Identity(uiState, viewModel)
-                2 -> Text("Date Selection (Coming Soon)")
+                2 -> Step2Date(uiState, viewModel)
                 3 -> Text("Personalization (Coming Soon)")
             }
         }
@@ -130,6 +136,63 @@ private fun canProceed(uiState: AddEditBirthdayUiState): Boolean {
         1 -> uiState.name.isNotBlank()
         2 -> uiState.birthDate != null
         else -> true
+    }
+}
+
+@Composable
+fun Step2Date(
+    uiState: AddEditBirthdayUiState,
+    viewModel: AddEditBirthdayViewModel
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "When is their birthday?",
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
+
+        DatePickerField(
+            selectedDate = uiState.birthDate,
+            onDateSelected = { viewModel.updateBirthDate(it) },
+            label = "Birth Date",
+            isError = uiState.birthDateError != null,
+            errorMessage = uiState.birthDateError,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        if (uiState.birthDate != null) {
+            val zodiac = ZodiacUtils.getZodiacSign(uiState.birthDate.month, uiState.birthDate.dayOfMonth)
+            val age = AgeUtils.calculateUpcomingAge(uiState.birthDate)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                LuminaGlassCard(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Zodiac", style = MaterialTheme.typography.labelMedium)
+                        Text(zodiac, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                LuminaGlassCard(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Turning", style = MaterialTheme.typography.labelMedium)
+                        Text("$age", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
     }
 }
 
