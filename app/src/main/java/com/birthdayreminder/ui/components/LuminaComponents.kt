@@ -1,21 +1,26 @@
 package com.birthdayreminder.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -155,7 +160,8 @@ fun LuminaTextField(
     readOnly: Boolean = false,
     trailingIcon: @Composable (() -> Unit)? = null,
     supportingText: @Composable (() -> Unit)? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    leadingIcon: @Composable (() -> Unit)? = null
 ) {
     TextField(
         value = value,
@@ -167,6 +173,7 @@ fun LuminaTextField(
         isError = isError,
         readOnly = readOnly,
         trailingIcon = trailingIcon,
+        leadingIcon = leadingIcon,
         supportingText = supportingText,
         enabled = enabled,
         colors = TextFieldDefaults.colors(
@@ -210,6 +217,40 @@ fun LuminaChip(
 }
 
 @Composable
+fun LuminaSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    LuminaGlassCard(modifier = modifier) {
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text(placeholder) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = "Search",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                errorContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            ),
+            singleLine = true
+        )
+    }
+}
+
+@Composable
 fun LuminaAvatarPicker(
     imageUri: String?,
     onClick: () -> Unit,
@@ -242,7 +283,7 @@ fun LuminaAvatarPicker(
                 )
             } else {
                 Icon(
-                    imageVector = Icons.Rounded.Add, // add_a_photo
+                    imageVector = Icons.Rounded.Add,
                     contentDescription = "Add Photo",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.size(48.dp)
@@ -303,7 +344,6 @@ fun LuminaDatePickerField(
                     }
                 }
             )
-            // Transparent overlay to make the whole field clickable
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -353,6 +393,70 @@ fun LuminaDatePickerField(
                     )
                 }
             )
+        }
+    }
+}
+
+@Composable
+fun LuminaBirthdayCard(
+    name: String,
+    dateString: String,
+    age: Int,
+    daysUntil: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LuminaGlassCard(modifier = modifier.clickable(onClick = onClick)) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha=0.2f), MaterialTheme.colorScheme.tertiary.copy(alpha=0.2f))))
+                    .border(1.dp, Color.White.copy(alpha=0.1f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = name.take(1).uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // Info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    maxLines = 1
+                )
+                Text(
+                    text = "$dateString • Turning $age",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            // Countdown
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+            ) {
+                Text(
+                    text = "$daysUntil Days",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
