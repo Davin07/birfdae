@@ -41,7 +41,7 @@ Implementing the multi-step wizard for adding and editing birthdays.
     - [ ] Write tests for Relationship selection (tabs only).
     - [ ] Implement UI for Name input and Relationship tabs (Family, Friend, Work, Acquaintance).
     - [ ] Integrate Image Picker for celebrant avatar.
-- [ ] Task: Wizard Step 2 - Date (Selection, Zodiac, Age)
+- [x] Task: Wizard Step 2 - Date (Selection, Zodiac, Age) 31a06ea
     - [ ] Implement Date Picker matching reference.
     - [ ] Integrate dynamic Zodiac and Age display logic.
 - [ ] Task: Wizard Step 3 - Personalization (Notes, Multi-Notifications, Preview)
