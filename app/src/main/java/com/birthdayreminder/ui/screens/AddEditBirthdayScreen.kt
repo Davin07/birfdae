@@ -48,7 +48,10 @@ import coil.compose.AsyncImage
 import com.birthdayreminder.domain.util.AgeUtils
 import com.birthdayreminder.domain.util.ZodiacUtils
 import com.birthdayreminder.ui.components.DatePickerField
+import com.birthdayreminder.ui.components.LuminaAvatarPicker
+import com.birthdayreminder.ui.components.LuminaChip
 import com.birthdayreminder.ui.components.LuminaGlassCard
+import com.birthdayreminder.ui.components.LuminaTextField
 import com.birthdayreminder.ui.components.NotificationTimePicker
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayUiState
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayViewModel
@@ -164,34 +167,15 @@ fun Step1Identity(
         modifier = Modifier.fillMaxWidth()
     ) {
         // Image Picker
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable {
-                    launcher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            if (uiState.imageUri != null) {
-                AsyncImage(
-                    model = uiState.imageUri,
-                    contentDescription = "Profile Photo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Rounded.Person,
-                    contentDescription = "Add Photo",
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+        LuminaAvatarPicker(
+            imageUri = uiState.imageUri,
+            onClick = {
+                launcher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
             }
-        }
+        )
+        
         Text(
             text = "Add Photo",
             style = MaterialTheme.typography.labelLarge,
@@ -199,11 +183,10 @@ fun Step1Identity(
         )
 
         // Name
-        OutlinedTextField(
+        LuminaTextField(
             value = uiState.name,
             onValueChange = { viewModel.updateName(it) },
-            label = { Text("Name") },
-            singleLine = true,
+            label = "Name",
             modifier = Modifier.fillMaxWidth(),
             isError = uiState.nameError != null,
             supportingText = uiState.nameError?.let { { Text(it) } }
@@ -217,15 +200,14 @@ fun Step1Identity(
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp) // Wrap flow needed for many items
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Using simple Row for now, might need FlowRow if many items
                 val relationships = listOf("Family", "Friend", "Work", "Other")
                 relationships.forEach { rel ->
-                    FilterChip(
+                    LuminaChip(
                         selected = uiState.relationship == rel,
                         onClick = { viewModel.updateRelationship(rel) },
-                        label = { Text(rel) }
+                        label = rel
                     )
                 }
             }
