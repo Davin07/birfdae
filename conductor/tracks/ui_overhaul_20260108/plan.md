@@ -44,7 +44,7 @@ Implementing the multi-step wizard for adding and editing birthdays.
 - [x] Task: Wizard Step 2 - Date (Selection, Zodiac, Age) 31a06ea
     - [ ] Implement Date Picker matching reference.
     - [ ] Integrate dynamic Zodiac and Age display logic.
-- [ ] Task: Wizard Step 3 - Personalization (Notes, Multi-Notifications, Preview)
+- [x] Task: Wizard Step 3 - Personalization (Notes, Multi-Notifications, Preview) ffff622
     - [ ] Implement multi-select checkboxes for notification offsets (On day, 3 days prior, etc.).
     - [ ] Implement specific time selector for notifications.
     - [ ] Create the "Notification Preview" card as per references.
