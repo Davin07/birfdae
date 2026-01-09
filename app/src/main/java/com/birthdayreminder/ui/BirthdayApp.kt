@@ -66,116 +66,116 @@ import com.birthdayreminder.ui.theme.LuminaPrimaryGradient
 fun BirthdayApp(navController: NavHostController = rememberNavController()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val showBottomBar = currentDestination?.route in listOf(
+        BirthdayNavigation.BIRTHDAY_LIST,
+        BirthdayNavigation.CALENDAR,
+        BirthdayNavigation.SEARCH,
+        BirthdayNavigation.NOTIFICATION_SETTINGS,
+    )
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            // Only show bottom navigation on main screens
-            if (currentDestination?.route in
-                listOf(
-                    BirthdayNavigation.BIRTHDAY_LIST,
-                    BirthdayNavigation.CALENDAR,
-                    BirthdayNavigation.SEARCH,
-                    BirthdayNavigation.NOTIFICATION_SETTINGS,
-                )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = BirthdayNavigation.BIRTHDAY_LIST,
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                enterTransition = {
+                    val fromIndex = getRouteIndex(initialState.destination.route)
+                    val toIndex = getRouteIndex(targetState.destination.route)
+                    val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                    
+                    slideIntoContainer(direction, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+                },
+                exitTransition = {
+                    val fromIndex = getRouteIndex(initialState.destination.route)
+                    val toIndex = getRouteIndex(targetState.destination.route)
+                    val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                    
+                    slideOutOfContainer(direction, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                },
+                popEnterTransition = {
+                    val fromIndex = getRouteIndex(initialState.destination.route)
+                    val toIndex = getRouteIndex(targetState.destination.route)
+                    val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                    
+                    slideIntoContainer(direction, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+                },
+                popExitTransition = {
+                    val fromIndex = getRouteIndex(initialState.destination.route)
+                    val toIndex = getRouteIndex(targetState.destination.route)
+                    val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                    
+                    slideOutOfContainer(direction, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                }
             ) {
-                BirthdayBottomNavigation(
-                    navController = navController,
-                    currentDestination = currentDestination?.route,
-                )
-            }
-        },
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BirthdayNavigation.BIRTHDAY_LIST,
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-            enterTransition = {
-                val fromIndex = getRouteIndex(initialState.destination.route)
-                val toIndex = getRouteIndex(targetState.destination.route)
-                val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
-                
-                slideIntoContainer(direction, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
-            },
-            exitTransition = {
-                val fromIndex = getRouteIndex(initialState.destination.route)
-                val toIndex = getRouteIndex(targetState.destination.route)
-                val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
-                
-                slideOutOfContainer(direction, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
-            },
-            popEnterTransition = {
-                val fromIndex = getRouteIndex(initialState.destination.route)
-                val toIndex = getRouteIndex(targetState.destination.route)
-                val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
-                
-                slideIntoContainer(direction, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
-            },
-            popExitTransition = {
-                val fromIndex = getRouteIndex(initialState.destination.route)
-                val toIndex = getRouteIndex(targetState.destination.route)
-                val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
-                
-                slideOutOfContainer(direction, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
-            }
-        ) {
-            composable(BirthdayNavigation.BIRTHDAY_LIST) {
-                BirthdayListScreen(
-                    onNavigateToAddBirthday = {
-                        navController.navigate(BirthdayNavigation.ADD_EDIT_BIRTHDAY)
-                    },
-                    onNavigateToEditBirthday = { birthdayId ->
-                        navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthdayId))
-                    },
-                )
-            }
+                composable(BirthdayNavigation.BIRTHDAY_LIST) {
+                    BirthdayListScreen(
+                        onNavigateToAddBirthday = {
+                            navController.navigate(BirthdayNavigation.ADD_EDIT_BIRTHDAY)
+                        },
+                        onNavigateToEditBirthday = { birthdayId ->
+                            navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthdayId))
+                        },
+                    )
+                }
 
-            composable(BirthdayNavigation.CALENDAR) {
-                CalendarScreen(
-                    onBirthdayClick = { birthday ->
-                        navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthday.id))
-                    },
-                )
-            }
+                composable(BirthdayNavigation.CALENDAR) {
+                    CalendarScreen(
+                        onBirthdayClick = { birthday ->
+                            navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthday.id))
+                        },
+                    )
+                }
 
-            composable(BirthdayNavigation.SEARCH) {
-                SearchScreen(
-                    onNavigateToEditBirthday = { birthdayId ->
-                        navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthdayId))
-                    }
-                )
-            }
+                composable(BirthdayNavigation.SEARCH) {
+                    SearchScreen(
+                        onNavigateToEditBirthday = { birthdayId ->
+                            navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthdayId))
+                        }
+                    )
+                }
 
-            composable(BirthdayNavigation.ADD_EDIT_BIRTHDAY) {
-                AddEditBirthdayScreen(
-                    birthdayId = null,
-                    onNavigateBack = { navController.popBackStack() },
-                )
-            }
+                composable(BirthdayNavigation.ADD_EDIT_BIRTHDAY) {
+                    AddEditBirthdayScreen(
+                        birthdayId = null,
+                        onNavigateBack = { navController.popBackStack() },
+                    )
+                }
 
-            composable(BirthdayNavigation.ADD_EDIT_BIRTHDAY_WITH_ID) { backStackEntry ->
-                val birthdayId = backStackEntry.arguments?.getString("birthdayId")?.toLongOrNull()
-                AddEditBirthdayScreen(
-                    birthdayId = birthdayId,
-                    onNavigateBack = { navController.popBackStack() },
-                )
-            }
+                composable(BirthdayNavigation.ADD_EDIT_BIRTHDAY_WITH_ID) { backStackEntry ->
+                    val birthdayId = backStackEntry.arguments?.getString("birthdayId")?.toLongOrNull()
+                    AddEditBirthdayScreen(
+                        birthdayId = birthdayId,
+                        onNavigateBack = { navController.popBackStack() },
+                    )
+                }
 
-            composable(BirthdayNavigation.NOTIFICATION_SETTINGS) {
-                NotificationSettingsScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    navController = navController,
-                )
-            }
+                composable(BirthdayNavigation.NOTIFICATION_SETTINGS) {
+                    NotificationSettingsScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        navController = navController,
+                    )
+                }
 
-            composable(BirthdayNavigation.BACKUP) {
-                BackupScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                )
+                composable(BirthdayNavigation.BACKUP) {
+                    BackupScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                    )
+                }
             }
+        }
+
+        if (showBottomBar) {
+            BirthdayBottomNavigation(
+                navController = navController,
+                currentDestination = currentDestination?.route,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 }
@@ -198,9 +198,10 @@ private fun getRouteIndex(route: String?): Int {
 private fun BirthdayBottomNavigation(
     navController: NavHostController,
     currentDestination: String?,
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 24.dp),
         contentAlignment = Alignment.BottomCenter
@@ -269,14 +270,21 @@ private fun BirthdayBottomNavigation(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(LuminaPrimaryGradient))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.tertiary
+                            )
+                        )
+                    )
                     .clickable { navigateTo(navController, BirthdayNavigation.ADD_EDIT_BIRTHDAY) },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Add,
                     contentDescription = "Add",
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(36.dp)
                 )
             }
