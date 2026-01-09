@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -36,18 +39,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
 import com.birthdayreminder.domain.util.AgeUtils
 import com.birthdayreminder.domain.util.ZodiacUtils
 import com.birthdayreminder.ui.components.DatePickerField
 import com.birthdayreminder.ui.components.LuminaGlassCard
+import com.birthdayreminder.ui.components.NotificationTimePicker
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayUiState
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayViewModel
+import java.time.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -125,7 +130,7 @@ fun AddEditBirthdayScreen(
             when (uiState.step) {
                 1 -> Step1Identity(uiState, viewModel)
                 2 -> Step2Date(uiState, viewModel)
-                3 -> Text("Personalization (Coming Soon)")
+                3 -> Step3Personalization(uiState, viewModel)
             }
         }
     }
@@ -136,63 +141,6 @@ private fun canProceed(uiState: AddEditBirthdayUiState): Boolean {
         1 -> uiState.name.isNotBlank()
         2 -> uiState.birthDate != null
         else -> true
-    }
-}
-
-@Composable
-fun Step2Date(
-    uiState: AddEditBirthdayUiState,
-    viewModel: AddEditBirthdayViewModel
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "When is their birthday?",
-            style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center
-        )
-
-        DatePickerField(
-            selectedDate = uiState.birthDate,
-            onDateSelected = { viewModel.updateBirthDate(it) },
-            label = "Birth Date",
-            isError = uiState.birthDateError != null,
-            errorMessage = uiState.birthDateError,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        if (uiState.birthDate != null) {
-            val zodiac = ZodiacUtils.getZodiacSign(uiState.birthDate.month, uiState.birthDate.dayOfMonth)
-            val age = AgeUtils.calculateUpcomingAge(uiState.birthDate)
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                LuminaGlassCard(modifier = Modifier.weight(1f)) {
-                    Column(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Zodiac", style = MaterialTheme.typography.labelMedium)
-                        Text(zodiac, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                LuminaGlassCard(modifier = Modifier.weight(1f)) {
-                    Column(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Turning", style = MaterialTheme.typography.labelMedium)
-                        Text("$age", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -279,6 +227,172 @@ fun Step1Identity(
                         onClick = { viewModel.updateRelationship(rel) },
                         label = { Text(rel) }
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun Step2Date(
+    uiState: AddEditBirthdayUiState,
+    viewModel: AddEditBirthdayViewModel
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "When is their birthday?",
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
+
+        DatePickerField(
+            selectedDate = uiState.birthDate,
+            onDateSelected = { viewModel.updateBirthDate(it) },
+            label = "Birth Date",
+            isError = uiState.birthDateError != null,
+            errorMessage = uiState.birthDateError,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        if (uiState.birthDate != null) {
+            val zodiac = ZodiacUtils.getZodiacSign(uiState.birthDate.month, uiState.birthDate.dayOfMonth)
+            val age = AgeUtils.calculateUpcomingAge(uiState.birthDate)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                LuminaGlassCard(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Zodiac", style = MaterialTheme.typography.labelMedium)
+                        Text(zodiac, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                LuminaGlassCard(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Turning", style = MaterialTheme.typography.labelMedium)
+                        Text("$age", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun Step3Personalization(
+    uiState: AddEditBirthdayUiState,
+    viewModel: AddEditBirthdayViewModel
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // Notes
+        OutlinedTextField(
+            value = uiState.notes,
+            onValueChange = { viewModel.updateNotes(it) },
+            label = { Text("Notes (Optional)") },
+            minLines = 3,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Notifications
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "Notifications",
+                style = MaterialTheme.typography.titleMedium
+            )
+            
+            val options = listOf(
+                0 to "On the day",
+                1 to "1 day before",
+                3 to "3 days before",
+                7 to "1 week before"
+            )
+            
+            options.forEach { (days, label) ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val newOffsets = uiState.notificationOffsets.toMutableList()
+                            if (newOffsets.contains(days)) {
+                                newOffsets.remove(days)
+                            } else {
+                                newOffsets.add(days)
+                            }
+                            viewModel.updateNotificationOffsets(newOffsets)
+                        }
+                        .padding(vertical = 4.dp)
+                ) {
+                    Checkbox(
+                        checked = uiState.notificationOffsets.contains(days),
+                        onCheckedChange = null // Handled by Row click
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = label, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
+
+        // Time Picker
+        NotificationTimePicker(
+            hour = uiState.notificationTime?.hour ?: 9,
+            minute = uiState.notificationTime?.minute ?: 0,
+            onTimeChange = { h, m ->
+                viewModel.updateNotificationTime(LocalTime.of(h, m))
+            }
+        )
+
+        // Preview
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "Preview",
+                style = MaterialTheme.typography.titleMedium
+            )
+            
+            LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "Birthday Reminder",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Text(
+                            text = "It's ${uiState.name.ifBlank { "Friend" }}'s birthday today!",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
         }
