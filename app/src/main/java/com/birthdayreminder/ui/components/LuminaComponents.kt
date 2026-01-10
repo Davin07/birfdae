@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,7 +52,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,8 +65,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun LuminaBackground(
     content: @Composable () -> Unit
-)
-{
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -93,8 +96,7 @@ fun LuminaHeader(
     title: String,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
-)
-{
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -124,8 +126,7 @@ fun LuminaHeader(
 fun LuminaGlassCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
-)
-{
+) {
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
@@ -149,15 +150,14 @@ fun LuminaGlassCard(
 fun LuminaTitle(
     text: String,
     modifier: Modifier = Modifier
-)
-{
+) {
     Text(
         text = text,
         style = MaterialTheme.typography.headlineLarge.copy(
             fontWeight = FontWeight.Bold,
             letterSpacing = (-0.5).sp
         ),
-        color = MaterialTheme.colorScheme.onBackground,
+        color = Color.White,
         modifier = modifier
     )
 }
@@ -166,8 +166,7 @@ fun LuminaTitle(
 fun LuminaBadge(
     text: String,
     modifier: Modifier = Modifier
-)
-{
+) {
     Surface(
         modifier = modifier.clip(RoundedCornerShape(12.dp)),
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
@@ -197,8 +196,7 @@ fun LuminaTextField(
     supportingText: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null
-)
-{
+) {
     TextField(
         value = value,
         onValueChange = onValueChange,
@@ -231,8 +229,7 @@ fun LuminaChip(
     onClick: () -> Unit,
     label: String,
     modifier: Modifier = Modifier
-)
-{
+) {
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -259,8 +256,7 @@ fun LuminaSearchBar(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier
-)
-{
+) {
     LuminaGlassCard(modifier = modifier) {
         TextField(
             value = value,
@@ -293,8 +289,7 @@ fun LuminaAvatar(
     name: String,
     imageUri: String?,
     modifier: Modifier = Modifier
-)
-{
+) {
     Box(
         modifier = modifier
             .clip(CircleShape)
@@ -331,8 +326,7 @@ fun LuminaAvatarPicker(
     imageUri: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-)
-{
+) {
     Box(
         modifier = modifier
             .size(144.dp)
@@ -396,8 +390,7 @@ fun LuminaDatePickerField(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null
-)
-{
+) {
     var showDatePicker by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
@@ -482,9 +475,12 @@ fun LuminaBirthdayCard(
     daysUntil: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-)
-{
-    LuminaGlassCard(modifier = modifier.clickable(onClick = onClick)) {
+) {
+    val haptics = LocalHapticFeedback.current
+    LuminaGlassCard(modifier = modifier.clickable {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        onClick()
+    }) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
