@@ -16,7 +16,7 @@ This phase updates the database schema and implements the necessary logic for Zo
 - [x] Task: Refactor Notification Scheduler for Multiple Alarms 4f8e75c
     - [ ] Write tests for scheduling multiple notifications per birthday based on offsets.
     - [ ] Update `AlarmScheduler` and `WorkManager` logic to handle the new `notificationOffsets`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Layer' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Data Layer' (Protocol in workflow.md)
 
 ## Phase 2: Design System & Foundation [checkpoint: ef9045b]
 Establishing the visual identity (colors, typography) and global UI components (Bottom Nav, Permissions).
@@ -32,7 +32,7 @@ Establishing the visual identity (colors, typography) and global UI components (
     - [ ] Implement immediate notification permission prompt on app launch.
     - [ ] Create utility for "force feedback" (haptics).
     - [ ] Set up global transition animations between screens.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Design System' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Design System' (Protocol in workflow.md)
 
 ## Phase 3: Add Birthday Wizard
 Implementing the multi-step wizard for adding and editing birthdays.
@@ -48,7 +48,7 @@ Implementing the multi-step wizard for adding and editing birthdays.
     - [ ] Implement multi-select checkboxes for notification offsets (On day, 3 days prior, etc.).
     - [ ] Implement specific time selector for notifications.
     - [ ] Create the "Notification Preview" card as per references.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Wizard' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Wizard' (Protocol in workflow.md)
 
 ## Phase 4: Search & Navigation
 Implementing the new Search screen and the redirection to Edit flow.
@@ -59,7 +59,7 @@ Implementing the new Search screen and the redirection to Edit flow.
     - [x] Write tests for search results and filtering.
 - [x] Task: Integrate Edit Flow via Search d872cb7
     - [x] Update navigation to open the Add Birthday Wizard in "Edit mode" when clicking a search result.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Search' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Search' (Protocol in workflow.md)
 
 ## Phase 5: Home Screen Redesign & Pinned Logic [checkpoint: 516fea5]
 Updating the main list and implementing the "Pinned Birthday" hero feature.
