@@ -36,7 +36,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val isMaterialYouEnabled by settingsRepository.isMaterialYouEnabled.collectAsState(initial = false)
 
-            BirthdayReminderAppTheme(dynamicColor = isMaterialYouEnabled) {
+            BirthdayReminderAppTheme(
+                darkTheme = true,
+                dynamicColor = isMaterialYouEnabled
+            ) {
                 // Request notification permission on launch for Android 13+
                 RequestNotificationPermission()
 

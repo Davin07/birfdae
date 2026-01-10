@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,12 +41,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.birthdayreminder.ui.components.LuminaBackground
 import com.birthdayreminder.ui.components.LuminaGlassCard
 import com.birthdayreminder.ui.components.LuminaHeader
+import com.birthdayreminder.ui.components.NotificationTimePicker
 import com.birthdayreminder.ui.navigation.BirthdayNavigation
 import com.birthdayreminder.ui.viewmodel.NotificationSettingsViewModel
 
@@ -63,7 +66,7 @@ fun NotificationSettingsScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             LuminaHeader(
                 title = "Settings",
-                onBackClick = onNavigateBack
+                onBackClick = null // No back button for top level
             )
 
             Column(
@@ -73,18 +76,17 @@ fun NotificationSettingsScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                // Notification Status Card
+                // Compact Notification Status Card
                 LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(48.dp)
                                 .background(
                                     color = if (uiState.areNotificationsEnabled) 
                                         MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
@@ -98,60 +100,57 @@ fun NotificationSettingsScreen(
                                 imageVector = if (uiState.areNotificationsEnabled) Icons.Default.Notifications else Icons.Outlined.Notifications,
                                 contentDescription = null,
                                 tint = if (uiState.areNotificationsEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(32.dp),
+                                modifier = Modifier.size(24.dp),
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
 
-                        Text(
-                            text = if (uiState.areNotificationsEnabled) "Notifications Active" else "Notifications Disabled",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = if (uiState.areNotificationsEnabled) 
-                                "You'll receive birthday reminders as scheduled." 
-                            else 
-                                "System permissions are required to send notifications.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        
-                        if (!uiState.areNotificationsEnabled) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = {
-                                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (uiState.areNotificationsEnabled) "Notifications Active" else "Notifications Disabled",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            if (!uiState.areNotificationsEnabled) {
+                                TextButton(
+                                    onClick = {
+                                        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                            }
+                                        } else {
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                data = Uri.fromParts("package", context.packageName, null)
+                                            }
                                         }
-                                    } else {
-                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                            data = Uri.fromParts("package", context.packageName, null)
-                                        }
-                                    }
-                                    context.startActivity(intent)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text("Open System Settings")
-                            }
-                        } else {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            OutlinedButton(
-                                onClick = { viewModel.refreshNotificationStatus() },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text("Refresh Status")
+                                        context.startActivity(intent)
+                                    },
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                                ) {
+                                    Text("Enable", color = MaterialTheme.colorScheme.error)
+                                }
                             }
                         }
+                    }
+                }
+
+                // Default Time Card
+                LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text(
+                            text = "Default Notification Time",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        NotificationTimePicker(
+                            hour = uiState.defaultHour,
+                            minute = uiState.defaultMinute,
+                            onTimeChange = { h, m -> viewModel.updateDefaultTime(h, m) }
+                        )
                     }
                 }
 
@@ -169,7 +168,7 @@ fun NotificationSettingsScreen(
                                 text = "Material You Theme",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "Use system dynamic colors",
@@ -218,7 +217,7 @@ fun NotificationSettingsScreen(
                                 text = "Backup & Restore",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "Protect and transfer your data",

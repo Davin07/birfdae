@@ -434,7 +434,7 @@ class BirthdayListViewModel
                         isPinned = !isCurrentlyPinned
                     )
                     
-                    refresh()
+                    // refresh() // Removed to rely on active Flow observation
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to toggle pin")
                 }

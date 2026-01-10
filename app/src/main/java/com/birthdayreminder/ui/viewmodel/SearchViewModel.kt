@@ -51,19 +51,19 @@ class SearchViewModel @Inject constructor(
 
             if (type == SearchType.NAME) {
                 birthdayRepository.searchBirthdaysByName(query).collectLatest { birthdays ->
-                    val withCountdown = birthdays.map { 
+                    val results = birthdays.map { 
                         calculateCountdownUseCase.calculateCountdown(it)
-                    }
-                    _uiState.value = _uiState.value.copy(results = withCountdown)
+                    }.sortedBy { it.daysUntilNext }
+                    _uiState.value = _uiState.value.copy(results = results)
                 }
             } else {
                 val month = mapMonthToNumber(query)
                 if (month != null) {
                     birthdayRepository.getBirthdaysForMonth(month).collectLatest { birthdays ->
-                         val withCountdown = birthdays.map { 
+                         val results = birthdays.map { 
                             calculateCountdownUseCase.calculateCountdown(it)
-                        }
-                        _uiState.value = _uiState.value.copy(results = withCountdown)
+                        }.sortedBy { it.daysUntilNext }
+                        _uiState.value = _uiState.value.copy(results = results)
                     }
                 } else {
                     _uiState.value = _uiState.value.copy(results = emptyList())

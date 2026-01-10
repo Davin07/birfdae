@@ -39,6 +39,7 @@ import com.birthdayreminder.ui.components.ConfirmationDialog
 import com.birthdayreminder.ui.components.LuminaBackground
 import com.birthdayreminder.ui.components.LuminaBirthdayCard
 import com.birthdayreminder.ui.components.LuminaChip
+import com.birthdayreminder.ui.components.LuminaHeader
 import com.birthdayreminder.ui.components.LuminaSearchBar
 import com.birthdayreminder.ui.components.LuminaTitle
 import com.birthdayreminder.ui.viewmodel.SearchType
@@ -58,106 +59,112 @@ fun SearchScreen(
 
     LuminaBackground {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 24.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Header Area
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                LuminaTitle(text = "Search")
+            LuminaHeader(title = "Search")
 
-                LuminaSearchBar(
-                    value = uiState.query,
-                    onValueChange = viewModel::onQueryChanged,
-                    placeholder = if (uiState.searchType == SearchType.NAME) "Search by name" else "Search by month",
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    LuminaChip(
-                        selected = uiState.searchType == SearchType.NAME,
-                        onClick = { viewModel.onSearchTypeChanged(SearchType.NAME) },
-                        label = "Name"
-                    )
-                    LuminaChip(
-                        selected = uiState.searchType == SearchType.MONTH,
-                        onClick = { viewModel.onSearchTypeChanged(SearchType.MONTH) },
-                        label = "Month"
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 140.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
             ) {
-                items(uiState.results, key = { it.birthday.id }) { birthday ->
-                    val dismissState = rememberSwipeToDismissBoxState(
-                        confirmValueChange = { value ->
-                            when(value) {
-                                SwipeToDismissBoxValue.EndToStart -> {
-                                    birthdayToDelete.value = birthday.birthday.id
-                                    false // Snap back, dialog handles delete
-                                }
-                                else -> false
-                            }
-                        }
+                // Header Area Content
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LuminaSearchBar(
+                        value = uiState.query,
+                        onValueChange = viewModel::onQueryChanged,
+                        placeholder = if (uiState.searchType == SearchType.NAME) "Search by name" else "Search by month",
+                        modifier = Modifier.fillMaxWidth()
                     )
 
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        enableDismissFromStartToEnd = false,
-                        enableDismissFromEndToStart = true,
-                        backgroundContent = {
-                            if (dismissState.dismissDirection == SwipeToDismissBoxValue.Settled) return@SwipeToDismissBox
-                            
-                            val color = Color(0xFFD32F2F)
-                            val alignment = Alignment.CenterEnd
-                            val icon = Icons.Default.Delete
-                            
-                            // Safe offset access
-                            val offset = try {
-                                dismissState.requireOffset()
-                            } catch (e: IllegalStateException) {
-                                0f
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        LuminaChip(
+                            selected = uiState.searchType == SearchType.NAME,
+                            onClick = { viewModel.onSearchTypeChanged(SearchType.NAME) },
+                            label = "Name"
+                        )
+                        LuminaChip(
+                            selected = uiState.searchType == SearchType.MONTH,
+                            onClick = { viewModel.onSearchTypeChanged(SearchType.MONTH) },
+                            label = "Month"
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 140.dp)
+                ) {
+                    items(uiState.results, key = { it.birthday.id }) { birthday ->
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { value ->
+                                when(value) {
+                                    SwipeToDismissBoxValue.EndToStart -> {
+                                        birthdayToDelete.value = birthday.birthday.id
+                                        false // Snap back, dialog handles delete
+                                    }
+                                    else -> false
+                                }
                             }
-                            val widthDp = with(LocalDensity.current) { abs(offset).toDp() }
-                            
-                            Box(
-                                Modifier
-                                    .fillMaxSize()
-                                    .background(Color.Transparent),
-                                contentAlignment = alignment
-                            ) {
+                        )
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false,
+                            enableDismissFromEndToStart = true,
+                            backgroundContent = {
+                                if (dismissState.dismissDirection == SwipeToDismissBoxValue.Settled) return@SwipeToDismissBox
+                                
+                                val color = Color(0xFFD32F2F)
+                                val alignment = Alignment.CenterEnd
+                                val icon = Icons.Default.Delete
+                                
+                                // Safe offset access
+                                val offset = try {
+                                    dismissState.requireOffset()
+                                } catch (e: IllegalStateException) {
+                                    0f
+                                }
+                                val widthDp = with(LocalDensity.current) { abs(offset).toDp() }
+                                
                                 Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .width(widthDp)
-                                        .background(color, RoundedCornerShape(12.dp))
-                                        .padding(horizontal = 20.dp),
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Transparent),
                                     contentAlignment = alignment
                                 ) {
-                                    Icon(icon, contentDescription = "Delete", tint = Color.White)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .width(widthDp)
+                                            .background(color, RoundedCornerShape(12.dp))
+                                            .padding(horizontal = 20.dp),
+                                        contentAlignment = alignment
+                                    ) {
+                                        Icon(icon, contentDescription = "Delete", tint = Color.White)
+                                    }
                                 }
+                            },
+                            content = {
+                                LuminaBirthdayCard(
+                                    name = birthday.name,
+                                    imageUri = birthday.birthday.imageUri,
+                                    dateString = birthday.birthDate.format(DateTimeFormatter.ofPattern("MMM dd")),
+                                    age = birthday.age,
+                                    daysUntil = birthday.daysUntilNext,
+                                    isPinned = birthday.birthday.isPinned,
+                                    onClick = { onNavigateToEditBirthday(birthday.birthday.id) }
+                                )
                             }
-                        },
-                        content = {
-                            LuminaBirthdayCard(
-                                name = birthday.name,
-                                imageUri = birthday.birthday.imageUri,
-                                dateString = birthday.birthDate.format(DateTimeFormatter.ofPattern("MMM dd")),
-                                age = birthday.age,
-                                daysUntil = birthday.daysUntilNext,
-                                onClick = { onNavigateToEditBirthday(birthday.birthday.id) }
-                            )
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }

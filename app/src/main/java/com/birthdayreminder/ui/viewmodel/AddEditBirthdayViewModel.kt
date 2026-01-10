@@ -3,6 +3,7 @@ package com.birthdayreminder.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.birthdayreminder.data.repository.BirthdayRepository
+import com.birthdayreminder.data.settings.SettingsRepository
 import com.birthdayreminder.domain.error.ErrorHandler
 import com.birthdayreminder.domain.error.ErrorResult
 import com.birthdayreminder.domain.usecase.AddBirthdayResult
@@ -14,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -31,6 +33,7 @@ class AddEditBirthdayViewModel
         private val addBirthdayUseCase: AddBirthdayUseCase,
         private val updateBirthdayUseCase: UpdateBirthdayUseCase,
         private val birthdayRepository: BirthdayRepository,
+        private val settingsRepository: SettingsRepository,
         private val errorHandler: ErrorHandler,
         private val birthdayValidator: BirthdayValidator,
     ) : ViewModel() {
@@ -43,7 +46,15 @@ class AddEditBirthdayViewModel
          */
         fun initializeForm(birthdayId: Long?) {
             if (birthdayId == null) {
-                _uiState.value = AddEditBirthdayUiState(isEditMode = false)
+                viewModelScope.launch {
+                    val (h, m) = settingsRepository.defaultNotificationTime.first()
+                    _uiState.value = AddEditBirthdayUiState(
+                        isEditMode = false,
+                        notificationHour = h,
+                        notificationMinute = m,
+                        notificationTime = LocalTime.of(h, m)
+                    )
+                }
             } else {
                 viewModelScope.launch {
                     _uiState.value = _uiState.value.copy(isLoading = true)

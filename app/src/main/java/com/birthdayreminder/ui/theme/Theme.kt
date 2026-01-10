@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -24,19 +25,21 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = LuminaOnBackgroundDark,
     onSurface = LuminaOnSurfaceDark,
     surfaceVariant = LuminaCardGlass,
-    onSurfaceVariant = LuminaOnSurfaceDark
+    onSurfaceVariant = LuminaOnSurfaceDark,
+    outline = Color.White.copy(alpha = 0.1f)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = LuminaPrimaryDark,
+    primary = LuminaLightPrimary,
     secondary = LuminaAccent,
-    tertiary = LuminaPrimary,
-    background = LuminaBackgroundLight,
-    surface = LuminaSurfaceLight,
-    onBackground = LuminaOnBackgroundLight,
-    onSurface = LuminaOnSurfaceLight,
-    surfaceVariant = LuminaCardGlassLight,
-    onSurfaceVariant = LuminaOnSurfaceLight
+    tertiary = LuminaLightTertiary,
+    background = LuminaLightBackground,
+    surface = LuminaLightSurface,
+    onBackground = LuminaLightOnSurface,
+    onSurface = LuminaLightOnSurface,
+    surfaceVariant = LuminaLightGlass,
+    onSurfaceVariant = LuminaLightOnSurface,
+    outline = Color.White.copy(alpha = 0.6f) // Glass border color
 )
 
 /**
@@ -45,9 +48,8 @@ private val LightColorScheme = lightColorScheme(
  */
 @Composable
 fun BirthdayReminderAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // Disabled by default to prioritize Lumina branding
+    darkTheme: Boolean = true, // Forced Dark Mode default
+    dynamicColor: Boolean = false, 
     content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
@@ -55,7 +57,6 @@ fun BirthdayReminderAppTheme(
             val context = LocalContext.current
             val dynamic = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             
-            // Apply Material You accents while preserving Lumina backgrounds/surfaces
             if (darkTheme) {
                 DarkColorScheme.copy(
                     primary = dynamic.primary,
