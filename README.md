@@ -7,22 +7,27 @@ A native Android application built with Kotlin and Jetpack Compose to help users
 The app follows a clean architecture pattern with three main layers:
 
 ### Data Layer (`app/src/main/java/com/birthdayreminder/data/`)
-- Room database entities
-- DAOs (Data Access Objects)
-- Repository implementations
-- Local data sources
+- **local**: Room database entities and DAOs
+- **repository**: Repository implementations
+- **di**: Dependency injection modules
+- **notification**: Notification handling
+- **backup**: Data backup functionality
+- **settings**: App settings management
 
 ### Domain Layer (`app/src/main/java/com/birthdayreminder/domain/`)
-- Use cases (business logic)
-- Repository interfaces
-- Domain models
-- ViewModels
+- **usecase**: Business logic encapsulation
+- **model**: Domain models
+- **validation**: Input validation logic
+- **error**: Error handling utilities
+- **di**: Domain dependency injection
 
 ### UI Layer (`app/src/main/java/com/birthdayreminder/ui/`)
-- Composable screens
-- Navigation setup
-- UI components
-- Theme and styling
+- **screens**: Composable screens
+- **viewmodel**: ViewModels and state management
+- **navigation**: Navigation graph and destinations
+- **components**: Reusable UI components
+- **theme**: App theme and styling
+- **utils**: UI utility classes
 
 ## Technologies Used
 
@@ -32,6 +37,9 @@ The app follows a clean architecture pattern with three main layers:
 - **Hilt** - Dependency injection framework
 - **Navigation Compose** - Navigation between screens
 - **WorkManager** - Background task scheduling for notifications
+- **Kotlin Serialization** - JSON serialization
+- **Coil** - Image loading for Android
+- **Timber** - Logger with a small, extensible API
 - **Material Design 3** - UI design system
 
 ## Dependencies
@@ -42,23 +50,30 @@ The app follows a clean architecture pattern with three main layers:
 - androidx.activity:activity-compose
 
 ### Compose Dependencies
-- androidx.compose:compose-bom
+- androidx.compose:compose-bom:2024.02.01
 - androidx.compose.ui:ui
 - androidx.compose.material3:material3
 - androidx.navigation:navigation-compose
 - androidx.lifecycle:lifecycle-viewmodel-compose
+- androidx.compose.ui:ui-text-google-fonts
+- androidx.compose.material:material-icons-extended
 
 ### Database
-- androidx.room:room-runtime
-- androidx.room:room-ktx
+- androidx.room:room-runtime:2.6.1
+- androidx.room:room-ktx:2.6.1
 
 ### Dependency Injection
-- com.google.dagger:hilt-android
+- com.google.dagger:hilt-android:2.48
 - androidx.hilt:hilt-navigation-compose
 
 ### Background Tasks
-- androidx.work:work-runtime-ktx
+- androidx.work:work-runtime-ktx:2.9.0
 - androidx.hilt:hilt-work
+
+### Utilities
+- org.jetbrains.kotlinx:kotlinx-serialization-json
+- io.coil-kt:coil-compose
+- com.jakewharton.timber:timber
 
 ## Requirements Addressed
 
@@ -77,8 +92,8 @@ This project structure addresses requirement 7.5 from the specifications:
 
 - Android API level 21 (Android 5.0)
 - Target SDK: 34 (Android 14)
-- Kotlin 1.9.10
-- Gradle 8.2.0
+- Kotlin 1.9.22
+- Gradle 8.9
 
 ## CI/CD Pipeline
 
@@ -147,7 +162,7 @@ All builds go through:
 ### Requirements
 - JDK 17 (Temurin distribution)
 - Android SDK 34
-- Gradle 8.2.0
+- Gradle 8.9
 - GitHub Actions cache enabled
 
 ### Local Build
