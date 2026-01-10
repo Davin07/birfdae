@@ -3,6 +3,7 @@ package com.birthdayreminder.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.birthdayreminder.data.repository.BirthdayRepository
+import com.birthdayreminder.data.settings.SettingsRepository
 import com.birthdayreminder.domain.error.ErrorHandler
 import com.birthdayreminder.domain.error.ErrorResult
 import com.birthdayreminder.domain.usecase.AddBirthdayResult
@@ -14,9 +15,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 
 /**
@@ -30,6 +33,7 @@ class AddEditBirthdayViewModel
         private val addBirthdayUseCase: AddBirthdayUseCase,
         private val updateBirthdayUseCase: UpdateBirthdayUseCase,
         private val birthdayRepository: BirthdayRepository,
+        private val settingsRepository: SettingsRepository,
         private val errorHandler: ErrorHandler,
         private val birthdayValidator: BirthdayValidator,
     ) : ViewModel() {
@@ -42,7 +46,16 @@ class AddEditBirthdayViewModel
          */
         fun initializeForm(birthdayId: Long?) {
             if (birthdayId == null) {
-                _uiState.value = AddEditBirthdayUiState(isEditMode = false)
+                viewModelScope.launch {
+                    val (h, m) = settingsRepository.defaultNotificationTime.first()
+                    _uiState.value =
+                        AddEditBirthdayUiState(
+                            isEditMode = false,
+                            notificationHour = h,
+                            notificationMinute = m,
+                            notificationTime = LocalTime.of(h, m),
+                        )
+                }
             } else {
                 viewModelScope.launch {
                     _uiState.value = _uiState.value.copy(isLoading = true)
@@ -60,6 +73,12 @@ class AddEditBirthdayViewModel
                                     advanceNotificationDays = birthday.advanceNotificationDays,
                                     notificationHour = birthday.notificationHour ?: 9,
                                     notificationMinute = birthday.notificationMinute ?: 0,
+                                    // New fields
+                                    imageUri = birthday.imageUri,
+                                    relationship = birthday.relationship ?: "Friend",
+                                    isPinned = birthday.isPinned,
+                                    notificationOffsets = birthday.notificationOffsets.ifEmpty { listOf(0) },
+                                    notificationTime = birthday.notificationTime,
                                     isLoading = false,
                                 )
                         } else {
@@ -86,70 +105,63 @@ class AddEditBirthdayViewModel
             }
         }
 
-        /**
-         * Updates the name field and clears related validation errors.
-         */
         fun updateName(name: String) {
-            _uiState.value =
-                _uiState.value.copy(
-                    name = name,
-                    nameError = null,
-                )
+            _uiState.update { it.copy(name = name, nameError = null) }
         }
 
-        /**
-         * Updates the birth date field and clears related validation errors.
-         */
         fun updateBirthDate(birthDate: LocalDate?) {
-            _uiState.value =
-                _uiState.value.copy(
-                    birthDate = birthDate,
-                    birthDateError = null,
-                )
+            _uiState.update { it.copy(birthDate = birthDate, birthDateError = null) }
         }
 
-        /**
-         * Updates the notes field and clears related validation errors.
-         */
         fun updateNotes(notes: String) {
-            _uiState.value =
-                _uiState.value.copy(
-                    notes = notes,
-                    notesError = null,
-                )
+            _uiState.update { it.copy(notes = notes, notesError = null) }
         }
 
-        /**
-         * Toggles the notifications enabled setting.
-         */
         fun toggleNotifications(enabled: Boolean) {
-            _uiState.value = _uiState.value.copy(notificationsEnabled = enabled)
+            _uiState.update { it.copy(notificationsEnabled = enabled) }
         }
 
-        /**
-         * Updates the advance notification days setting.
-         */
         fun updateAdvanceNotificationDays(days: Int) {
-            _uiState.value = _uiState.value.copy(advanceNotificationDays = days)
+            _uiState.update { it.copy(advanceNotificationDays = days) }
         }
 
-        /**
-         * Updates the notification hour setting.
-         */
         fun updateNotificationHour(hour: Int) {
-            _uiState.value = _uiState.value.copy(notificationHour = hour)
+            _uiState.update { it.copy(notificationHour = hour) }
         }
 
-        /**
-         * Updates the notification minute setting.
-         */
         fun updateNotificationMinute(minute: Int) {
-            _uiState.value = _uiState.value.copy(notificationMinute = minute)
+            _uiState.update { it.copy(notificationMinute = minute) }
         }
 
-        /**
-         * Saves the birthday (either creates new or updates existing).
-         */
+        // New Update Functions
+        fun updateImageUri(uri: String?) {
+            _uiState.update { it.copy(imageUri = uri) }
+        }
+
+        fun updateRelationship(relationship: String) {
+            _uiState.update { it.copy(relationship = relationship) }
+        }
+
+        fun updateIsPinned(isPinned: Boolean) {
+            _uiState.update { it.copy(isPinned = isPinned) }
+        }
+
+        fun updateNotificationOffsets(offsets: List<Int>) {
+            _uiState.update { it.copy(notificationOffsets = offsets) }
+        }
+
+        fun updateNotificationTime(time: LocalTime?) {
+            _uiState.update { it.copy(notificationTime = time) }
+        }
+
+        fun nextStep() {
+            _uiState.update { it.copy(step = it.step + 1) }
+        }
+
+        fun previousStep() {
+            _uiState.update { if (it.step > 1) it.copy(step = it.step - 1) else it }
+        }
+
         fun saveBirthday() {
             val currentState = _uiState.value
             val birthDate = currentState.birthDate ?: return
@@ -169,30 +181,23 @@ class AddEditBirthdayViewModel
                                 advanceNotificationDays = currentState.advanceNotificationDays,
                                 notificationHour = currentState.notificationHour,
                                 notificationMinute = currentState.notificationMinute,
+                                imageUri = currentState.imageUri,
+                                relationship = currentState.relationship,
+                                isPinned = currentState.isPinned,
+                                notificationOffsets = currentState.notificationOffsets,
+                                notificationTime = currentState.notificationTime,
                             )
 
                         when (result) {
                             is UpdateBirthdayResult.Success -> {
-                                _uiState.value =
-                                    currentState.copy(
-                                        isSaving = false,
-                                        saveSuccess = true,
-                                    )
+                                _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
                             }
                             is UpdateBirthdayResult.ValidationError -> {
                                 handleValidationErrors(result.errors)
                             }
                             is UpdateBirthdayResult.DatabaseError -> {
-                                val errorResult =
-                                    errorHandler.createErrorResult(
-                                        result.exception,
-                                        "update birthday",
-                                    )
-                                _uiState.value =
-                                    currentState.copy(
-                                        isSaving = false,
-                                        errorResult = errorResult,
-                                    )
+                                val errorResult = errorHandler.createErrorResult(result.exception, "update birthday")
+                                _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                             is UpdateBirthdayResult.NotFound -> {
                                 val errorResult =
@@ -200,23 +205,15 @@ class AddEditBirthdayViewModel
                                         IllegalStateException(result.message),
                                         "update birthday",
                                     )
-                                _uiState.value =
-                                    currentState.copy(
-                                        isSaving = false,
-                                        errorResult = errorResult,
-                                    )
+                                _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                             is UpdateBirthdayResult.ExactAlarmPermissionNotGranted -> {
                                 val errorResult =
                                     errorHandler.createErrorResult(
-                                        SecurityException("Exact alarm permission is required for notifications"),
+                                        SecurityException("Exact alarm permission is required"),
                                         "schedule notification",
                                     )
-                                _uiState.value =
-                                    currentState.copy(
-                                        isSaving = false,
-                                        errorResult = errorResult,
-                                    )
+                                _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                         }
                     } else {
@@ -229,59 +226,41 @@ class AddEditBirthdayViewModel
                                 advanceNotificationDays = currentState.advanceNotificationDays,
                                 notificationHour = currentState.notificationHour,
                                 notificationMinute = currentState.notificationMinute,
+                                imageUri = currentState.imageUri,
+                                relationship = currentState.relationship,
+                                isPinned = currentState.isPinned,
+                                notificationOffsets = currentState.notificationOffsets,
+                                notificationTime = currentState.notificationTime,
                             )
 
                         when (result) {
                             is AddBirthdayResult.Success -> {
-                                _uiState.value =
-                                    currentState.copy(
-                                        isSaving = false,
-                                        saveSuccess = true,
-                                    )
+                                _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
                             }
                             is AddBirthdayResult.ValidationError -> {
                                 handleValidationErrors(result.errors)
                             }
                             is AddBirthdayResult.DatabaseError -> {
-                                val errorResult =
-                                    errorHandler.createErrorResult(
-                                        result.exception,
-                                        "add birthday",
-                                    )
-                                _uiState.value =
-                                    currentState.copy(
-                                        isSaving = false,
-                                        errorResult = errorResult,
-                                    )
+                                val errorResult = errorHandler.createErrorResult(result.exception, "add birthday")
+                                _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                             is AddBirthdayResult.ExactAlarmPermissionNotGranted -> {
                                 val errorResult =
                                     errorHandler.createErrorResult(
-                                        SecurityException("Exact alarm permission is required for notifications"),
+                                        SecurityException("Exact alarm permission is required"),
                                         "schedule notification",
                                     )
-                                _uiState.value =
-                                    currentState.copy(
-                                        isSaving = false,
-                                        errorResult = errorResult,
-                                    )
+                                _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                         }
                     }
                 } catch (e: Exception) {
                     val errorResult = errorHandler.createErrorResult(e, "save birthday")
-                    _uiState.value =
-                        currentState.copy(
-                            isSaving = false,
-                            errorResult = errorResult,
-                        )
+                    _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                 }
             }
         }
 
-        /**
-         * Handles validation errors from use cases by mapping them to form field errors.
-         */
         private fun handleValidationErrors(errors: List<String>) {
             val currentState = _uiState.value
             var nameError: String? = null
@@ -319,24 +298,15 @@ class AddEditBirthdayViewModel
                 )
         }
 
-        /**
-         * Clears the error message.
-         */
         fun clearError() {
-            _uiState.value = _uiState.value.copy(errorResult = null)
+            _uiState.update { it.copy(errorResult = null) }
         }
 
-        /**
-         * Resets the save success state.
-         */
         fun resetSaveSuccess() {
-            _uiState.value = _uiState.value.copy(saveSuccess = false)
+            _uiState.update { it.copy(saveSuccess = false) }
         }
     }
 
-/**
- * UI state for the Add/Edit Birthday screen.
- */
 data class AddEditBirthdayUiState(
     val isEditMode: Boolean = false,
     val birthdayId: Long? = null,
@@ -347,6 +317,14 @@ data class AddEditBirthdayUiState(
     val advanceNotificationDays: Int = 0,
     val notificationHour: Int = 9,
     val notificationMinute: Int = 0,
+    // New Fields
+    val imageUri: String? = null,
+    val relationship: String = "Friend",
+    val isPinned: Boolean = false,
+    val notificationOffsets: List<Int> = listOf(0),
+    val notificationTime: LocalTime? = null,
+    val step: Int = 1,
+    // State
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
@@ -355,15 +333,9 @@ data class AddEditBirthdayUiState(
     val birthDateError: String? = null,
     val notesError: String? = null,
 ) {
-    /**
-     * Returns true if the form has any validation errors.
-     */
     val hasErrors: Boolean
         get() = nameError != null || birthDateError != null || notesError != null
 
-    /**
-     * Returns true if the form is ready to be saved (has required fields and no errors).
-     */
     val canSave: Boolean
         get() = name.isNotBlank() && birthDate != null && !hasErrors && !isSaving
 

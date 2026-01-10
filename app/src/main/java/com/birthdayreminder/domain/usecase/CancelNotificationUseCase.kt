@@ -28,6 +28,20 @@ class CancelNotificationUseCase
             }
         }
 
+        suspend fun cancelNotification(
+            birthday: com.birthdayreminder.data.local.entity.Birthday,
+        ): CancelNotificationResult {
+            return try {
+                alarmScheduler.cancelNotification(birthday)
+
+                notificationHelper.cancelBirthdayNotification(birthday.id)
+
+                CancelNotificationResult.Success
+            } catch (e: Exception) {
+                CancelNotificationResult.Error(e.message ?: "Unknown error occurred")
+            }
+        }
+
         suspend fun cancelAllNotifications(): CancelNotificationResult {
             return try {
                 CancelNotificationResult.Success

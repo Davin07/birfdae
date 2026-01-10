@@ -1,0 +1,84 @@
+# Implementation Plan: UI Overhaul & Functional Enhancements
+
+This plan outlines the steps for a comprehensive UI redesign and functional expansion of the Birthday Reminder app, adhering to the project's TDD workflow and Material Design 3 principles.
+
+## Phase 1: Data Layer & Core Utilities [checkpoint: 91cac4f]
+This phase updates the database schema and implements the necessary logic for Zodiac signs, age calculations, and multi-notification scheduling.
+
+- [x] Task: Update Room Database Schema (Image URI, Relationship, Pinned Status, Multi-notification config) dbf43f0
+    - [ ] Create a migration for `BirthdayEntity` to include `imageUri` (String?), `relationship` (String), `isPinned` (Boolean), `notificationOffsets` (List<Int>), and `notificationTime` (String).
+    - [ ] Update `BirthdayEntity` and `BirthdayRepository` to support new fields.
+    - [ ] Write migration tests to ensure data persistence.
+- [x] Task: Implement Zodiac and Age Calculation Logic 6a84da8
+    - [ ] Write unit tests for `ZodiacUtils` and `AgeUtils`.
+    - [ ] Implement `ZodiacUtils` to determine sign from Day/Month.
+    - [ ] Implement `AgeUtils` to calculate current and upcoming age.
+- [x] Task: Refactor Notification Scheduler for Multiple Alarms 4f8e75c
+    - [ ] Write tests for scheduling multiple notifications per birthday based on offsets.
+    - [ ] Update `AlarmScheduler` and `WorkManager` logic to handle the new `notificationOffsets`.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Data Layer' (Protocol in workflow.md)
+
+## Phase 2: Design System & Foundation [checkpoint: ef9045b]
+Establishing the visual identity (colors, typography) and global UI components (Bottom Nav, Permissions).
+
+- [x] Task: Define Unified Theme & Design System 475ea33
+    - [ ] Create `LuminaTheme` with color palette and typography derived from `reference/`.
+    - [ ] Implement reusable components (Cards, Buttons, Inputs) matching the reference style.
+- [x] Task: Implement Standardized Bottom Navigation dfb28a2
+    - [ ] Redesign the bottom navigation bar matching the Calendar View reference.
+    - [ ] Integrate the "faux FAB" center button for adding birthdays.
+    - [ ] Write UI tests for navigation between top-level destinations.
+- [x] Task: Proactive Permission & Haptic/Animation Utilities 35d25e1
+    - [ ] Implement immediate notification permission prompt on app launch.
+    - [ ] Create utility for "force feedback" (haptics).
+    - [ ] Set up global transition animations between screens.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Design System' (Protocol in workflow.md)
+
+## Phase 3: Add Birthday Wizard
+Implementing the multi-step wizard for adding and editing birthdays.
+
+- [x] Task: Wizard Step 1 - Identity (Name, Tabbed Relationship, Image) dfe5a64
+    - [ ] Write tests for Relationship selection (tabs only).
+    - [ ] Implement UI for Name input and Relationship tabs (Family, Friend, Work, Acquaintance).
+    - [ ] Integrate Image Picker for celebrant avatar.
+- [x] Task: Wizard Step 2 - Date (Selection, Zodiac, Age) dfe5a64
+    - [ ] Implement Date Picker matching reference.
+    - [ ] Integrate dynamic Zodiac and Age display logic.
+- [x] Task: Wizard Step 3 - Personalization (Notes, Multi-Notifications, Preview) dfe5a64
+    - [ ] Implement multi-select checkboxes for notification offsets (On day, 3 days prior, etc.).
+    - [ ] Implement specific time selector for notifications.
+    - [ ] Create the "Notification Preview" card as per references.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Wizard' (Protocol in workflow.md)
+
+## Phase 4: Search & Navigation
+Implementing the new Search screen and the redirection to Edit flow.
+
+- [x] Task: Implement Search Screen UI & Logic d872cb7
+    - [x] Create Search screen with bottom-positioned search bar.
+    - [x] Implement filtering logic for Name and Month.
+    - [x] Write tests for search results and filtering.
+- [x] Task: Integrate Edit Flow via Search d872cb7
+    - [x] Update navigation to open the Add Birthday Wizard in "Edit mode" when clicking a search result.
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Search' (Protocol in workflow.md)
+
+## Phase 5: Home Screen Redesign & Pinned Logic [checkpoint: 516fea5]
+Updating the main list and implementing the "Pinned Birthday" hero feature.
+
+- [x] Task: Redesign Birthday List Cards db72867
+    - [x] Implement the new card design from `reference/upcoming_birthdays_list_*`.
+    - [x] Add haptic feedback and "fun" animations on card interactions.
+- [x] Task: Implement Pinned Birthday Logic db72867
+    - [x] Write tests for the "Pinned > Next Upcoming" sorting/priority logic.
+    - [x] Implement the Hero card at the top of the list for Pinned/Upcoming.
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Home Screen' (Protocol in workflow.md)
+
+## Phase 6: Notification Settings & Final Polish
+Redesigning settings and final visual synchronization.
+
+- [x] Task: Redesign Notification Settings Screen 269db28
+    - [x] Implement the ability to modify the Global Default Notification Time.
+    - [x] Align visuals with the rest of the application (correcting reference inconsistencies).
+- [x] Task: Global Polish & Final Integrity Check 49eb05f
+    - [x] Run full project integrity verification (Lint, Tests, Build).
+    - [x] Verify haptic feedback and animations across all user flows.
+- [x] Task: Conductor - User Manual Verification 'Phase 6: Final Polish' (Protocol in workflow.md)

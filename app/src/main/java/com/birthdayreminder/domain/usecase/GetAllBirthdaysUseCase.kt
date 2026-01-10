@@ -141,13 +141,13 @@ class GetAllBirthdaysUseCase
          */
         fun searchBirthdays(searchQuery: String): Flow<List<BirthdayWithCountdown>> {
             return if (searchQuery.isBlank()) {
-                getAllBirthdaysSortedByName()
+                getAllBirthdaysSortedByNextOccurrence()
             } else {
                 birthdayRepository.searchBirthdaysByName(searchQuery)
                     .map { birthdays ->
                         birthdays
                             .map { calculateCountdownUseCase.calculateCountdown(it) }
-                            .sortedBy { it.name.lowercase() }
+                            .sortedBy { it.daysUntilNext } // Sort by proximity
                     }
             }
         }

@@ -6,6 +6,7 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 /**
  * Room entity representing a birthday entry in the local database.
@@ -52,6 +53,30 @@ data class Birthday(
      * If null, defaults to 0 minutes.
      */
     val notificationMinute: Int? = null,
+    /**
+     * URI string for the contact's image.
+     */
+    val imageUri: String? = null,
+    /**
+     * Relationship type (e.g., Family, Friend, Work).
+     */
+    val relationship: String? = null,
+    /**
+     * Whether this birthday is pinned to the top of the list.
+     */
+    @androidx.room.ColumnInfo(defaultValue = "0")
+    val isPinned: Boolean = false,
+    /**
+     * List of day offsets for notifications (e.g., [0, 3] for on-day and 3 days before).
+     */
+    @androidx.room.ColumnInfo(defaultValue = "")
+    val notificationOffsets: List<Int> = emptyList(),
+    /**
+     * Specific time to send the notification.
+     * Replaces notificationHour/Minute.
+     */
+    @Contextual
+    val notificationTime: LocalTime? = null,
     /**
      * Timestamp when this birthday entry was created.
      * Used for sorting and data management.

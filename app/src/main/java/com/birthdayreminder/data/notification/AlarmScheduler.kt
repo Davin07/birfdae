@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -32,7 +33,7 @@ class AlarmScheduler
             const val TYPE_BIRTHDAY_TODAY = "birthday_today"
             const val TYPE_ADVANCE_REMINDER = "advance_reminder"
 
-            // List of all supported advance notification days to ensure thorough cancellation
+            // Legacy support
             val SUPPORTED_ADVANCE_DAYS = listOf(1, 3, 7)
 
             private const val REQUEST_CODE_BASE = 10000
@@ -41,9 +42,7 @@ class AlarmScheduler
                 birthdayId: Long,
                 advanceDays: Int = 0,
             ): Int {
-                // Use the birthdayId directly as the base if it's within Int range,
-                // or use a more robust hashing if collisions are a concern at scale.
-                return (birthdayId.toInt() * 10) + advanceDays
+                return (birthdayId.hashCode() * 100) + (advanceDays % 100)
             }
         }
 
@@ -57,59 +56,77 @@ class AlarmScheduler
                 return false
             }
 
-            val notificationHour = birthday.notificationHour ?: DEFAULT_NOTIFICATION_HOUR
-            val notificationMinute = birthday.notificationMinute ?: DEFAULT_NOTIFICATION_MINUTE
+            // Determine notification time (prefer new field, fallback to legacy/default)
+            val notificationTime =
+                birthday.notificationTime
+                    ?: LocalTime.of(
+                        birthday.notificationHour ?: DEFAULT_NOTIFICATION_HOUR,
+                        birthday.notificationMinute ?: DEFAULT_NOTIFICATION_MINUTE,
+                    )
+
+            // Determine offsets (prefer new field, fallback to legacy)
+            val offsets =
+                if (birthday.notificationOffsets.isNotEmpty()) {
+                    birthday.notificationOffsets
+                } else {
+                    val list = mutableListOf<Int>()
+                    // Always schedule 'on day' (0) if using legacy fallback?
+                    // Previous logic always scheduled TYPE_BIRTHDAY_TODAY (0).
+                    list.add(0)
+                    if (birthday.advanceNotificationDays > 0) {
+                        list.add(birthday.advanceNotificationDays)
+                    }
+                    list
+                }
 
             var allScheduled = true
-
             val nextBirthday = getNextBirthdayDate(birthday.birthDate)
-            val birthdayNotificationTime = nextBirthday.atTime(notificationHour, notificationMinute)
 
-            if (scheduleExactAlarm(birthday.id, birthdayNotificationTime, TYPE_BIRTHDAY_TODAY, 0)) {
-                Timber.d("Scheduled birthday notification for ${birthday.name} on $nextBirthday")
-            } else {
-                allScheduled = false
-                Timber.e("Failed to schedule birthday notification for ${birthday.id}")
-            }
+            offsets.forEach { offsetDays ->
+                val triggerDate = nextBirthday.minusDays(offsetDays.toLong())
+                val triggerTime = triggerDate.atTime(notificationTime)
 
-            if (birthday.advanceNotificationDays > 0) {
-                if (SUPPORTED_ADVANCE_DAYS.contains(birthday.advanceNotificationDays)) {
-                    val advanceDate = nextBirthday.minusDays(birthday.advanceNotificationDays.toLong())
-                    val advanceNotificationTime = advanceDate.atTime(notificationHour, notificationMinute)
+                val type = if (offsetDays == 0) TYPE_BIRTHDAY_TODAY else TYPE_ADVANCE_REMINDER
 
-                    if (scheduleExactAlarm(
-                            birthday.id,
-                            advanceNotificationTime,
-                            TYPE_ADVANCE_REMINDER,
-                            birthday.advanceNotificationDays,
-                        )
-                    ) {
-                        Timber.d(
-                            "Scheduled advance notification for ${birthday.name} " +
-                                "${birthday.advanceNotificationDays} days before",
-                        )
-                    } else {
-                        allScheduled = false
-                        Timber.e("Failed to schedule advance notification for ${birthday.id}")
-                    }
+                if (scheduleExactAlarm(birthday.id, triggerTime, type, offsetDays)) {
+                    Timber.d("Scheduled notification for ${birthday.name} (offset: $offsetDays) at $triggerTime")
                 } else {
-                    Timber.w(
-                        "Skipping advance notification for ${birthday.name}: " +
-                            "${birthday.advanceNotificationDays} days is not supported. " +
-                            "Supported values: $SUPPORTED_ADVANCE_DAYS",
-                    )
+                    allScheduled = false
+                    Timber.e("Failed to schedule notification for ${birthday.id} (offset: $offsetDays)")
                 }
             }
 
             return allScheduled
         }
 
-        fun cancelNotification(birthdayId: Long) {
-            cancelAlarm(birthdayId, TYPE_BIRTHDAY_TODAY, 0)
-            SUPPORTED_ADVANCE_DAYS.forEach { days ->
-                cancelAlarm(birthdayId, TYPE_ADVANCE_REMINDER, days)
+        fun cancelNotification(birthday: Birthday) {
+            // Cancel based on current offsets
+            val offsets =
+                if (birthday.notificationOffsets.isNotEmpty()) {
+                    birthday.notificationOffsets
+                } else {
+                    val list = mutableListOf(0)
+                    if (birthday.advanceNotificationDays > 0) {
+                        list.add(birthday.advanceNotificationDays)
+                    }
+                    // Also include standard legacy offsets to be safe when clearing
+                    list.addAll(SUPPORTED_ADVANCE_DAYS)
+                    list.distinct()
+                }
+
+            offsets.forEach { days ->
+                val type = if (days == 0) TYPE_BIRTHDAY_TODAY else TYPE_ADVANCE_REMINDER
+                cancelAlarm(birthday.id, type, days)
             }
-            Timber.d("Cancelled all notifications for birthday $birthdayId")
+            Timber.d("Cancelled notifications for birthday ${birthday.id}")
+        }
+
+        // Overload for ID-only cancellation (clears common offsets)
+        fun cancelNotification(birthdayId: Long) {
+            (listOf(0) + SUPPORTED_ADVANCE_DAYS).forEach { days ->
+                val type = if (days == 0) TYPE_BIRTHDAY_TODAY else TYPE_ADVANCE_REMINDER
+                cancelAlarm(birthdayId, type, days)
+            }
         }
 
         private fun scheduleExactAlarm(
@@ -122,10 +139,37 @@ class AlarmScheduler
             val triggerMillis = notificationTime.atZone(zoneId).toInstant().toEpochMilli()
 
             if (triggerMillis <= System.currentTimeMillis()) {
-                Timber.w("Notification time is in the past, skipping: $notificationTime")
-                return false
+                // If the computed time is in the past, it means the birthday/reminder for *this year* has passed.
+                // We should schedule for *next year*.
+                // BUT, getNextBirthdayDate usually returns next future date?
+                // logic in getNextBirthdayDate: returns birthdayThisYear if >= today.
+                // If birthday is today, triggerMillis might be past if time passed.
+                // If time passed today, we should probably schedule for next year.
+                // Re-calculating for next year:
+
+                // However, recursively calling might be complex.
+                // Simplest is to check: if (triggerMillis <= now) add 1 year.
+                val nextYearTrigger = notificationTime.plusYears(1)
+                val nextTriggerMillis = nextYearTrigger.atZone(zoneId).toInstant().toEpochMilli()
+
+                // Recursive call or just set?
+                // Let's just update triggerMillis logic
+                // But wait, getNextBirthdayDate handles date. notificationTime handles time.
+                // If getNextBirthdayDate returns TODAY, and notification time (9am) passed (now 10am).
+                // We should schedule for next year.
+
+                return scheduleExactAlarmInternal(birthdayId, nextTriggerMillis, notificationType, advanceDays)
             }
 
+            return scheduleExactAlarmInternal(birthdayId, triggerMillis, notificationType, advanceDays)
+        }
+
+        private fun scheduleExactAlarmInternal(
+            birthdayId: Long,
+            triggerMillis: Long,
+            notificationType: String,
+            advanceDays: Int,
+        ): Boolean {
             val requestCode = getRequestCode(birthdayId, advanceDays)
             val intent = createNotificationIntent(birthdayId, notificationType, advanceDays)
             val pendingIntent =
@@ -151,7 +195,7 @@ class AlarmScheduler
                             pendingIntent,
                         )
                     }
-                    Timber.d("Scheduled exact alarm for birthday $birthdayId at $notificationTime")
+                    Timber.d("Scheduled exact alarm for birthday $birthdayId (offset $advanceDays)")
                     true
                 } else {
                     Timber.w("Cannot schedule exact alarms, permission not granted")
@@ -234,28 +278,53 @@ class AlarmScheduler
         }
 
         fun getNextNotificationTime(birthday: Birthday): LocalDateTime? {
+            // Updated to support multiple offsets?
+            // This function is likely used for UI display "Next notification at...".
+            // If multiple, return the soonest one?
+
             if (!birthday.notificationsEnabled) {
                 return null
             }
 
-            val notificationHour = birthday.notificationHour ?: DEFAULT_NOTIFICATION_HOUR
-            val notificationMinute = birthday.notificationMinute ?: DEFAULT_NOTIFICATION_MINUTE
+            val notificationTime =
+                birthday.notificationTime
+                    ?: LocalTime.of(
+                        birthday.notificationHour ?: DEFAULT_NOTIFICATION_HOUR,
+                        birthday.notificationMinute ?: DEFAULT_NOTIFICATION_MINUTE,
+                    )
+
+            val offsets =
+                if (birthday.notificationOffsets.isNotEmpty()) {
+                    birthday.notificationOffsets
+                } else {
+                    val list = mutableListOf(0)
+                    if (birthday.advanceNotificationDays > 0) list.add(birthday.advanceNotificationDays)
+                    list
+                }
 
             val nextBirthday = getNextBirthdayDate(birthday.birthDate)
-            val birthdayTime = nextBirthday.atTime(notificationHour, notificationMinute)
-
             val now = java.time.Instant.now().atZone(ZoneId.systemDefault()).toLocalDateTime()
 
-            if (birthdayTime.isAfter(now)) return birthdayTime
+            // Calculate all potential triggers for next birthday
+            val triggers =
+                offsets.map { offset ->
+                    val date = nextBirthday.minusDays(offset.toLong())
+                    date.atTime(notificationTime)
+                }
 
-            if (birthday.advanceNotificationDays > 0) {
-                val advanceDate = nextBirthday.minusDays(birthday.advanceNotificationDays.toLong())
-                val advanceTime = advanceDate.atTime(notificationHour, notificationMinute)
-                if (advanceTime.isAfter(now)) return advanceTime
-            }
+            // Find first one in future
+            val futureTriggers = triggers.filter { it.isAfter(now) }.sorted()
 
-            // If both passed, calculate for next year
+            if (futureTriggers.isNotEmpty()) return futureTriggers.first()
+
+            // If all passed for this year's birthday, check next year
             val nextYearBirthday = nextBirthday.plusYears(1)
-            return nextYearBirthday.atTime(notificationHour, notificationMinute)
+            val nextYearTriggers =
+                offsets.map { offset ->
+                    val date = nextYearBirthday.minusDays(offset.toLong())
+                    date.atTime(notificationTime)
+                }
+
+            return nextYearTriggers.sorted().firstOrNull()
         }
     }

@@ -14,6 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -104,6 +105,12 @@ private fun BirthdayDatePickerDialog(
             initialSelectedDateMillis =
                 initialDate?.toEpochDay()?.times(24 * 60 * 60 * 1000)
                     ?: System.currentTimeMillis(),
+            selectableDates =
+                object : SelectableDates {
+                    override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                        return utcTimeMillis <= System.currentTimeMillis()
+                    }
+                },
         )
 
     DatePickerDialog(
@@ -134,10 +141,6 @@ private fun BirthdayDatePickerDialog(
                     text = "Select Birthday",
                     modifier = Modifier.padding(16.dp),
                 )
-            },
-            dateValidator = { utcTimeMillis ->
-                // Only allow past dates and today for birthdays
-                utcTimeMillis <= System.currentTimeMillis()
             },
         )
     }
