@@ -22,7 +22,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
@@ -32,14 +31,11 @@ import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,8 +56,8 @@ import com.birthdayreminder.domain.util.ZodiacUtils
 import com.birthdayreminder.ui.components.LuminaAvatarPicker
 import com.birthdayreminder.ui.components.LuminaBackground
 import com.birthdayreminder.ui.components.LuminaChip
-import com.birthdayreminder.ui.components.LuminaDatePickerField
 import com.birthdayreminder.ui.components.LuminaGlassCard
+import com.birthdayreminder.ui.components.LuminaHeader
 import com.birthdayreminder.ui.components.LuminaTextField
 import com.birthdayreminder.ui.components.NotificationTimePicker
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayUiState
@@ -94,7 +90,7 @@ fun AddEditBirthdayScreen(
 
     LuminaBackground {
         Column(modifier = Modifier.fillMaxSize()) {
-            WizardHeader(
+            LuminaHeader(
                 title = if (uiState.isEditMode) "Edit Birthday" else "Add Birthday",
                 onBackClick = {
                     if (uiState.step > 1) {
@@ -168,36 +164,6 @@ fun AddEditBirthdayScreen(
     }
 }
 
-@Composable
-fun WizardHeader(
-    title: String,
-    onBackClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 32.dp, bottom = 16.dp)
-            .padding(horizontal = 24.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.background(Color.White.copy(alpha=0.1f), CircleShape)
-        ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
-        }
-        
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-            color = Color.White
-        )
-        
-        Spacer(modifier = Modifier.width(48.dp))
-    }
-}
-
 private fun canProceed(uiState: AddEditBirthdayUiState): Boolean {
     return when (uiState.step) {
         1 -> uiState.name.isNotBlank()
@@ -218,12 +184,9 @@ fun Step1Identity(
     ) { uri ->
         if (uri != null) {
             try {
-                // Request persistable URI permission to ensure access after app restart
                 val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
                 context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-            } catch (e: Exception) {
-                // Log or handle error if permission can't be persisted (e.g., local app resource)
-            }
+            } catch (e: Exception) {}
             viewModel.updateImageUri(uri.toString())
         }
     }
@@ -269,7 +232,6 @@ fun Step1Identity(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp
                 )
-                // Scrollable Row for chips
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -328,7 +290,7 @@ fun Step2Date(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // Selected Date Card (more compact)
+        // Selected Date Card
         LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp).fillMaxWidth(),
@@ -375,7 +337,6 @@ fun Step2Date(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Rectangular cards (Area 3 - Adjusted height)
                 LuminaGlassCard(modifier = Modifier.weight(1f).height(90.dp)) {
                     Column(
                         modifier = Modifier.padding(12.dp).fillMaxSize(),
@@ -416,10 +377,7 @@ fun Step3Personalization(
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
-                // Header (App Icon + App Name + Time)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Cake,
                         contentDescription = null,
@@ -441,18 +399,14 @@ fun Step3Personalization(
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Content
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "🎉 Birthday Today!",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                
                 Spacer(modifier = Modifier.height(8.dp))
-                
                 Text(
                     text = if (uiState.birthDate != null) {
                         val age = AgeUtils.calculateUpcomingAge(uiState.birthDate)
@@ -494,7 +448,6 @@ fun Step3Personalization(
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("NOTIFICATIONS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             
-            // Time Picker
             NotificationTimePicker(
                 hour = uiState.notificationTime?.hour ?: 9,
                 minute = uiState.notificationTime?.minute ?: 0,
@@ -503,7 +456,6 @@ fun Step3Personalization(
                 }
             )
             
-            // Options
             val options = listOf(
                 0 to "On the day",
                 1 to "1 day before",
@@ -529,7 +481,7 @@ fun Step3Personalization(
                 ) {
                     Checkbox(
                         checked = uiState.notificationOffsets.contains(days),
-                        onCheckedChange = null // Handled by Row click
+                        onCheckedChange = null
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(text = label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)

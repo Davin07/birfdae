@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Edit
@@ -59,24 +61,22 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun LuminaBackground(
     content: @Composable () -> Unit
-) {
+)
+{
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Blobs
         val primaryColor = MaterialTheme.colorScheme.primary
         val tertiaryColor = MaterialTheme.colorScheme.tertiary
         
         Canvas(modifier = Modifier.fillMaxSize().blur(100.dp)) {
-            // Top Left Blob
             drawCircle(
                 color = primaryColor.copy(alpha = 0.2f),
                 radius = size.width * 0.4f,
                 center = Offset(0f, 0f)
             )
-            // Bottom Right Blob
             drawCircle(
                 color = tertiaryColor.copy(alpha = 0.2f),
                 radius = size.width * 0.5f,
@@ -89,14 +89,47 @@ fun LuminaBackground(
 }
 
 @Composable
+fun LuminaHeader(
+    title: String,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier
+)
+{
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 32.dp, bottom = 16.dp)
+            .padding(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onBackClick,
+            modifier = Modifier.background(Color.White.copy(alpha = 0.1f), CircleShape)
+        ) {
+            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+        }
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+            color = Color.White
+        )
+
+        Spacer(modifier = Modifier.width(48.dp))
+    }
+}
+
+@Composable
 fun LuminaGlassCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
-) {
+)
+{
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) // Glass opacity
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
             .border(
                 width = 1.dp,
                 brush = Brush.linearGradient(
@@ -116,7 +149,8 @@ fun LuminaGlassCard(
 fun LuminaTitle(
     text: String,
     modifier: Modifier = Modifier
-) {
+)
+{
     Text(
         text = text,
         style = MaterialTheme.typography.headlineLarge.copy(
@@ -132,7 +166,8 @@ fun LuminaTitle(
 fun LuminaBadge(
     text: String,
     modifier: Modifier = Modifier
-) {
+)
+{
     Surface(
         modifier = modifier.clip(RoundedCornerShape(12.dp)),
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
@@ -162,7 +197,8 @@ fun LuminaTextField(
     supportingText: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null
-) {
+)
+{
     TextField(
         value = value,
         onValueChange = onValueChange,
@@ -195,7 +231,8 @@ fun LuminaChip(
     onClick: () -> Unit,
     label: String,
     modifier: Modifier = Modifier
-) {
+)
+{
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -222,7 +259,8 @@ fun LuminaSearchBar(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier
-) {
+)
+{
     LuminaGlassCard(modifier = modifier) {
         TextField(
             value = value,
@@ -251,17 +289,55 @@ fun LuminaSearchBar(
 }
 
 @Composable
+fun LuminaAvatar(
+    name: String,
+    imageUri: String?,
+    modifier: Modifier = Modifier
+)
+{
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha=0.2f), MaterialTheme.colorScheme.tertiary.copy(alpha=0.2f))))
+            .border(1.dp, Color.White.copy(alpha=0.1f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        if (imageUri != null) {
+            AsyncImage(
+                model = imageUri,
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            val initials = name.trim().split("\\s+".toRegex())
+                .take(2)
+                .mapNotNull { it.firstOrNull()?.toString() }
+                .joinToString("")
+                .uppercase()
+                .ifEmpty { "?" }
+            
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
 fun LuminaAvatarPicker(
     imageUri: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-) {
+)
+{
     Box(
         modifier = modifier
-            .size(144.dp) // Reference says w-36 (144px/dp approx)
+            .size(144.dp)
             .clickable(onClick = onClick)
     ) {
-        // Circle Glass Card
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -291,7 +367,6 @@ fun LuminaAvatarPicker(
             }
         }
         
-        // Edit Icon
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -321,7 +396,8 @@ fun LuminaDatePickerField(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null
-) {
+)
+{
     var showDatePicker by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
@@ -398,43 +474,6 @@ fun LuminaDatePickerField(
 }
 
 @Composable
-fun LuminaAvatar(
-    name: String,
-    imageUri: String?,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha=0.2f), MaterialTheme.colorScheme.tertiary.copy(alpha=0.2f))))
-            .border(1.dp, Color.White.copy(alpha=0.1f), CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        if (imageUri != null) {
-            AsyncImage(
-                model = imageUri,
-                contentDescription = "Avatar",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            val initials = name.trim().split("\\s+".toRegex())
-                .take(2)
-                .mapNotNull { it.firstOrNull()?.toString() }
-                .joinToString("")
-                .uppercase()
-                .ifEmpty { "?" }
-            
-            Text(
-                text = initials,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White
-            )
-        }
-    }
-}
-
-@Composable
 fun LuminaBirthdayCard(
     name: String,
     imageUri: String? = null,
@@ -443,13 +482,13 @@ fun LuminaBirthdayCard(
     daysUntil: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-) {
+)
+{
     LuminaGlassCard(modifier = modifier.clickable(onClick = onClick)) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar
             LuminaAvatar(
                 name = name,
                 imageUri = imageUri,
@@ -458,7 +497,6 @@ fun LuminaBirthdayCard(
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            // Info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = name,
@@ -473,7 +511,6 @@ fun LuminaBirthdayCard(
                 )
             }
             
-            // Countdown
             Surface(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(8.dp),
