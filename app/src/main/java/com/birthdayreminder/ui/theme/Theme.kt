@@ -40,7 +40,7 @@ private val LightColorScheme =
         onSurface = LuminaLightOnSurface,
         surfaceVariant = LuminaLightGlass,
         onSurfaceVariant = LuminaLightOnSurface,
-        outline = Color.White.copy(alpha = 0.6f), // Glass border color
+        outline = Color.White.copy(alpha = 0.6f),
     )
 
 /**
@@ -49,7 +49,7 @@ private val LightColorScheme =
  */
 @Composable
 fun BirthdayReminderAppTheme(
-    darkTheme: Boolean = true, // Forced Dark Mode default
+    darkTheme: Boolean = true,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {

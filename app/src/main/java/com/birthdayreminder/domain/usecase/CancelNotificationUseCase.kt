@@ -28,7 +28,9 @@ class CancelNotificationUseCase
             }
         }
 
-        suspend fun cancelNotification(birthday: com.birthdayreminder.data.local.entity.Birthday): CancelNotificationResult {
+        suspend fun cancelNotification(
+            birthday: com.birthdayreminder.data.local.entity.Birthday,
+        ): CancelNotificationResult {
             return try {
                 alarmScheduler.cancelNotification(birthday)
 

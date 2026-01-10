@@ -61,7 +61,7 @@ fun NotificationSettingsScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             LuminaHeader(
                 title = "Settings",
-                onBackClick = null, // No back button for top level
+                onBackClick = null,
             )
 
             Column(
@@ -97,9 +97,19 @@ fun NotificationSettingsScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                imageVector = if (uiState.areNotificationsEnabled) Icons.Default.Notifications else Icons.Outlined.Notifications,
+                                imageVector =
+                                    if (uiState.areNotificationsEnabled) {
+                                        Icons.Default.Notifications
+                                    } else {
+                                        Icons.Outlined.Notifications
+                                    },
                                 contentDescription = null,
-                                tint = if (uiState.areNotificationsEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                                tint =
+                                    if (uiState.areNotificationsEnabled) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.error
+                                    },
                                 modifier = Modifier.size(24.dp),
                             )
                         }
@@ -108,7 +118,12 @@ fun NotificationSettingsScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (uiState.areNotificationsEnabled) "Notifications Active" else "Notifications Disabled",
+                                text =
+                                    if (uiState.areNotificationsEnabled) {
+                                        "Notifications Active"
+                                    } else {
+                                        "Notifications Disabled"
+                                    },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,

@@ -77,7 +77,20 @@ class SearchViewModel
 
         private fun mapMonthToNumber(query: String): String? {
             val months =
-                listOf("january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december")
+                listOf(
+                    "january",
+                    "february",
+                    "march",
+                    "april",
+                    "may",
+                    "june",
+                    "july",
+                    "august",
+                    "september",
+                    "october",
+                    "november",
+                    "december",
+                )
             val index = months.indexOfFirst { it.startsWith(query.lowercase()) }
 
             // Also support numbers 1-12

@@ -11,7 +11,7 @@ import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
 class MigrationTest {
-    private val TEST_DB = "migration-test"
+    private val testDb = "migration-test"
 
     @get:Rule
     val helper: MigrationTestHelper =
@@ -25,16 +25,19 @@ class MigrationTest {
     @Throws(IOException::class)
     fun migrate2To3() {
         var db =
-            helper.createDatabase(TEST_DB, 2).apply {
+            helper.createDatabase(testDb, 2).apply {
                 // Insert data using version 2 schema
                 execSQL(
-                    "INSERT INTO birthdays (name, birthDate, notes, notificationsEnabled, advanceNotificationDays, notificationHour, notificationMinute, createdAt) VALUES ('Test User', '1990-01-01', 'Notes', 1, 0, 9, 0, '2024-01-01T10:00:00')",
+                    "INSERT INTO birthdays (name, birthDate, notes, notificationsEnabled, " +
+                        "advanceNotificationDays, notificationHour, notificationMinute, createdAt) " +
+                        "VALUES ('Test User', '1990-01-01', 'Notes', 1, 0, 9, 0, " +
+                        "'2024-01-01T10:00:00')",
                 )
                 close()
             }
 
         // Migrate to version 3
-        db = helper.runMigrationsAndValidate(TEST_DB, 3, true, AppDatabase.MIGRATION_2_3)
+        db = helper.runMigrationsAndValidate(testDb, 3, true, AppDatabase.MIGRATION_2_3)
 
         // Validate that the new columns exist and have default values
         val cursor = db.query("SELECT * FROM birthdays WHERE name = 'Test User'")

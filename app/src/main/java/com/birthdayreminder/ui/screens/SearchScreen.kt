@@ -71,7 +71,12 @@ fun SearchScreen(
                     LuminaSearchBar(
                         value = uiState.query,
                         onValueChange = viewModel::onQueryChanged,
-                        placeholder = if (uiState.searchType == SearchType.NAME) "Search by name" else "Search by month",
+                        placeholder =
+                            if (uiState.searchType == SearchType.NAME) {
+                                "Search by name"
+                            } else {
+                                "Search by month"
+                            },
                         modifier = Modifier.fillMaxWidth(),
                     )
 
@@ -118,13 +123,14 @@ fun SearchScreen(
                             enableDismissFromStartToEnd = false,
                             enableDismissFromEndToStart = true,
                             backgroundContent = {
-                                if (dismissState.dismissDirection == SwipeToDismissBoxValue.Settled) return@SwipeToDismissBox
+                                if (dismissState.dismissDirection == SwipeToDismissBoxValue.Settled) {
+                                    return@SwipeToDismissBox
+                                }
 
                                 val color = Color(0xFFD32F2F)
                                 val alignment = Alignment.CenterEnd
                                 val icon = Icons.Default.Delete
 
-                                // Safe offset access
                                 val offset =
                                     try {
                                         dismissState.requireOffset()

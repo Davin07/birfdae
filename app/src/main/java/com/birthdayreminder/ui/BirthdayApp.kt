@@ -90,30 +90,54 @@ fun BirthdayApp(navController: NavHostController = rememberNavController()) {
                 enterTransition = {
                     val fromIndex = getRouteIndex(initialState.destination.route)
                     val toIndex = getRouteIndex(targetState.destination.route)
-                    val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                    val direction =
+                        if (toIndex > fromIndex) {
+                            AnimatedContentTransitionScope.SlideDirection.Start
+                        } else {
+                            AnimatedContentTransitionScope.SlideDirection.End
+                        }
 
-                    slideIntoContainer(direction, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+                    slideIntoContainer(direction, animationSpec = tween(300)) +
+                        fadeIn(animationSpec = tween(300))
                 },
                 exitTransition = {
                     val fromIndex = getRouteIndex(initialState.destination.route)
                     val toIndex = getRouteIndex(targetState.destination.route)
-                    val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                    val direction =
+                        if (toIndex > fromIndex) {
+                            AnimatedContentTransitionScope.SlideDirection.Start
+                        } else {
+                            AnimatedContentTransitionScope.SlideDirection.End
+                        }
 
-                    slideOutOfContainer(direction, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                    slideOutOfContainer(direction, animationSpec = tween(300)) +
+                        fadeOut(animationSpec = tween(300))
                 },
                 popEnterTransition = {
                     val fromIndex = getRouteIndex(initialState.destination.route)
                     val toIndex = getRouteIndex(targetState.destination.route)
-                    val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                    val direction =
+                        if (toIndex > fromIndex) {
+                            AnimatedContentTransitionScope.SlideDirection.Start
+                        } else {
+                            AnimatedContentTransitionScope.SlideDirection.End
+                        }
 
-                    slideIntoContainer(direction, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+                    slideIntoContainer(direction, animationSpec = tween(300)) +
+                        fadeIn(animationSpec = tween(300))
                 },
                 popExitTransition = {
                     val fromIndex = getRouteIndex(initialState.destination.route)
                     val toIndex = getRouteIndex(targetState.destination.route)
-                    val direction = if (toIndex > fromIndex) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                    val direction =
+                        if (toIndex > fromIndex) {
+                            AnimatedContentTransitionScope.SlideDirection.Start
+                        } else {
+                            AnimatedContentTransitionScope.SlideDirection.End
+                        }
 
-                    slideOutOfContainer(direction, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                    slideOutOfContainer(direction, animationSpec = tween(300)) +
+                        fadeOut(animationSpec = tween(300))
                 },
             ) {
                 composable(BirthdayNavigation.BIRTHDAY_LIST) {
@@ -278,7 +302,7 @@ private fun BirthdayBottomNavigation(
                 modifier =
                     Modifier
                         .align(Alignment.BottomCenter)
-                        .offset(y = (-15).dp), // Moved lower to prevent cutoff
+                        .offset(y = (-15).dp),
             ) {
                 Box(
                     modifier =

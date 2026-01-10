@@ -216,7 +216,10 @@ fun BirthdayListContent(
                                     )
 
                                 LaunchedEffect(birthdayToDelete) {
-                                    if (birthdayToDelete == null && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                                    if (
+                                        birthdayToDelete == null &&
+                                        dismissState.currentValue != SwipeToDismissBoxValue.Settled
+                                    ) {
                                         dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                                     }
                                 }
@@ -357,7 +360,7 @@ fun HeroBirthdayCard(
                             text = birthday.name,
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface, // Theme Aware
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
 
@@ -374,7 +377,7 @@ fun HeroBirthdayCard(
                         Text(
                             text = birthday.birthDate.format(DateTimeFormatter.ofPattern("MMMM dd")),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface, // Theme Aware
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -390,7 +393,7 @@ fun HeroBirthdayCard(
                         Text(
                             text = time.format(DateTimeFormatter.ofPattern("h:mm a")),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface, // Theme Aware
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 }
@@ -399,7 +402,7 @@ fun HeroBirthdayCard(
 
                 // Right Countdown Box
                 Surface(
-                    color = MaterialTheme.colorScheme.surface, // Use surface color (White/Dark Grey)
+                    color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier.size(90.dp),
                 ) {

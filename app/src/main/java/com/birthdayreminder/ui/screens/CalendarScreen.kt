@@ -205,7 +205,7 @@ fun CalendarScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 140.dp), // Slightly increased padding
+                    contentPadding = PaddingValues(bottom = 140.dp),
                 ) {
                     items(birthdaysToShow) { birthday ->
                         LuminaBirthdayCard(
@@ -262,7 +262,7 @@ private fun CalendarDaysGrid(
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
-        modifier = Modifier.fillMaxWidth().height(310.dp), // Adjusted height
+        modifier = Modifier.fillMaxWidth().height(310.dp),
         userScrollEnabled = false,
     ) {
         items(dates) { date ->

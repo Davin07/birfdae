@@ -80,7 +80,12 @@ fun LuminaBackground(content: @Composable () -> Unit) {
         // Light mode blobs: Green/Teal. Dark mode: subtle.
         val blobAlpha = if (isDark) 0.2f else 0.15f
 
-        Canvas(modifier = Modifier.fillMaxSize().blur(100.dp)) {
+        Canvas(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .blur(100.dp),
+        ) {
             drawCircle(
                 color = primaryColor.copy(alpha = blobAlpha),
                 radius = size.width * 0.4f,
@@ -114,9 +119,13 @@ fun LuminaHeader(
         if (onBackClick != null) {
             IconButton(
                 onClick = onBackClick,
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), CircleShape)
-                    .align(Alignment.CenterStart),
+                modifier =
+                    Modifier
+                        .background(
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+                            CircleShape,
+                        )
+                        .align(Alignment.CenterStart),
             ) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
             }
@@ -127,7 +136,7 @@ fun LuminaHeader(
             style =
                 MaterialTheme.typography.displayLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 40.sp, // Ensuring it's visibly larger if displayLarge isn't enough
+                    fontSize = 40.sp,
                 ),
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.align(Alignment.Center),
@@ -185,7 +194,7 @@ fun LuminaGlassCard(
 fun LuminaTitle(
     text: String,
     modifier: Modifier = Modifier,
-    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.headlineLarge, // Default, can override
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.headlineLarge,
 ) {
     val color = MaterialTheme.colorScheme.onBackground
 
@@ -422,7 +431,7 @@ fun LuminaAvatar(
             Text(
                 text = initials,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary, // Visible on gradient
+                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
@@ -479,7 +488,10 @@ fun LuminaAvatarPicker(
                     model = imageUri,
                     contentDescription = "Avatar",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
                 )
             } else {
                 Icon(
