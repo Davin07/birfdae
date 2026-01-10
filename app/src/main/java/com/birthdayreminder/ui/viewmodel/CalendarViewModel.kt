@@ -28,38 +28,38 @@ class CalendarViewModel
         }
 
         fun navigateToPreviousMonth() {
-            _uiState.update { 
+            _uiState.update {
                 it.copy(
                     currentMonth = it.currentMonth.minusMonths(1),
-                    selectedDate = null 
-                ) 
+                    selectedDate = null,
+                )
             }
         }
 
         fun navigateToNextMonth() {
-            _uiState.update { 
+            _uiState.update {
                 it.copy(
                     currentMonth = it.currentMonth.plusMonths(1),
-                    selectedDate = null 
-                ) 
+                    selectedDate = null,
+                )
             }
         }
 
         fun navigateToCurrentMonth() {
-            _uiState.update { 
+            _uiState.update {
                 it.copy(
                     currentMonth = YearMonth.now(),
-                    selectedDate = null 
-                ) 
+                    selectedDate = null,
+                )
             }
         }
 
         fun navigateToMonth(yearMonth: YearMonth) {
-            _uiState.update { 
+            _uiState.update {
                 it.copy(
                     currentMonth = yearMonth,
-                    selectedDate = null 
-                ) 
+                    selectedDate = null,
+                )
             }
         }
 
@@ -86,20 +86,20 @@ class CalendarViewModel
                 try {
                     getAllBirthdaysUseCase.getAllBirthdaysSortedByNextOccurrence()
                         .collect { birthdays ->
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     allBirthdays = birthdays,
                                     isLoading = false,
-                                    errorMessage = null
-                                ) 
+                                    errorMessage = null,
+                                )
                             }
                         }
                 } catch (e: Exception) {
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = e.message ?: "Failed to load birthdays"
-                        ) 
+                            errorMessage = e.message ?: "Failed to load birthdays",
+                        )
                     }
                 }
             }
@@ -115,7 +115,7 @@ data class CalendarUiState(
 ) {
     val hasError: Boolean get() = errorMessage != null
     val hasSelectedDate: Boolean get() = selectedDate != null
-    
+
     // Helper to get birthdays for selected date (computed in UI or here)
     // We'll compute in UI for flexibility
 }

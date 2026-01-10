@@ -32,7 +32,7 @@ class DeleteBirthdayUseCase
                 birthdayRepository.deleteBirthdayById(birthdayId)
 
                 // Cancel any scheduled notifications
-                cancelNotificationUseCase(birthdayId)
+                cancelNotificationUseCase.cancelNotification(existingBirthday)
 
                 DeleteBirthdayResult.Success(existingBirthday)
             } catch (e: Exception) {
@@ -51,7 +51,7 @@ class DeleteBirthdayUseCase
                 birthdayRepository.deleteBirthday(birthday)
 
                 // Cancel any scheduled notifications
-                cancelNotificationUseCase(birthday.id)
+                cancelNotificationUseCase.cancelNotification(birthday)
 
                 DeleteBirthdayResult.Success(birthday)
             } catch (e: Exception) {

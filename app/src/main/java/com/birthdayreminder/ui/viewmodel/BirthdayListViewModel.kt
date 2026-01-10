@@ -419,21 +419,21 @@ class BirthdayListViewModel
                 try {
                     val currentPinnedId = _uiState.value.birthdays.find { it.birthday.isPinned }?.id
                     val isCurrentlyPinned = currentPinnedId == birthdayId
-                    
+
                     // Unpin existing if pinning a new one
                     if (currentPinnedId != null && !isCurrentlyPinned) {
                         updateBirthdayUseCase.updateBirthdayPartial(
                             birthdayId = currentPinnedId,
-                            isPinned = false
+                            isPinned = false,
                         )
                     }
-                    
+
                     // Toggle the target birthday
                     updateBirthdayUseCase.updateBirthdayPartial(
                         birthdayId = birthdayId,
-                        isPinned = !isCurrentlyPinned
+                        isPinned = !isCurrentlyPinned,
                     )
-                    
+
                     // refresh() // Removed to rely on active Flow observation
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to toggle pin")

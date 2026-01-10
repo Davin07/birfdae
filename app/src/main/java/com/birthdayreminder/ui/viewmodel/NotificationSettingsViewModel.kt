@@ -17,7 +17,7 @@ data class NotificationSettingsUiState(
     val isLoading: Boolean = false,
     val isMaterialYouEnabled: Boolean = false,
     val defaultHour: Int = 9,
-    val defaultMinute: Int = 0
+    val defaultMinute: Int = 0,
 )
 
 @HiltViewModel
@@ -61,7 +61,10 @@ class NotificationSettingsViewModel
             }
         }
 
-        fun updateDefaultTime(hour: Int, minute: Int) {
+        fun updateDefaultTime(
+            hour: Int,
+            minute: Int,
+        ) {
             viewModelScope.launch {
                 settingsRepository.setDefaultNotificationTime(hour, minute)
             }

@@ -10,35 +10,41 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SettingsRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context
-) : SettingsRepository {
-    private val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-    
-    private val _isMaterialYouEnabled = MutableStateFlow(prefs.getBoolean(KEY_MATERIAL_YOU, false))
-    override val isMaterialYouEnabled: Flow<Boolean> = _isMaterialYouEnabled.asStateFlow()
+class SettingsRepositoryImpl
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) : SettingsRepository {
+        private val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
 
-    private val _defaultNotificationTime = MutableStateFlow(
-        Pair(prefs.getInt(KEY_NOTIF_HOUR, 9), prefs.getInt(KEY_NOTIF_MINUTE, 0))
-    )
-    override val defaultNotificationTime: Flow<Pair<Int, Int>> = _defaultNotificationTime.asStateFlow()
+        private val _isMaterialYouEnabled = MutableStateFlow(prefs.getBoolean(KEY_MATERIAL_YOU, false))
+        override val isMaterialYouEnabled: Flow<Boolean> = _isMaterialYouEnabled.asStateFlow()
 
-    override suspend fun setMaterialYouEnabled(enabled: Boolean) {
-        prefs.edit { putBoolean(KEY_MATERIAL_YOU, enabled) }
-        _isMaterialYouEnabled.value = enabled
-    }
+        private val _defaultNotificationTime =
+            MutableStateFlow(
+                Pair(prefs.getInt(KEY_NOTIF_HOUR, 9), prefs.getInt(KEY_NOTIF_MINUTE, 0)),
+            )
+        override val defaultNotificationTime: Flow<Pair<Int, Int>> = _defaultNotificationTime.asStateFlow()
 
-    override suspend fun setDefaultNotificationTime(hour: Int, minute: Int) {
-        prefs.edit {
-            putInt(KEY_NOTIF_HOUR, hour)
-            putInt(KEY_NOTIF_MINUTE, minute)
+        override suspend fun setMaterialYouEnabled(enabled: Boolean) {
+            prefs.edit { putBoolean(KEY_MATERIAL_YOU, enabled) }
+            _isMaterialYouEnabled.value = enabled
         }
-        _defaultNotificationTime.value = Pair(hour, minute)
-    }
 
-    companion object {
-        private const val KEY_MATERIAL_YOU = "material_you_enabled"
-        private const val KEY_NOTIF_HOUR = "default_notif_hour"
-        private const val KEY_NOTIF_MINUTE = "default_notif_minute"
+        override suspend fun setDefaultNotificationTime(
+            hour: Int,
+            minute: Int,
+        ) {
+            prefs.edit {
+                putInt(KEY_NOTIF_HOUR, hour)
+                putInt(KEY_NOTIF_MINUTE, minute)
+            }
+            _defaultNotificationTime.value = Pair(hour, minute)
+        }
+
+        companion object {
+            private const val KEY_MATERIAL_YOU = "material_you_enabled"
+            private const val KEY_NOTIF_HOUR = "default_notif_hour"
+            private const val KEY_NOTIF_MINUTE = "default_notif_minute"
+        }
     }
-}

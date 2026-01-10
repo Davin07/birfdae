@@ -3,7 +3,10 @@ package com.birthdayreminder.domain.util
 import java.time.Month
 
 object ZodiacUtils {
-    fun getZodiacSign(month: Month, day: Int): String {
+    fun getZodiacSign(
+        month: Month,
+        day: Int,
+    ): String {
         return when (month) {
             Month.JANUARY -> if (day < 20) "Capricorn" else "Aquarius"
             Month.FEBRUARY -> if (day < 19) "Aquarius" else "Pisces"

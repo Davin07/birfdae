@@ -13,7 +13,5 @@ import javax.inject.Singleton
 abstract class SettingsModule {
     @Binds
     @Singleton
-    abstract fun bindSettingsRepository(
-        settingsRepositoryImpl: SettingsRepositoryImpl
-    ): SettingsRepository
+    abstract fun bindSettingsRepository(settingsRepositoryImpl: SettingsRepositoryImpl): SettingsRepository
 }

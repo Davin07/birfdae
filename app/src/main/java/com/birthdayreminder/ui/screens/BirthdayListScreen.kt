@@ -23,18 +23,15 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -50,7 +47,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -63,7 +59,6 @@ import com.birthdayreminder.ui.components.LuminaBackground
 import com.birthdayreminder.ui.components.LuminaBirthdayCard
 import com.birthdayreminder.ui.components.LuminaGlassCard
 import com.birthdayreminder.ui.components.LuminaHeader
-import com.birthdayreminder.ui.components.LuminaTitle
 import com.birthdayreminder.ui.viewmodel.BirthdayListUiState
 import com.birthdayreminder.ui.viewmodel.BirthdayListViewModel
 import java.time.LocalTime
@@ -94,7 +89,7 @@ fun BirthdayListScreen(
             },
             onClearError = viewModel::clearError,
             modifier = Modifier.fillMaxSize(),
-            birthdayToDelete = birthdayToDelete
+            birthdayToDelete = birthdayToDelete,
         )
 
         if (uiState.hasError && !uiState.isLoading && uiState.birthdays.isNotEmpty()) {
@@ -134,13 +129,13 @@ fun BirthdayListContent(
     modifier: Modifier = Modifier,
 ) {
     val pullRefreshState = rememberPullToRefreshState()
-    
+
     if (pullRefreshState.isRefreshing) {
         LaunchedEffect(true) {
             onRefresh()
         }
     }
-    
+
     LaunchedEffect(uiState.isRefreshing) {
         if (!uiState.isRefreshing) {
             pullRefreshState.endRefresh()
@@ -151,20 +146,24 @@ fun BirthdayListContent(
 
     Box(modifier = modifier.nestedScroll(pullRefreshState.nestedScrollConnection)) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
             // Header
             LuminaHeader(
                 title = "Birthdays",
-                onBackClick = null
+                onBackClick = null,
             )
 
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
             ) {
                 when {
                     uiState.isLoading && uiState.birthdays.isEmpty() -> LoadingState(Modifier.fillMaxSize())
-                    uiState.hasError -> ErrorState(uiState.errorMessage ?: "Error", { onClearError(); onRefresh() }, Modifier.fillMaxSize())
+                    uiState.hasError ->
+                        ErrorState(uiState.errorMessage ?: "Error", {
+                            onClearError()
+                            onRefresh()
+                        }, Modifier.fillMaxSize())
                     uiState.showEmptyState -> EmptyState(Modifier.fillMaxSize())
                     else -> {
                         val sorted = uiState.birthdays
@@ -176,7 +175,7 @@ fun BirthdayListContent(
                         LazyColumn(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
-                            contentPadding = PaddingValues(bottom = 140.dp)
+                            contentPadding = PaddingValues(bottom = 140.dp),
                         ) {
                             if (hero != null) {
                                 item {
@@ -184,7 +183,7 @@ fun BirthdayListContent(
                                         birthday = hero,
                                         isPinned = hero.birthday.isPinned && !hero.isToday,
                                         isToday = hero.isToday,
-                                        onClick = { onEditBirthday(hero.id) }
+                                        onClick = { onEditBirthday(hero.id) },
                                     )
                                 }
                                 item {
@@ -193,28 +192,29 @@ fun BirthdayListContent(
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
-                                        letterSpacing = 1.sp
+                                        letterSpacing = 1.sp,
                                     )
                                 }
                             }
 
                             items(others, key = { it.id }) { birthday ->
-                                val dismissState = rememberSwipeToDismissBoxState(
-                                    confirmValueChange = { value ->
-                                        when(value) {
-                                            SwipeToDismissBoxValue.EndToStart -> {
-                                                onDeleteBirthday(birthday)
-                                                false
+                                val dismissState =
+                                    rememberSwipeToDismissBoxState(
+                                        confirmValueChange = { value ->
+                                            when (value) {
+                                                SwipeToDismissBoxValue.EndToStart -> {
+                                                    onDeleteBirthday(birthday)
+                                                    false
+                                                }
+                                                SwipeToDismissBoxValue.StartToEnd -> {
+                                                    onPinBirthday(birthday)
+                                                    false
+                                                }
+                                                else -> false
                                             }
-                                            SwipeToDismissBoxValue.StartToEnd -> {
-                                                onPinBirthday(birthday)
-                                                false
-                                            }
-                                            else -> false
-                                        }
-                                    }
-                                )
-                                
+                                        },
+                                    )
+
                                 LaunchedEffect(birthdayToDelete) {
                                     if (birthdayToDelete == null && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
                                         dismissState.snapTo(SwipeToDismissBoxValue.Settled)
@@ -224,33 +224,51 @@ fun BirthdayListContent(
                                 SwipeToDismissBox(
                                     state = dismissState,
                                     backgroundContent = {
-                                        val offset = try { dismissState.requireOffset() } catch (e: Exception) { 0f }
+                                        val offset =
+                                            try {
+                                                dismissState.requireOffset()
+                                            } catch (e: Exception) {
+                                                0f
+                                            }
                                         val widthDp = with(LocalDensity.current) { abs(offset).toDp() }
-                                        
+
                                         Box(Modifier.fillMaxSize()) {
                                             if (offset > 0) {
                                                 Box(
-                                                    modifier = Modifier
-                                                        .fillMaxHeight()
-                                                        .width(widthDp)
-                                                        .align(Alignment.CenterStart)
-                                                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
-                                                        .padding(start = 20.dp),
-                                                    contentAlignment = Alignment.CenterStart
+                                                    modifier =
+                                                        Modifier
+                                                            .fillMaxHeight()
+                                                            .width(widthDp)
+                                                            .align(Alignment.CenterStart)
+                                                            .background(
+                                                                MaterialTheme.colorScheme.primary,
+                                                                RoundedCornerShape(12.dp),
+                                                            )
+                                                            .padding(start = 20.dp),
+                                                    contentAlignment = Alignment.CenterStart,
                                                 ) {
-                                                    Icon(Icons.Default.PushPin, contentDescription = null, tint = Color.White)
+                                                    Icon(
+                                                        Icons.Default.PushPin,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                    )
                                                 }
                                             } else if (offset < 0) {
                                                 Box(
-                                                    modifier = Modifier
-                                                        .fillMaxHeight()
-                                                        .width(widthDp)
-                                                        .align(Alignment.CenterEnd)
-                                                        .background(Color(0xFFD32F2F), RoundedCornerShape(12.dp))
-                                                        .padding(end = 20.dp),
-                                                    contentAlignment = Alignment.CenterEnd
+                                                    modifier =
+                                                        Modifier
+                                                            .fillMaxHeight()
+                                                            .width(widthDp)
+                                                            .align(Alignment.CenterEnd)
+                                                            .background(Color(0xFFD32F2F), RoundedCornerShape(12.dp))
+                                                            .padding(end = 20.dp),
+                                                    contentAlignment = Alignment.CenterEnd,
                                                 ) {
-                                                    Icon(Icons.Default.Delete, contentDescription = null, tint = Color.White)
+                                                    Icon(
+                                                        Icons.Default.Delete,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                    )
                                                 }
                                             }
                                         }
@@ -259,13 +277,16 @@ fun BirthdayListContent(
                                         LuminaBirthdayCard(
                                             name = birthday.name,
                                             imageUri = birthday.birthday.imageUri,
-                                            dateString = birthday.birthDate.format(DateTimeFormatter.ofPattern("MMM dd")),
+                                            dateString =
+                                                birthday.birthDate.format(
+                                                    DateTimeFormatter.ofPattern("MMM dd"),
+                                                ),
                                             age = birthday.age,
                                             daysUntil = birthday.daysUntilNext,
                                             isPinned = birthday.birthday.isPinned,
-                                            onClick = { onEditBirthday(birthday.id) }
+                                            onClick = { onEditBirthday(birthday.id) },
                                         )
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -273,11 +294,11 @@ fun BirthdayListContent(
                 }
             }
         }
-        
+
         if (pullRefreshState.progress > 0f || pullRefreshState.isRefreshing) {
             PullToRefreshContainer(
                 state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier.align(Alignment.TopCenter),
             )
         }
     }
@@ -288,99 +309,116 @@ fun HeroBirthdayCard(
     birthday: BirthdayWithCountdown,
     isPinned: Boolean,
     isToday: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Column {
-        val label = when {
-            isToday -> "TODAY"
-            isPinned -> "PINNED"
-            else -> "UPCOMING"
-        }
-        
+        val label =
+            when {
+                isToday -> "TODAY"
+                isPinned -> "PINNED"
+                else -> "UPCOMING"
+            }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         ) {
             Icon(
-                imageVector = if (isPinned) Icons.Default.PushPin else Icons.Default.Notifications, 
-                contentDescription = null, 
-                tint = MaterialTheme.colorScheme.primary, 
-                modifier = Modifier.size(16.dp)
+                imageVector = if (isPinned) Icons.Default.PushPin else Icons.Default.Notifications,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp),
             )
             Spacer(modifier = Modifier.width(4.dp))
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+            )
         }
 
         LuminaGlassCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
             Row(
                 modifier = Modifier.padding(24.dp).fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         LuminaAvatar(
                             name = birthday.name,
                             imageUri = birthday.birthday.imageUri,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(48.dp),
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             text = birthday.name,
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface // Theme Aware
+                            color = MaterialTheme.colorScheme.onSurface, // Theme Aware
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DateRange, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.DateRange,
+                            null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = birthday.birthDate.format(DateTimeFormatter.ofPattern("MMMM dd")),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface // Theme Aware
+                            color = MaterialTheme.colorScheme.onSurface, // Theme Aware
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Notifications, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.Notifications,
+                            null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         val time = birthday.birthday.notificationTime ?: LocalTime.of(9, 0)
                         Text(
                             text = time.format(DateTimeFormatter.ofPattern("h:mm a")),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface // Theme Aware
+                            color = MaterialTheme.colorScheme.onSurface, // Theme Aware
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.width(16.dp))
-                
+
                 // Right Countdown Box
                 Surface(
                     color = MaterialTheme.colorScheme.surface, // Use surface color (White/Dark Grey)
                     shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.size(90.dp)
+                    modifier = Modifier.size(90.dp),
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.Center,
                     ) {
                         Text(
                             text = "${birthday.daysUntilNext}",
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                         Text(
                             text = "DAYS",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -398,7 +436,11 @@ private fun LoadingState(modifier: Modifier) {
 }
 
 @Composable
-private fun ErrorState(message: String, onRetry: () -> Unit, modifier: Modifier) {
+private fun ErrorState(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier,
+) {
     Box(modifier, contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("Oops!", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
@@ -412,7 +454,11 @@ private fun ErrorState(message: String, onRetry: () -> Unit, modifier: Modifier)
 private fun EmptyState(modifier: Modifier) {
     Box(modifier, contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("No Birthdays", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                "No Birthdays",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
             Text("Add your first birthday!", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

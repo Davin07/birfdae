@@ -48,12 +48,13 @@ class AddEditBirthdayViewModel
             if (birthdayId == null) {
                 viewModelScope.launch {
                     val (h, m) = settingsRepository.defaultNotificationTime.first()
-                    _uiState.value = AddEditBirthdayUiState(
-                        isEditMode = false,
-                        notificationHour = h,
-                        notificationMinute = m,
-                        notificationTime = LocalTime.of(h, m)
-                    )
+                    _uiState.value =
+                        AddEditBirthdayUiState(
+                            isEditMode = false,
+                            notificationHour = h,
+                            notificationMinute = m,
+                            notificationTime = LocalTime.of(h, m),
+                        )
                 }
             } else {
                 viewModelScope.launch {
@@ -184,7 +185,7 @@ class AddEditBirthdayViewModel
                                 relationship = currentState.relationship,
                                 isPinned = currentState.isPinned,
                                 notificationOffsets = currentState.notificationOffsets,
-                                notificationTime = currentState.notificationTime
+                                notificationTime = currentState.notificationTime,
                             )
 
                         when (result) {
@@ -199,11 +200,19 @@ class AddEditBirthdayViewModel
                                 _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                             is UpdateBirthdayResult.NotFound -> {
-                                val errorResult = errorHandler.createErrorResult(IllegalStateException(result.message), "update birthday")
+                                val errorResult =
+                                    errorHandler.createErrorResult(
+                                        IllegalStateException(result.message),
+                                        "update birthday",
+                                    )
                                 _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                             is UpdateBirthdayResult.ExactAlarmPermissionNotGranted -> {
-                                val errorResult = errorHandler.createErrorResult(SecurityException("Exact alarm permission is required"), "schedule notification")
+                                val errorResult =
+                                    errorHandler.createErrorResult(
+                                        SecurityException("Exact alarm permission is required"),
+                                        "schedule notification",
+                                    )
                                 _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                         }
@@ -221,7 +230,7 @@ class AddEditBirthdayViewModel
                                 relationship = currentState.relationship,
                                 isPinned = currentState.isPinned,
                                 notificationOffsets = currentState.notificationOffsets,
-                                notificationTime = currentState.notificationTime
+                                notificationTime = currentState.notificationTime,
                             )
 
                         when (result) {
@@ -236,7 +245,11 @@ class AddEditBirthdayViewModel
                                 _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                             is AddBirthdayResult.ExactAlarmPermissionNotGranted -> {
-                                val errorResult = errorHandler.createErrorResult(SecurityException("Exact alarm permission is required"), "schedule notification")
+                                val errorResult =
+                                    errorHandler.createErrorResult(
+                                        SecurityException("Exact alarm permission is required"),
+                                        "schedule notification",
+                                    )
                                 _uiState.update { it.copy(isSaving = false, errorResult = errorResult) }
                             }
                         }

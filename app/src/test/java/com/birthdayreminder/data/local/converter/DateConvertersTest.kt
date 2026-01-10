@@ -22,7 +22,7 @@ class DateConvertersTest {
         assertEquals("1,2,3", string)
         assertEquals(list, converter.toIntList(string))
     }
-    
+
     @Test
     fun emptyIntListConversion() {
         val list = emptyList<Int>()
@@ -30,7 +30,7 @@ class DateConvertersTest {
         assertEquals("", string)
         assertEquals(list, converter.toIntList(string))
     }
-    
+
     @Test
     fun nullIntListConversion() {
         val string = converter.fromIntList(null)

@@ -2,7 +2,6 @@ package com.birthdayreminder.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,7 +50,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
@@ -59,7 +57,6 @@ import com.birthdayreminder.ui.components.LuminaBackground
 import com.birthdayreminder.ui.components.LuminaBirthdayCard
 import com.birthdayreminder.ui.components.LuminaGlassCard
 import com.birthdayreminder.ui.components.LuminaHeader
-import com.birthdayreminder.ui.components.LuminaTitle
 import com.birthdayreminder.ui.viewmodel.CalendarViewModel
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -79,10 +76,11 @@ fun CalendarScreen(
     val coroutineScope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
 
-    val pagerState = rememberPagerState(
-        initialPage = 1000,
-        pageCount = { 2001 },
-    )
+    val pagerState =
+        rememberPagerState(
+            initialPage = 1000,
+            pageCount = { 2001 },
+        )
 
     LaunchedEffect(pagerState.currentPage) {
         val initialMonth = YearMonth.now()
@@ -102,37 +100,37 @@ fun CalendarScreen(
                         onClick = {
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             coroutineScope.launch { pagerState.animateScrollToPage(1000) }
-                        }
+                        },
                     ) {
                         Icon(Icons.Default.DateRange, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
                         Text("Today")
                     }
-                }
+                },
             )
 
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 // Month Selector
                 LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         IconButton(onClick = {
                             coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
                         }) {
                             Icon(Icons.Default.KeyboardArrowLeft, null, tint = Color.White)
                         }
-                        
+
                         Text(
                             text = uiState.currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = Color.White,
                         )
 
                         IconButton(onClick = {
@@ -148,9 +146,9 @@ fun CalendarScreen(
                     Column(modifier = Modifier.padding(12.dp)) {
                         DayOfWeekHeaders()
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         if (uiState.isLoading) {
-                            Box(Modifier.fillMaxWidth().height(310.dp), contentAlignment = Alignment.Center) { 
+                            Box(Modifier.fillMaxWidth().height(310.dp), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                             }
                         } else {
@@ -161,18 +159,19 @@ fun CalendarScreen(
                             ) { page ->
                                 val initialMonth = YearMonth.now()
                                 val month = initialMonth.plusMonths((page - 1000).toLong())
-                                
-                                val birthdaysInMonth = remember(month, uiState.allBirthdays) {
-                                    uiState.allBirthdays.filter { 
-                                        it.birthDate.month == month.month 
-                                    }.groupBy { 
-                                        try {
-                                            LocalDate.of(month.year, month.month, it.birthDate.dayOfMonth)
-                                        } catch (e: Exception) {
-                                            LocalDate.of(month.year, month.month, 28)
+
+                                val birthdaysInMonth =
+                                    remember(month, uiState.allBirthdays) {
+                                        uiState.allBirthdays.filter {
+                                            it.birthDate.month == month.month
+                                        }.groupBy {
+                                            try {
+                                                LocalDate.of(month.year, month.month, it.birthDate.dayOfMonth)
+                                            } catch (e: Exception) {
+                                                LocalDate.of(month.year, month.month, 28)
+                                            }
                                         }
                                     }
-                                }
 
                                 CalendarDaysGrid(
                                     currentMonth = month,
@@ -189,23 +188,24 @@ fun CalendarScreen(
                 }
 
                 // List (Bottom)
-                val birthdaysToShow = remember(uiState.selectedDate, uiState.currentMonth, uiState.allBirthdays) {
-                    if (uiState.selectedDate != null) {
-                        uiState.allBirthdays.filter { 
-                            it.birthDate.month == uiState.selectedDate!!.month && 
-                            it.birthDate.dayOfMonth == uiState.selectedDate!!.dayOfMonth 
+                val birthdaysToShow =
+                    remember(uiState.selectedDate, uiState.currentMonth, uiState.allBirthdays) {
+                        if (uiState.selectedDate != null) {
+                            uiState.allBirthdays.filter {
+                                it.birthDate.month == uiState.selectedDate!!.month &&
+                                    it.birthDate.dayOfMonth == uiState.selectedDate!!.dayOfMonth
+                            }
+                        } else {
+                            uiState.allBirthdays.filter {
+                                it.birthDate.month == uiState.currentMonth.month
+                            }.sortedBy { it.birthDate.dayOfMonth }
                         }
-                    } else {
-                        uiState.allBirthdays.filter { 
-                            it.birthDate.month == uiState.currentMonth.month 
-                        }.sortedBy { it.birthDate.dayOfMonth }
                     }
-                }
-                
+
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 140.dp) // Slightly increased padding
+                    contentPadding = PaddingValues(bottom = 140.dp), // Slightly increased padding
                 ) {
                     items(birthdaysToShow) { birthday ->
                         LuminaBirthdayCard(
@@ -215,7 +215,7 @@ fun CalendarScreen(
                             age = birthday.age,
                             daysUntil = birthday.daysUntilNext,
                             isPinned = birthday.birthday.isPinned,
-                            onClick = { onBirthdayClick(birthday) }
+                            onClick = { onBirthdayClick(birthday) },
                         )
                     }
                 }
@@ -233,7 +233,7 @@ private fun DayOfWeekHeaders() {
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             )
         }
     }
@@ -253,13 +253,17 @@ private fun CalendarDaysGrid(
     val dates = mutableListOf<LocalDate?>()
 
     repeat(firstDayOfWeek) { dates.add(null) }
-    for (day in 1..daysInMonth) { dates.add(currentMonth.atDay(day)) }
-    while (dates.size < totalCells) { dates.add(null) }
+    for (day in 1..daysInMonth) {
+        dates.add(currentMonth.atDay(day))
+    }
+    while (dates.size < totalCells) {
+        dates.add(null)
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
         modifier = Modifier.fillMaxWidth().height(310.dp), // Adjusted height
-        userScrollEnabled = false
+        userScrollEnabled = false,
     ) {
         items(dates) { date ->
             CalendarDayCell(
@@ -287,17 +291,18 @@ private fun CalendarDayCell(
     }
 
     Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                when {
-                    isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                    isToday -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                    else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                }
-            )
-            .clickable(enabled = date != null) { onClick() },
+        modifier =
+            Modifier
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    when {
+                        isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        isToday -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    },
+                )
+                .clickable(enabled = date != null) { onClick() },
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -305,24 +310,26 @@ private fun CalendarDayCell(
                 text = date.dayOfMonth.toString(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = when {
-                    isSelected -> MaterialTheme.colorScheme.primary
-                    isToday -> MaterialTheme.colorScheme.secondary
-                    else -> Color.White.copy(alpha = 0.8f)
-                }
+                color =
+                    when {
+                        isSelected -> MaterialTheme.colorScheme.primary
+                        isToday -> MaterialTheme.colorScheme.secondary
+                        else -> Color.White.copy(alpha = 0.8f)
+                    },
             )
 
             if (birthdays.isNotEmpty()) {
                 Row(
                     modifier = Modifier.padding(top = 2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     repeat(minOf(birthdays.size, 3)) {
                         Box(
-                            modifier = Modifier
-                                .size(4.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
+                            modifier =
+                                Modifier
+                                    .size(4.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary),
                         )
                     }
                 }

@@ -105,11 +105,12 @@ private fun BirthdayDatePickerDialog(
             initialSelectedDateMillis =
                 initialDate?.toEpochDay()?.times(24 * 60 * 60 * 1000)
                     ?: System.currentTimeMillis(),
-            selectableDates = object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    return utcTimeMillis <= System.currentTimeMillis()
-                }
-            }
+            selectableDates =
+                object : SelectableDates {
+                    override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                        return utcTimeMillis <= System.currentTimeMillis()
+                    }
+                },
         )
 
     DatePickerDialog(
@@ -140,7 +141,7 @@ private fun BirthdayDatePickerDialog(
                     text = "Select Birthday",
                     modifier = Modifier.padding(16.dp),
                 )
-            }
+            },
         )
     }
 }

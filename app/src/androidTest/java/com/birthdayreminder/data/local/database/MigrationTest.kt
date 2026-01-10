@@ -14,20 +14,24 @@ class MigrationTest {
     private val TEST_DB = "migration-test"
 
     @get:Rule
-    val helper: MigrationTestHelper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(),
-        AppDatabase::class.java.canonicalName,
-        FrameworkSQLiteOpenHelperFactory()
-    )
+    val helper: MigrationTestHelper =
+        MigrationTestHelper(
+            InstrumentationRegistry.getInstrumentation(),
+            AppDatabase::class.java.canonicalName,
+            FrameworkSQLiteOpenHelperFactory(),
+        )
 
     @Test
     @Throws(IOException::class)
     fun migrate2To3() {
-        var db = helper.createDatabase(TEST_DB, 2).apply {
-            // Insert data using version 2 schema
-            execSQL("INSERT INTO birthdays (name, birthDate, notes, notificationsEnabled, advanceNotificationDays, notificationHour, notificationMinute, createdAt) VALUES ('Test User', '1990-01-01', 'Notes', 1, 0, 9, 0, '2024-01-01T10:00:00')")
-            close()
-        }
+        var db =
+            helper.createDatabase(TEST_DB, 2).apply {
+                // Insert data using version 2 schema
+                execSQL(
+                    "INSERT INTO birthdays (name, birthDate, notes, notificationsEnabled, advanceNotificationDays, notificationHour, notificationMinute, createdAt) VALUES ('Test User', '1990-01-01', 'Notes', 1, 0, 9, 0, '2024-01-01T10:00:00')",
+                )
+                close()
+            }
 
         // Migrate to version 3
         db = helper.runMigrationsAndValidate(TEST_DB, 3, true, AppDatabase.MIGRATION_2_3)
