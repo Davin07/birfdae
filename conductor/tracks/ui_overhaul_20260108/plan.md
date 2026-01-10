@@ -61,7 +61,7 @@ Implementing the new Search screen and the redirection to Edit flow.
     - [x] Update navigation to open the Add Birthday Wizard in "Edit mode" when clicking a search result.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Search' (Protocol in workflow.md)
 
-## Phase 5: Home Screen Redesign & Pinned Logic
+## Phase 5: Home Screen Redesign & Pinned Logic [checkpoint: 516fea5]
 Updating the main list and implementing the "Pinned Birthday" hero feature.
 
 - [x] Task: Redesign Birthday List Cards db72867
@@ -70,15 +70,15 @@ Updating the main list and implementing the "Pinned Birthday" hero feature.
 - [x] Task: Implement Pinned Birthday Logic db72867
     - [x] Write tests for the "Pinned > Next Upcoming" sorting/priority logic.
     - [x] Implement the Hero card at the top of the list for Pinned/Upcoming.
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Home Screen' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Home Screen' (Protocol in workflow.md)
 
 ## Phase 6: Notification Settings & Final Polish
 Redesigning settings and final visual synchronization.
 
-- [ ] Task: Redesign Notification Settings Screen
-    - [ ] Implement the ability to modify the Global Default Notification Time.
-    - [ ] Align visuals with the rest of the application (correcting reference inconsistencies).
-- [ ] Task: Global Polish & Final Integrity Check
+- [x] Task: Redesign Notification Settings Screen 269db28
+    - [x] Implement the ability to modify the Global Default Notification Time.
+    - [x] Align visuals with the rest of the application (correcting reference inconsistencies).
+- [~] Task: Global Polish & Final Integrity Check
     - [ ] Run full project integrity verification (Lint, Tests, Build).
     - [ ] Verify haptic feedback and animations across all user flows.
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: Final Polish' (Protocol in workflow.md)
