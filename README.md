@@ -133,8 +133,6 @@ graph LR
 - **Feature Branches**: Debug builds, no tests, quick feedback
 - **Develop Branch**: Full builds + tests, artifact upload
 - **Main Branch**: Full builds + tests + release creation
-- **Release Branches**: Release builds + comprehensive testing
-
 ### Quality Gates
 
 All builds go through:
@@ -174,3 +172,15 @@ All builds go through:
 ### CI Build
 
 The GitHub Actions workflow handles all build types automatically based on branch strategy.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Code of Conduct
+
+We are committed to fostering a welcoming community. Please review our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
