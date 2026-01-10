@@ -1,5 +1,6 @@
 package com.birthdayreminder.ui.screens
 
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -46,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,6 +60,7 @@ import com.birthdayreminder.domain.util.ZodiacUtils
 import com.birthdayreminder.ui.components.LuminaAvatarPicker
 import com.birthdayreminder.ui.components.LuminaBackground
 import com.birthdayreminder.ui.components.LuminaChip
+import com.birthdayreminder.ui.components.LuminaDatePickerField
 import com.birthdayreminder.ui.components.LuminaGlassCard
 import com.birthdayreminder.ui.components.LuminaTextField
 import com.birthdayreminder.ui.components.NotificationTimePicker
@@ -107,7 +111,7 @@ fun AddEditBirthdayScreen(
                     .weight(1f)
                     .padding(horizontal = 24.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 // Step Indicator
                 Row(
@@ -137,7 +141,7 @@ fun AddEditBirthdayScreen(
                     3 -> Step3Personalization(uiState, viewModel)
                 }
                 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(80.dp))
             }
             
             // Bottom Action Bar
@@ -172,7 +176,7 @@ fun WizardHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 24.dp, bottom = 12.dp)
+            .padding(top = 32.dp, bottom = 16.dp)
             .padding(horizontal = 24.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -208,10 +212,18 @@ fun Step1Identity(
     uiState: AddEditBirthdayUiState,
     viewModel: AddEditBirthdayViewModel
 ) {
+    val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
+            try {
+                // Request persistable URI permission to ensure access after app restart
+                val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+            } catch (e: Exception) {
+                // Log or handle error if permission can't be persisted (e.g., local app resource)
+            }
             viewModel.updateImageUri(uri.toString())
         }
     }
@@ -257,6 +269,7 @@ fun Step1Identity(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp
                 )
+                // Scrollable Row for chips
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -315,10 +328,10 @@ fun Step2Date(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // Selected Date Card (Area 1)
+        // Selected Date Card (more compact)
         LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(
-                modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                modifier = Modifier.padding(12.dp).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -334,7 +347,7 @@ fun Step2Date(
             }
         }
 
-        // Embedded Date Picker (Area 2 - Increased height to prevent cutoff)
+        // Embedded Date Picker
         LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.height(400.dp)) { 
                 DatePicker(
@@ -360,7 +373,7 @@ fun Step2Date(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Rectangular cards (Area 3 - Adjusted height)
                 LuminaGlassCard(modifier = Modifier.weight(1f).height(90.dp)) {
@@ -453,10 +466,35 @@ fun Step3Personalization(
             }
         }
 
+        // Pin Option
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Pin to Top",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Show this birthday as the hero card",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = uiState.isPinned,
+                onCheckedChange = { viewModel.updateIsPinned(it) }
+            )
+        }
+
         // Notification Settings
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("NOTIFICATIONS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             
+            // Time Picker
             NotificationTimePicker(
                 hour = uiState.notificationTime?.hour ?: 9,
                 minute = uiState.notificationTime?.minute ?: 0,
@@ -465,6 +503,7 @@ fun Step3Personalization(
                 }
             )
             
+            // Options
             val options = listOf(
                 0 to "On the day",
                 1 to "1 day before",
@@ -490,7 +529,7 @@ fun Step3Personalization(
                 ) {
                     Checkbox(
                         checked = uiState.notificationOffsets.contains(days),
-                        onCheckedChange = null
+                        onCheckedChange = null // Handled by Row click
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(text = label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -192,7 +193,7 @@ private fun getRouteIndex(route: String?): Int {
 }
 
 /**
- * Bottom navigation bar for main app screens - Redesigned as a floating glass bar
+ * Bottom navigation bar sit on an opaque dock to prevent content overlap issues
  */
 @Composable
 private fun BirthdayBottomNavigation(
@@ -200,93 +201,99 @@ private fun BirthdayBottomNavigation(
     currentDestination: String?,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 24.dp),
-        contentAlignment = Alignment.BottomCenter
+    Surface(
+        color = MaterialTheme.colorScheme.background.copy(alpha = 0.98f),
+        modifier = modifier.fillMaxWidth()
     ) {
-        // Glass Background
-        LuminaGlassCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Upcoming (First)
-                BottomNavItem(
-                    icon = Icons.Rounded.Upcoming,
-                    label = "Upcoming",
-                    selected = currentDestination == BirthdayNavigation.BIRTHDAY_LIST,
-                    onClick = { navigateTo(navController, BirthdayNavigation.BIRTHDAY_LIST) },
-                    modifier = Modifier.weight(1f)
-                )
-
-                // Calendar (Second)
-                BottomNavItem(
-                    icon = Icons.Rounded.CalendarMonth,
-                    label = "Calendar",
-                    selected = currentDestination == BirthdayNavigation.CALENDAR,
-                    onClick = { navigateTo(navController, BirthdayNavigation.CALENDAR) },
-                    modifier = Modifier.weight(1f)
-                )
-
-                // Spacer for FAB (Center)
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Search (Fourth)
-                BottomNavItem(
-                    icon = Icons.Rounded.Search,
-                    label = "Search",
-                    selected = currentDestination == BirthdayNavigation.SEARCH,
-                    onClick = { navigateTo(navController, BirthdayNavigation.SEARCH) },
-                    modifier = Modifier.weight(1f)
-                )
-
-                // Settings (Fifth)
-                BottomNavItem(
-                    icon = Icons.Rounded.Settings,
-                    label = "Settings",
-                    selected = currentDestination == BirthdayNavigation.NOTIFICATION_SETTINGS,
-                    onClick = { navigateTo(navController, BirthdayNavigation.NOTIFICATION_SETTINGS) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        // FAB (Floating on top, centered)
         Box(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = (-30).dp)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .padding(top = 18.dp), // Reduced by 2dp
+            contentAlignment = Alignment.BottomCenter
         ) {
+            // Glass Background
+            LuminaGlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Upcoming (First)
+                    BottomNavItem(
+                        icon = Icons.Rounded.Upcoming,
+                        label = "Upcoming",
+                        selected = currentDestination == BirthdayNavigation.BIRTHDAY_LIST,
+                        onClick = { navigateTo(navController, BirthdayNavigation.BIRTHDAY_LIST) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Calendar (Second)
+                    BottomNavItem(
+                        icon = Icons.Rounded.CalendarMonth,
+                        label = "Calendar",
+                        selected = currentDestination == BirthdayNavigation.CALENDAR,
+                        onClick = { navigateTo(navController, BirthdayNavigation.CALENDAR) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Spacer for FAB (Center)
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Search (Fourth)
+                    BottomNavItem(
+                        icon = Icons.Rounded.Search,
+                        label = "Search",
+                        selected = currentDestination == BirthdayNavigation.SEARCH,
+                        onClick = { navigateTo(navController, BirthdayNavigation.SEARCH) },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Settings (Fifth)
+                    BottomNavItem(
+                        icon = Icons.Rounded.Settings,
+                        label = "Settings",
+                        selected = currentDestination == BirthdayNavigation.NOTIFICATION_SETTINGS,
+                        onClick = { navigateTo(navController, BirthdayNavigation.NOTIFICATION_SETTINGS) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // FAB (Floating on top, centered)
             Box(
                 modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.tertiary
+                    .align(Alignment.BottomCenter)
+                    .offset(y = (-15).dp) // Moved lower to prevent cutoff
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.tertiary
+                                )
                             )
                         )
+                        .clickable { navigateTo(navController, BirthdayNavigation.ADD_EDIT_BIRTHDAY) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "Add",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(36.dp)
                     )
-                    .clickable { navigateTo(navController, BirthdayNavigation.ADD_EDIT_BIRTHDAY) },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Add,
-                    contentDescription = "Add",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(36.dp)
-                )
+                }
             }
         }
     }
@@ -346,24 +353,6 @@ private fun BottomNavItem(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
             ),
             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-
-/**
- * Placeholder screen for development
- */
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(16.dp),
         )
     }
 }

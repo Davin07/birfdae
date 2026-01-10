@@ -398,8 +398,46 @@ fun LuminaDatePickerField(
 }
 
 @Composable
+fun LuminaAvatar(
+    name: String,
+    imageUri: String?,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha=0.2f), MaterialTheme.colorScheme.tertiary.copy(alpha=0.2f))))
+            .border(1.dp, Color.White.copy(alpha=0.1f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        if (imageUri != null) {
+            AsyncImage(
+                model = imageUri,
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            val initials = name.trim().split("\\s+".toRegex())
+                .take(2)
+                .mapNotNull { it.firstOrNull()?.toString() }
+                .joinToString("")
+                .uppercase()
+                .ifEmpty { "?" }
+            
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
 fun LuminaBirthdayCard(
     name: String,
+    imageUri: String? = null,
     dateString: String,
     age: Int,
     daysUntil: Int,
@@ -412,20 +450,11 @@ fun LuminaBirthdayCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha=0.2f), MaterialTheme.colorScheme.tertiary.copy(alpha=0.2f))))
-                    .border(1.dp, Color.White.copy(alpha=0.1f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = name.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
-                )
-            }
+            LuminaAvatar(
+                name = name,
+                imageUri = imageUri,
+                modifier = Modifier.size(48.dp)
+            )
             
             Spacer(modifier = Modifier.width(16.dp))
             

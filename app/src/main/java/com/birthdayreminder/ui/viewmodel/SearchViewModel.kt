@@ -32,6 +32,13 @@ class SearchViewModel @Inject constructor(
         performSearch()
     }
 
+    fun deleteBirthday(birthdayId: Long) {
+        viewModelScope.launch {
+            birthdayRepository.deleteBirthdayById(birthdayId)
+            performSearch()
+        }
+    }
+
     private fun performSearch() {
         val query = _uiState.value.query
         val type = _uiState.value.searchType
