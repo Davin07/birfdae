@@ -23,6 +23,13 @@ interface BirthdayDao {
     fun getAllBirthdays(): Flow<List<Birthday>>
 
     /**
+     * Retrieves a one-shot snapshot of all birthdays.
+     * Used inside transactions where a reactive Flow is unnecessary.
+     */
+    @Query("SELECT * FROM birthdays ORDER BY name ASC")
+    suspend fun getAllBirthdaysSnapshot(): List<Birthday>
+
+    /**
      * Retrieves all birthdays sorted by their next occurrence date.
      * This query calculates which birthday comes next chronologically.
      * Note: The actual sorting by next occurrence will be handled in the repository layer

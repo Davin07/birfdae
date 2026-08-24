@@ -1,5 +1,6 @@
 package com.birthdayreminder.domain.di
 
+import com.birthdayreminder.data.backup.BackupDataSource
 import com.birthdayreminder.data.notification.AlarmScheduler
 import com.birthdayreminder.data.notification.NotificationHelper
 import com.birthdayreminder.data.repository.BirthdayRepository
@@ -8,9 +9,12 @@ import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
 import com.birthdayreminder.domain.usecase.CalculateCountdownUseCase
 import com.birthdayreminder.domain.usecase.CancelNotificationUseCase
 import com.birthdayreminder.domain.usecase.DeleteBirthdayUseCase
+import com.birthdayreminder.domain.usecase.ExportBirthdaysUseCase
 import com.birthdayreminder.domain.usecase.GetAllBirthdaysUseCase
+import com.birthdayreminder.domain.usecase.ImportBirthdaysUseCase
 import com.birthdayreminder.domain.usecase.ScheduleNotificationUseCase
 import com.birthdayreminder.domain.usecase.UpdateBirthdayUseCase
+import com.birthdayreminder.domain.usecase.ValidateBackupFileUseCase
 import com.birthdayreminder.domain.util.SafeDateCalculator
 import com.birthdayreminder.domain.validation.BirthdayValidator
 import dagger.Module
@@ -141,5 +145,45 @@ object DomainModule {
     @Singleton
     fun provideSafeDateCalculator(errorHandler: ErrorHandler): SafeDateCalculator {
         return SafeDateCalculator(errorHandler)
+    }
+
+    /**
+     * Provides the ExportBirthdaysUseCase.
+     */
+    @Provides
+    @Singleton
+    fun provideExportBirthdaysUseCase(
+        repository: BirthdayRepository,
+        backupDataSource: BackupDataSource,
+    ): ExportBirthdaysUseCase {
+        return ExportBirthdaysUseCase(repository, backupDataSource)
+    }
+
+    /**
+     * Provides the ImportBirthdaysUseCase.
+     */
+    @Provides
+    @Singleton
+    fun provideImportBirthdaysUseCase(
+        repository: BirthdayRepository,
+        backupDataSource: BackupDataSource,
+        scheduleNotificationUseCase: ScheduleNotificationUseCase,
+        cancelNotificationUseCase: CancelNotificationUseCase,
+    ): ImportBirthdaysUseCase {
+        return ImportBirthdaysUseCase(
+            repository,
+            backupDataSource,
+            scheduleNotificationUseCase,
+            cancelNotificationUseCase,
+        )
+    }
+
+    /**
+     * Provides the ValidateBackupFileUseCase.
+     */
+    @Provides
+    @Singleton
+    fun provideValidateBackupFileUseCase(backupDataSource: BackupDataSource): ValidateBackupFileUseCase {
+        return ValidateBackupFileUseCase(backupDataSource)
     }
 }

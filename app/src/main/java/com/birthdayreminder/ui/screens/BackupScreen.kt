@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.birthdayreminder.data.backup.ConflictStrategy
+import com.birthdayreminder.ui.viewmodel.BackupError
 import com.birthdayreminder.ui.viewmodel.BackupUiState
 import com.birthdayreminder.ui.viewmodel.BackupViewModel
 
@@ -84,33 +85,30 @@ fun BackupScreen(
         )
 
     // Clear success messages after a delay
-    LaunchedEffect(uiState.exportSuccess) {
-        if (uiState.exportSuccess) {
+    LaunchedEffect(uiState.export.exportedCount) {
+        if (uiState.export.exportedCount != null) {
             kotlinx.coroutines.delay(3000)
             viewModel.clearExportSuccess()
         }
     }
 
-    LaunchedEffect(uiState.importSuccess) {
-        if (uiState.importSuccess) {
+    LaunchedEffect(uiState.import.summary) {
+        if (uiState.import.summary != null) {
             kotlinx.coroutines.delay(3000)
             viewModel.clearImportSuccess()
         }
     }
 
-    LaunchedEffect(uiState.validationSuccess) {
-        if (uiState.validationSuccess) {
-            kotlinx.coroutines.delay(3000)
-            viewModel.clearValidationSuccess()
+    // When validation succeeds and we have a pending import, show the conflict dialog
+    LaunchedEffect(uiState.validation.fileInfo, pendingImportUri) {
+        if (uiState.validation.fileInfo != null && pendingImportUri != null) {
+            showConflictDialog = true
         }
     }
 
-    // When validation is successful and we have a pending import, show the conflict dialog
-    LaunchedEffect(uiState.validationSuccess, uiState.isFileValid) {
-        if (uiState.validationSuccess && uiState.isFileValid == true && pendingImportUri != null) {
-            showConflictDialog = true
-        } else if (uiState.validationSuccess && uiState.isFileValid == false) {
-            // File is invalid, clear the pending URI
+    // If validation reports an invalid file, clear the pending URI
+    LaunchedEffect(uiState.validation.invalidReason) {
+        if (uiState.validation.invalidReason != null) {
             pendingImportUri = null
         }
     }
@@ -158,23 +156,23 @@ fun BackupScreen(
             )
 
             // Error messages
-            if (uiState.exportError != null) {
+            if (uiState.export.error != null) {
                 Spacer(modifier = Modifier.height(16.dp))
-                ErrorMessage(message = uiState.exportError!!)
+                ErrorMessage(message = backupErrorMessage(uiState.export.error!!))
             }
 
-            if (uiState.importError != null) {
+            if (uiState.import.error != null) {
                 Spacer(modifier = Modifier.height(16.dp))
-                ErrorMessage(message = uiState.importError!!)
+                ErrorMessage(message = backupErrorMessage(uiState.import.error!!))
             }
 
-            if (uiState.validationError != null) {
+            if (uiState.validation.error != null) {
                 Spacer(modifier = Modifier.height(16.dp))
-                ErrorMessage(message = uiState.validationError!!)
+                ErrorMessage(message = backupErrorMessage(uiState.validation.error!!))
             }
 
             // File validation result message
-            if (uiState.validationSuccess && uiState.isFileValid == false) {
+            if (uiState.validation.invalidReason != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Card(
                     colors =
@@ -280,10 +278,10 @@ private fun BackupExportSection(
                     val fileName = viewModel.generateDefaultBackupFileName()
                     onExportClick(fileName)
                 },
-                enabled = !uiState.isExporting,
+                enabled = !uiState.isBusy,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                if (uiState.isExporting) {
+                if (uiState.export.inProgress) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -293,10 +291,10 @@ private fun BackupExportSection(
                 Text("Export to File")
             }
 
-            if (uiState.exportSuccess) {
+            if (uiState.export.exportedCount != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Backup created successfully!",
+                    text = "Backup created successfully! ${uiState.export.exportedCount} birthdays exported.",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -348,10 +346,10 @@ private fun BackupImportSection(
 
             Button(
                 onClick = onImportClick,
-                enabled = !uiState.isImporting,
+                enabled = !uiState.isBusy,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                if (uiState.isImporting) {
+                if (uiState.import.inProgress) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -361,10 +359,14 @@ private fun BackupImportSection(
                 Text("Import from File")
             }
 
-            if (uiState.importSuccess) {
+            if (uiState.import.summary != null) {
                 Spacer(modifier = Modifier.height(8.dp))
+                val summary = uiState.import.summary
                 Text(
-                    text = "Backup restored successfully! ${uiState.importedCount ?: 0} birthdays imported.",
+                    text =
+                        "Backup restored successfully! " +
+                            "${summary.importedCount} birthdays imported" +
+                            if (summary.skippedCount > 0) ", ${summary.skippedCount} skipped." else ".",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -470,4 +472,22 @@ private fun ConflictStrategyDialog(
             }
         },
     )
+}
+
+/**
+ * Maps a typed backup error to a user-friendly message.
+ */
+private fun backupErrorMessage(error: BackupError): String {
+    return when (error) {
+        is BackupError.Storage ->
+            "Could not access the selected file." +
+                (error.detail?.let { " ($it)" } ?: "")
+        is BackupError.Database ->
+            "The restore failed and your data was not changed. Please try again."
+        is BackupError.InvalidFile ->
+            "The selected file is not a valid backup file."
+        is BackupError.UnsupportedVersion ->
+            "This backup was created by a newer app version (format v${error.version}) " +
+                "and cannot be imported. Please update the app first."
+    }
 }

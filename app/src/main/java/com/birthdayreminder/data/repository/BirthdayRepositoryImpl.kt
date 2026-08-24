@@ -1,6 +1,8 @@
 package com.birthdayreminder.data.repository
 
+import androidx.room.withTransaction
 import com.birthdayreminder.data.local.dao.BirthdayDao
+import com.birthdayreminder.data.local.database.AppDatabase
 import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.domain.error.ErrorHandler
 import kotlinx.coroutines.flow.Flow
@@ -19,10 +21,24 @@ class BirthdayRepositoryImpl
     @Inject
     constructor(
         private val birthdayDao: BirthdayDao,
+        private val database: AppDatabase,
         private val errorHandler: ErrorHandler,
     ) : BirthdayRepository {
         override fun getAllBirthdays(): Flow<List<Birthday>> {
             return birthdayDao.getAllBirthdays()
+        }
+
+        override suspend fun getAllBirthdaysSnapshot(): List<Birthday> {
+            return try {
+                birthdayDao.getAllBirthdaysSnapshot()
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to get birthday snapshot")
+                throw Exception(errorHandler.handleDatabaseError(e), e)
+            }
+        }
+
+        override suspend fun <T> runInTransaction(block: suspend () -> T): T {
+            return database.withTransaction { block() }
         }
 
         override fun getBirthdaysForDate(monthDay: String): Flow<List<Birthday>> {

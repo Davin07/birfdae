@@ -57,6 +57,12 @@ android {
         abortOnError = false
         checkReleaseBuilds = false
     }
+    testOptions {
+        unitTests.all {
+            // Mockito's bundled ByteBuddy predates this JVM; allow it to instrument anyway.
+            it.jvmArgs("-Dnet.bytebuddy.experimental=true")
+        }
+    }
 }
 
 room {

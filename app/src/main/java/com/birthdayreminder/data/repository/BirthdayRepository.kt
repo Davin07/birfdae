@@ -15,6 +15,12 @@ interface BirthdayRepository {
     fun getAllBirthdays(): Flow<List<Birthday>>
 
     /**
+     * Retrieves a one-shot snapshot of all birthdays.
+     * Useful inside transactions where a reactive Flow is unnecessary.
+     */
+    suspend fun getAllBirthdaysSnapshot(): List<Birthday>
+
+    /**
      * Retrieves birthdays for a specific date (month and day).
      * Used for finding birthdays on a particular calendar date.
      */
@@ -68,4 +74,15 @@ interface BirthdayRepository {
      * Returns birthdays that match the search query (case-insensitive).
      */
     fun searchBirthdaysByName(searchQuery: String): Flow<List<Birthday>>
+
+    /**
+     * Runs the given block inside a single database transaction.
+     *
+     * All database operations performed within the block either fully succeed or fully roll back,
+     * guaranteeing all-or-nothing semantics for multi-step operations such as backup imports.
+     *
+     * @param block Operations to execute atomically
+     * @return The value returned by the block
+     */
+    suspend fun <T> runInTransaction(block: suspend () -> T): T
 }
