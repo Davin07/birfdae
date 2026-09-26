@@ -2,13 +2,17 @@
 
 ## Build/Lint/Test Commands
 
+All Gradle commands work as-is from Git Bash or any POSIX shell — including on Windows.
+`gradlew` is pinned to LF line endings via `.gitattributes`, so it is safe to invoke
+directly. If you are in `cmd.exe` or PowerShell, use `gradlew.bat` (no `./` prefix).
+
 ### Build Commands
 - **Full build**: `./gradlew build` (includes compilation, tests, and linting)
-  - On Windows: `./gradlew.bat build`
+  - On Windows: `gradlew.bat build`
 - **Assemble only**: `./gradlew assemble` (compiles without running tests)
-  - On Windows: `./gradlew.bat assemble`
+  - On Windows: `gradlew.bat assemble`
 - **Clean build**: `./gradlew clean build`
-  - On Windows: `./gradlew.bat clean build`
+  - On Windows: `gradlew.bat clean build`
 
 ### Lint Commands
 - **Kotlin linting**: `./gradlew ktlintCheck`

@@ -1,0 +1,21 @@
+# Shell scripts must stay LF. A gradlew checked out with CRLF endings fails on
+# every Unix runner with "bad interpreter" and breaks the wrapper invocation.
+gradlew      text eol=lf
+*.sh         text eol=lf
+*.bash       text eol=lf
+
+# Windows batch files must stay CRLF.
+*.bat        text eol=crlf
+*.cmd        text eol=crlf
+
+# Binary files - never touch these.
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.gif        binary
+*.jar        binary
+*.keystore   binary
+*.jks        binary
+*.apk        binary
+*.aab        binary
+*.so         binary
