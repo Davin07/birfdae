@@ -110,9 +110,7 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           accept-android-sdk-licenses: true
-          api-level: 34
-          build-tools: 34.0.0
-          cmdline-tools: latest
+          packages: 'platforms;android-34 build-tools;34.0.0 platform-tools'
 
       - name: Cache Gradle dependencies
         uses: actions/cache@v3
