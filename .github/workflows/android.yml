@@ -110,9 +110,7 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           accept-android-sdk-licenses: true
-          api-level: 34
-          build-tools: 34.0.0
-          cmdline-tools: latest
+          packages: 'platforms;android-34 build-tools;34.0.0 platform-tools'
 
       - name: Cache Gradle dependencies
         uses: actions/cache@v3
@@ -127,20 +125,6 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v2
 
-      - name: Make gradlew executable
-        run: |
-          echo '#!/bin/sh' > gradlew
-          echo 'exec java -Dorg.gradle.appname=gradlew -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain "$@"' >> gradlew
-          chmod +x ./gradlew
-
-      - name: Clean environment variables
-        run: |
-          # Remove any problematic environment variables that might interfere with Gradle
-          unset CLASSPATH
-          unset GRADLE_OPTS
-          unset ANDROID_GRADLE_PLUGIN_VERSION
-          echo "Environment cleaned for Gradle"
-
       - name: Check if this build type should run
         id: check-build-type
         run: |
@@ -153,31 +137,9 @@ jobs:
             echo "should_run=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run linting with Gradle wrapper validation and clean environment
+      - name: Run linting
         if: steps.check-build-type.outputs.should_run == 'true'
-        run: |
-          # Clean environment completely
-          unset CLASSPATH
-          unset GRADLE_OPTS
-          unset ANDROID_GRADLE_PLUGIN_VERSION
-          unset GRADLE_USER_HOME
-          
-          # Verify settings file exists
-          echo "Checking for settings.gradle.kts..."
-          if [ -f "settings.gradle.kts" ]; then
-            echo "settings.gradle.kts found"
-            ls -la settings.gradle.kts
-            echo "Contents of settings.gradle.kts:"
-            cat settings.gradle.kts
-          else
-            echo "ERROR: settings.gradle.kts not found!"
-            ls -la
-            exit 1
-          fi
-          
-          # Try running Gradle with verbose logging to see what's happening
-          echo "Running Gradle lint..."
-          ./gradlew lint --stacktrace --no-daemon
+        run: ./gradlew lint
 
       - name: Run ktlint
         if: steps.check-build-type.outputs.should_run == 'true'

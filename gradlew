@@ -238,7 +238,7 @@ fi
 # metacharacters, like "a|b" or "a<b" or "a>b", in a variable, and use
 # printf "%q\n" "$var" on macOS 12.5 at least.)
 eval "set -- $(
-        printf '%s\n' "$@" |
+        printf '%s\n' "$DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS" |
         xargs -n1 |
         sed ' s~[^-[:alnum:]+,./:=@_]~\\&~g; ' |
         tr '\n' ' '
