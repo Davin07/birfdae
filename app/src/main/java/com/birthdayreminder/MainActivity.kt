@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,9 +29,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val isMaterialYouEnabled by settingsRepository.isMaterialYouEnabled.collectAsState(initial = false)
+            // Follow the system light/dark setting. This used to be hard-coded
+            // to true, which made the app dark-only.
+            val useDarkTheme = isSystemInDarkTheme()
 
             BirthdayReminderAppTheme(
-                darkTheme = true,
+                darkTheme = useDarkTheme,
                 dynamicColor = isMaterialYouEnabled,
             ) {
                 RequestNotificationPermission()

@@ -456,6 +456,10 @@ fun HeroBirthdayCard(
                     name = birthday.name,
                     imageUri = birthday.birthday.imageUri,
                     size = SaffronTokens.avatarLarge,
+                    // The hero is already primaryContainer, so the avatar needs
+                    // the surface colour to read as a distinct disc.
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
         }

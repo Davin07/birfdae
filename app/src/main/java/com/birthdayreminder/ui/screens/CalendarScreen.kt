@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -324,20 +325,32 @@ private fun CalendarDayCell(
         return
     }
 
-    val container =
-        when {
-            isSelected -> MaterialTheme.colorScheme.primary
-            birthdays.isNotEmpty() -> MaterialTheme.colorScheme.primaryContainer
-            isToday -> MaterialTheme.colorScheme.secondaryContainer
-            else -> MaterialTheme.colorScheme.surface
+    // Resolve the container and its ink together, so they can never disagree.
+    // Previously the "today" fill was painted by a second background() over the
+    // first, which left the birthday dot in primary gold sitting on rosewood.
+    val container: Color
+    val contentColor: Color
+    when {
+        isSelected -> {
+            container = MaterialTheme.colorScheme.primary
+            contentColor = MaterialTheme.colorScheme.onPrimary
         }
-    val contentColor =
-        when {
-            isSelected -> MaterialTheme.colorScheme.onPrimary
-            birthdays.isNotEmpty() -> MaterialTheme.colorScheme.onPrimaryContainer
-            isToday -> MaterialTheme.colorScheme.onSecondaryContainer
-            else -> MaterialTheme.colorScheme.onSurface
+
+        isToday -> {
+            container = MaterialTheme.colorScheme.secondary
+            contentColor = MaterialTheme.colorScheme.onSecondary
         }
+
+        birthdays.isNotEmpty() -> {
+            container = MaterialTheme.colorScheme.primaryContainer
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        }
+
+        else -> {
+            container = MaterialTheme.colorScheme.surface
+            contentColor = MaterialTheme.colorScheme.onSurface
+        }
+    }
 
     Box(
         modifier =
@@ -345,16 +358,7 @@ private fun CalendarDayCell(
                 .aspectRatio(1f)
                 .clip(SaffronTokens.radiusSmall)
                 .background(container)
-                .then(
-                    if (isToday && !isSelected) {
-                        Modifier.background(
-                            MaterialTheme.colorScheme.secondary,
-                            SaffronTokens.radiusSmall,
-                        )
-                    } else {
-                        Modifier
-                    },
-                ).clickable { onClick() },
+                .clickable { onClick() },
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -362,7 +366,7 @@ private fun CalendarDayCell(
                 text = date.dayOfMonth.toString(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isToday && !isSelected) MaterialTheme.colorScheme.onSecondary else contentColor,
+                color = contentColor,
             )
 
             if (birthdays.isNotEmpty()) {
@@ -374,13 +378,7 @@ private fun CalendarDayCell(
                                 Modifier
                                     .size(4.dp)
                                     .clip(CircleShape)
-                                    .background(
-                                        if (isSelected) {
-                                            MaterialTheme.colorScheme.onPrimary
-                                        } else {
-                                            MaterialTheme.colorScheme.primary
-                                        },
-                                    ),
+                                    .background(contentColor),
                         )
                     }
                 }

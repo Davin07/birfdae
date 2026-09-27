@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,8 +45,14 @@ fun PersonAvatar(
     imageUri: String?,
     modifier: Modifier = Modifier,
     size: Dp = SaffronTokens.avatarMedium,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
 ) {
-    val (container, content) = accentFor(name)
+    val (accentContainer, accentContent) = accentFor(name)
+    // A caller drawn on a primaryContainer surface must override these, or the
+    // avatar picks the same container it sits on and disappears.
+    val container = containerColor ?: accentContainer
+    val content = contentColor ?: accentContent
 
     Box(
         modifier =
