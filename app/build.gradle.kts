@@ -62,6 +62,9 @@ android {
             // Mockito's bundled ByteBuddy predates this JVM; allow it to instrument anyway.
             it.jvmArgs("-Dnet.bytebuddy.experimental=true")
         }
+        // The card renderer draws into a real android.graphics.Bitmap, which
+        // is a stub on the JVM. Robolectric supplies a working shadow.
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -133,6 +136,9 @@ dependencies {
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("app.cash.turbine:turbine:1.0.0")
     testImplementation("androidx.test:core:1.5.0")
+    // Real Bitmap/Canvas shadows, needed by the card image renderer tests.
+    testImplementation("org.robolectric:robolectric:4.11.1")
+    testImplementation("androidx.test.ext:junit:1.1.5")
     kaptTest("com.google.dagger:hilt-compiler:2.48")
 
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PushPin
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -112,6 +113,7 @@ fun PersonRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isPinned: Boolean = false,
+    onShareClick: (() -> Unit)? = null,
 ) {
     Surface(
         onClick = onClick,
@@ -169,6 +171,18 @@ fun PersonRow(
             }
 
             CountdownPill(days = daysUntil)
+
+            // Sharing is the growth surface, so it gets a visible target
+            // rather than being buried in a long-press or a swipe.
+            if (onShareClick != null) {
+                SaffronIconButton(
+                    onClick = onShareClick,
+                    icon = Icons.Rounded.Share,
+                    contentDescription = "Share a card for $name",
+                    tint = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                )
+            }
         }
     }
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        The card renderer writes PNGs into the app's own cache directory and
+        hands them out as content:// URIs, so a share target can read them
+        without needing storage permission. cache-path is already deleted by
+        the system when the app is evicted, which is what we want for
+        throwaway share images.
+    -->
+    <cache-path
+        name="shared_cards"
+        path="shared_cards/" />
+</paths>

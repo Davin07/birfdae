@@ -41,6 +41,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -51,10 +53,12 @@ import com.birthdayreminder.ui.components.birfdae.SaffronTokens
 import com.birthdayreminder.ui.navigation.BirthdayNavigation
 import com.birthdayreminder.ui.screens.AddEditBirthdayScreen
 import com.birthdayreminder.ui.screens.BackupScreen
+import com.birthdayreminder.ui.screens.BirthdayCardScreen
 import com.birthdayreminder.ui.screens.BirthdayListScreen
 import com.birthdayreminder.ui.screens.CalendarScreen
 import com.birthdayreminder.ui.screens.NotificationSettingsScreen
 import com.birthdayreminder.ui.screens.SearchScreen
+import com.birthdayreminder.ui.viewmodel.BirthdayCardViewModel
 
 /**
  * Main app composable that sets up navigation and bottom navigation bar
@@ -145,6 +149,23 @@ fun BirthdayApp(navController: NavHostController = rememberNavController()) {
                         onNavigateToEditBirthday = { birthdayId ->
                             navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthdayId))
                         },
+                        onShareCard = { birthdayId ->
+                            navController.navigate(BirthdayNavigation.createCardRoute(birthdayId))
+                        },
+                    )
+                }
+
+                composable(BirthdayNavigation.CARD_WITH_ID) { backStackEntry ->
+                    // The id travels in the route and is read by the ViewModel
+                    // from its SavedStateHandle.
+                    val vm: BirthdayCardViewModel = hiltViewModel(backStackEntry)
+                    val uiState by vm.uiState.collectAsStateWithLifecycle()
+                    BirthdayCardScreen(
+                        birthday = uiState.birthday,
+                        nextOccurrence = uiState.nextOccurrence,
+                        ageTurning = uiState.ageTurning,
+                        senderName = uiState.senderName,
+                        onNavigateBack = { navController.popBackStack() },
                     )
                 }
 

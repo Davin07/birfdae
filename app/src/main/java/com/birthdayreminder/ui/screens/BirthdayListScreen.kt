@@ -80,6 +80,7 @@ import kotlin.math.abs
 fun BirthdayListScreen(
     onNavigateToAddBirthday: () -> Unit,
     onNavigateToEditBirthday: (Long) -> Unit,
+    onShareCard: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BirthdayListViewModel = hiltViewModel(),
 ) {
@@ -94,6 +95,7 @@ fun BirthdayListScreen(
             onAddBirthday = onNavigateToAddBirthday,
             onDeleteBirthday = { birthday -> birthdayToDelete = birthday },
             onPinBirthday = { birthday -> viewModel.togglePin(birthday.id) },
+            onShareCard = onShareCard,
             onClearError = viewModel::clearError,
             modifier = Modifier.fillMaxSize(),
             birthdayToDelete = birthdayToDelete,
@@ -132,6 +134,7 @@ fun BirthdayListScreen(
  * @param onAddBirthday opens the add wizard
  * @param onDeleteBirthday requests deletion; the caller confirms it
  * @param onPinBirthday toggles the pin flag
+ * @param onShareCard opens the shareable card for a person id
  * @param onClearError dismisses an error
  * @param birthdayToDelete pending deletion, used to snap swipe rows back
  * @param modifier applied to the body
@@ -145,6 +148,7 @@ fun BirthdayListContent(
     onAddBirthday: () -> Unit,
     onDeleteBirthday: (BirthdayWithCountdown) -> Unit,
     onPinBirthday: (BirthdayWithCountdown) -> Unit,
+    onShareCard: (Long) -> Unit,
     onClearError: () -> Unit,
     birthdayToDelete: BirthdayWithCountdown? = null,
     modifier: Modifier = Modifier,
@@ -218,6 +222,7 @@ fun BirthdayListContent(
                                     birthday = birthday,
                                     snapBack = birthdayToDelete == null,
                                     onEdit = { onEditBirthday(birthday.id) },
+                                    onShare = { onShareCard(birthday.id) },
                                     onDelete = { onDeleteBirthday(birthday) },
                                     onPin = { onPinBirthday(birthday) },
                                 )
@@ -231,6 +236,7 @@ fun BirthdayListContent(
                                     birthday = birthday,
                                     snapBack = birthdayToDelete == null,
                                     onEdit = { onEditBirthday(birthday.id) },
+                                    onShare = { onShareCard(birthday.id) },
                                     onDelete = { onDeleteBirthday(birthday) },
                                     onPin = { onPinBirthday(birthday) },
                                 )
@@ -268,6 +274,7 @@ private fun SwipeablePersonRow(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onPin: () -> Unit,
+    onShare: () -> Unit,
 ) {
     val dateFormatter = remember { DateTimeFormatter.ofPattern("MMM dd") }
     val dismissState =
@@ -341,6 +348,7 @@ private fun SwipeablePersonRow(
                 daysUntil = birthday.daysUntilNext,
                 isPinned = birthday.birthday.isPinned,
                 onClick = onEdit,
+                onShareClick = onShare,
             )
         },
     )
