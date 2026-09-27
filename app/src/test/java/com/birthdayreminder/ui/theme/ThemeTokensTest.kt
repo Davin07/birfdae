@@ -239,7 +239,5 @@ class ThemeTokensTest {
     fun `font family instances are initialized`() {
         assertNotNull(Fraunces)
         assertNotNull(Figtree)
-        assertNotNull(FrauncesFamily)
-        assertNotNull(FigtreeFamily)
     }
 }

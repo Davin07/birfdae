@@ -1,7 +1,6 @@
 package com.birthdayreminder.ui.components.birfdae
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -12,7 +11,6 @@ import org.junit.Test
  * accent bucket that keeps a person's colour stable across screens.
  */
 class PersonComponentsTest {
-
     @Test
     fun `initials of a single name is one letter`() {
         assertEquals("A", initialsOf("Amma"))

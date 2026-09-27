@@ -8,33 +8,26 @@ import com.birthdayreminder.R
 /**
  * Custom font families for the Birf Dae Saffron UI.
  *
- * Fraunces: Display serif font used for headlines, display text, and celebration cards.
- * Figtree: Modern geometric sans-serif used for titles, body copy, and labels.
+ * Fraunces: display serif for headlines, display text and the birthday card.
+ * Figtree: geometric sans for titles, body copy and labels.
  *
- * Sourced as static TTF resources from res/font/ for 100% offline resilience.
- * Wrapped in try-catch falling back gracefully to FontFamily.Serif / FontFamily.Default
- * in case of headless test or resource loading failure.
+ * Both are static TTFs under `res/font/`, so they render identically offline
+ * and `ui-text-google-fonts` cert-pinning is not in the critical path.
+ *
+ * An earlier draft wrapped these in try/catch with a system-font fallback. That
+ * could never have worked as intended: `R.font.*` are compile-time constants,
+ * so a missing or renamed resource fails the build rather than throwing at
+ * runtime here. A silent fallback would also ship a wrong-looking app instead
+ * of a loud failure, so there isn't one.
  */
 val Fraunces: FontFamily =
-    try {
-        FontFamily(
-            Font(R.font.fraunces_semibold, FontWeight.SemiBold),
-        )
-    } catch (e: Throwable) {
-        FontFamily.Serif
-    }
+    FontFamily(
+        Font(R.font.fraunces_semibold, FontWeight.SemiBold),
+    )
 
 val Figtree: FontFamily =
-    try {
-        FontFamily(
-            Font(R.font.figtree_regular, FontWeight.Normal),
-            Font(R.font.figtree_medium, FontWeight.Medium),
-            Font(R.font.figtree_bold, FontWeight.Bold),
-        )
-    } catch (e: Throwable) {
-        FontFamily.Default
-    }
-
-// Aliases for compatibility
-val FrauncesFamily = Fraunces
-val FigtreeFamily = Figtree
+    FontFamily(
+        Font(R.font.figtree_regular, FontWeight.Normal),
+        Font(R.font.figtree_medium, FontWeight.Medium),
+        Font(R.font.figtree_bold, FontWeight.Bold),
+    )

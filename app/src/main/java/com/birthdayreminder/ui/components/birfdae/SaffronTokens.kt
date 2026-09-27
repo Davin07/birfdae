@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
  *
  * Everything in `ui/components/BirfDae` and every screen must take its
  * dimensions from here rather than hard-coding dp literals. The legacy
- * Lumina system carried ~128 raw dp values across the UI, which is how a
+ * previous system carried ~128 raw dp values across the UI, which is how a
  * design system drifts away from its own spacing rhythm.
  */
 object SaffronTokens {

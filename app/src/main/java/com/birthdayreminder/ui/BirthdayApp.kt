@@ -15,13 +15,12 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -39,18 +38,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.birthdayreminder.ui.components.LuminaGlassCard
+import com.birthdayreminder.ui.components.birfdae.SaffronTokens
 import com.birthdayreminder.ui.navigation.BirthdayNavigation
 import com.birthdayreminder.ui.screens.AddEditBirthdayScreen
 import com.birthdayreminder.ui.screens.BackupScreen
@@ -241,12 +238,16 @@ private fun BirthdayBottomNavigation(
             // Reduced by 2dp
             contentAlignment = Alignment.BottomCenter,
         ) {
-            // Glass Background
-            LuminaGlassCard(
+            // Flat dock. The glass treatment is gone: without a real
+            // elevation system behind it, the translucency only muddied the
+            // nav labels against scrolling content.
+            Surface(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(72.dp),
+                        .height(SaffronTokens.navBarHeight),
+                shape = SaffronTokens.radiusSheet,
+                color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
                 Row(
                     modifier =
@@ -307,16 +308,9 @@ private fun BirthdayBottomNavigation(
                 Box(
                     modifier =
                         Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(
-                                        MaterialTheme.colorScheme.primary,
-                                        MaterialTheme.colorScheme.tertiary,
-                                    ),
-                                ),
-                            )
+                            .size(SaffronTokens.fabSize)
+                            .clip(SaffronTokens.radiusMedium)
+                            .background(MaterialTheme.colorScheme.primary)
                             .clickable { navigateTo(navController, BirthdayNavigation.ADD_EDIT_BIRTHDAY) },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -324,7 +318,7 @@ private fun BirthdayBottomNavigation(
                         imageVector = Icons.Rounded.Add,
                         contentDescription = "Add",
                         tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
@@ -356,42 +350,35 @@ private fun BottomNavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val contentColor =
+        if (selected) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
+
     Column(
         modifier =
             modifier
-                .clip(CircleShape)
+                .clip(SaffronTokens.radiusMedium)
+                .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                 .clickable(onClick = onClick)
-                .padding(vertical = 8.dp),
+                .heightIn(min = SaffronTokens.minTouchTarget)
+                .padding(vertical = SaffronTokens.space6),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            modifier =
-                if (selected) {
-                    Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
-                } else {
-                    Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp),
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(22.dp),
+        )
         Text(
             text = label,
-            style =
-                MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 10.sp,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                ),
-            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
+            maxLines = 1,
         )
     }
 }

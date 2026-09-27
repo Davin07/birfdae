@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 /**
  * Saffron screen background.
  *
- * Replaces [LuminaBackground], which drew a blurred two-blob Canvas gradient
+ * Replaces the old background, which drew a blurred two-blob Canvas gradient
  * over the whole screen and then hard-coded a light-mode background that
  * overrode the theme. Saffron is flat: colour comes from the surface role and
  * hierarchy comes from type, spacing and the container roles.
@@ -59,7 +59,7 @@ fun SaffronBackground(
 }
 
 /**
- * Flat surface card. Replaces [LuminaGlassCard] (21 call sites), which used a
+ * Flat surface card. The old glass card had 21 call sites and used a
  * translucent fill plus a gradient border and needed a manual dark-mode branch
  * to stay legible.
  *
@@ -86,7 +86,7 @@ fun SurfaceCard(
 /**
  * Top app bar with an optional back affordance and trailing actions.
  *
- * The legacy [LuminaHeader] rendered a 40sp title in the centre of a Box, which
+ * The legacy header rendered a 40sp title in the centre of a Box, which
  * collided with both the back button and any trailing action. This lays out as
  * a normal Row so the three regions cannot overlap.
  *
@@ -216,7 +216,7 @@ fun SaffronIconButton(
 /**
  * Pill-shaped selectable chip with a 44dp touch floor.
  *
- * Replaces [LuminaChip], whose selected state was a 20%-alpha primary fill
+ * Replaces the old chip, whose selected state was a 20%-alpha primary fill
  * with primary-coloured text — roughly 2.4:1 against its own background.
  *
  * @param selected whether this chip is active

@@ -1,7 +1,6 @@
 package com.birthdayreminder.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,13 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,25 +42,39 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
 import com.birthdayreminder.ui.components.ConfirmationDialog
 import com.birthdayreminder.ui.components.ErrorDialog
-import com.birthdayreminder.ui.components.LuminaAvatar
-import com.birthdayreminder.ui.components.LuminaBackground
-import com.birthdayreminder.ui.components.LuminaBirthdayCard
-import com.birthdayreminder.ui.components.LuminaGlassCard
-import com.birthdayreminder.ui.components.LuminaHeader
+import com.birthdayreminder.ui.components.birfdae.PersonAvatar
+import com.birthdayreminder.ui.components.birfdae.PersonRow
+import com.birthdayreminder.ui.components.birfdae.SaffronBackground
+import com.birthdayreminder.ui.components.birfdae.SaffronButton
+import com.birthdayreminder.ui.components.birfdae.SaffronTokens
+import com.birthdayreminder.ui.components.birfdae.SectionHeader
+import com.birthdayreminder.ui.components.birfdae.SectionLabel
 import com.birthdayreminder.ui.viewmodel.BirthdayListUiState
 import com.birthdayreminder.ui.viewmodel.BirthdayListViewModel
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 
+/**
+ * Home screen: the next birthday that matters, then everyone else.
+ *
+ * Explore surface. The hero states only what the data supports - the name, the
+ * date, the age they turn and the reminder time - because this app has no
+ * reminder-history table, so any "you have never missed one" claim would be
+ * invented.
+ *
+ * @param onNavigateToAddBirthday opens the add wizard
+ * @param onNavigateToEditBirthday opens the edit wizard for a person id
+ * @param modifier applied to the screen
+ * @param viewModel screen ViewModel
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BirthdayListScreen(
@@ -76,17 +86,14 @@ fun BirthdayListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var birthdayToDelete by remember { mutableStateOf<BirthdayWithCountdown?>(null) }
 
-    LuminaBackground {
+    SaffronBackground {
         BirthdayListContent(
             uiState = uiState,
             onRefresh = viewModel::refresh,
             onEditBirthday = onNavigateToEditBirthday,
-            onDeleteBirthday = { birthday ->
-                birthdayToDelete = birthday
-            },
-            onPinBirthday = { birthday ->
-                viewModel.togglePin(birthday.id)
-            },
+            onAddBirthday = onNavigateToAddBirthday,
+            onDeleteBirthday = { birthday -> birthdayToDelete = birthday },
+            onPinBirthday = { birthday -> viewModel.togglePin(birthday.id) },
             onClearError = viewModel::clearError,
             modifier = Modifier.fillMaxSize(),
             birthdayToDelete = birthdayToDelete,
@@ -116,12 +123,26 @@ fun BirthdayListScreen(
     }
 }
 
+/**
+ * Stateless body of the home screen, split out so it can be previewed.
+ *
+ * @param uiState current screen state
+ * @param onRefresh invoked when pull-to-refresh settles
+ * @param onEditBirthday opens the edit wizard
+ * @param onAddBirthday opens the add wizard
+ * @param onDeleteBirthday requests deletion; the caller confirms it
+ * @param onPinBirthday toggles the pin flag
+ * @param onClearError dismisses an error
+ * @param birthdayToDelete pending deletion, used to snap swipe rows back
+ * @param modifier applied to the body
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BirthdayListContent(
     uiState: BirthdayListUiState,
     onRefresh: () -> Unit,
     onEditBirthday: (Long) -> Unit,
+    onAddBirthday: () -> Unit,
     onDeleteBirthday: (BirthdayWithCountdown) -> Unit,
     onPinBirthday: (BirthdayWithCountdown) -> Unit,
     onClearError: () -> Unit,
@@ -131,165 +152,87 @@ fun BirthdayListContent(
     val pullRefreshState = rememberPullToRefreshState()
 
     if (pullRefreshState.isRefreshing) {
-        LaunchedEffect(true) {
-            onRefresh()
-        }
+        LaunchedEffect(true) { onRefresh() }
     }
 
     LaunchedEffect(uiState.isRefreshing) {
-        if (!uiState.isRefreshing) {
-            pullRefreshState.endRefresh()
-        } else {
+        if (uiState.isRefreshing) {
             pullRefreshState.startRefresh()
+        } else {
+            pullRefreshState.endRefresh()
         }
     }
 
     Box(modifier = modifier.nestedScroll(pullRefreshState.nestedScrollConnection)) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            // Header
-            LuminaHeader(
-                title = "Birthdays",
-                onBackClick = null,
-            )
+        Column(modifier = Modifier.fillMaxSize()) {
+            SectionHeader(title = "Upcoming")
 
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
-            ) {
-                when {
-                    uiState.isLoading && uiState.birthdays.isEmpty() -> LoadingState(Modifier.fillMaxSize())
-                    uiState.hasError ->
-                        ErrorState(uiState.errorMessage ?: "Error", {
+            when {
+                uiState.isLoading && uiState.birthdays.isEmpty() -> LoadingState(Modifier.fillMaxSize())
+                uiState.hasError ->
+                    ErrorState(
+                        message = uiState.errorMessage ?: "Something went wrong.",
+                        onRetry = {
                             onClearError()
                             onRefresh()
-                        }, Modifier.fillMaxSize())
-                    uiState.showEmptyState -> EmptyState(Modifier.fillMaxSize())
-                    else -> {
-                        val sorted = uiState.birthdays
-                        val birthdayToday = sorted.find { it.isToday }
-                        val pinnedBirthday = sorted.find { it.birthday.isPinned }
-                        val hero = birthdayToday ?: pinnedBirthday ?: sorted.firstOrNull()
-                        val others = if (hero != null) sorted.filter { it.id != hero.id } else sorted
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                uiState.showEmptyState -> EmptyState(onAddBirthday = onAddBirthday, modifier = Modifier.fillMaxSize())
+                else -> {
+                    val sorted = uiState.birthdays
+                    // Today's birthday leads; otherwise a pinned person; otherwise the next up.
+                    val hero =
+                        sorted.firstOrNull { it.isToday }
+                            ?: sorted.firstOrNull { it.birthday.isPinned }
+                            ?: sorted.firstOrNull()
+                    val others = if (hero != null) sorted.filter { it.id != hero.id } else sorted
+                    val soon = others.filter { it.daysUntilNext <= 30 }
+                    val later = others.filter { it.daysUntilNext > 30 }
 
-                        LazyColumn(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            contentPadding = PaddingValues(bottom = 140.dp),
-                        ) {
-                            if (hero != null) {
-                                item {
-                                    HeroBirthdayCard(
-                                        birthday = hero,
-                                        isPinned = hero.birthday.isPinned && !hero.isToday,
-                                        isToday = hero.isToday,
-                                        onClick = { onEditBirthday(hero.id) },
-                                    )
-                                }
-                                item {
-                                    Text(
-                                        "COMING UP",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
-                                        letterSpacing = 1.sp,
-                                    )
-                                }
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(SaffronTokens.space8),
+                        contentPadding =
+                            PaddingValues(
+                                start = SaffronTokens.gutter,
+                                end = SaffronTokens.gutter,
+                                bottom = SaffronTokens.navBarHeight + SaffronTokens.space24,
+                            ),
+                    ) {
+                        if (hero != null) {
+                            item(key = "hero-${hero.id}") {
+                                HeroBirthdayCard(
+                                    birthday = hero,
+                                    isPinned = hero.birthday.isPinned && !hero.isToday,
+                                    isToday = hero.isToday,
+                                    onClick = { onEditBirthday(hero.id) },
+                                )
                             }
+                        }
 
-                            items(others, key = { it.id }) { birthday ->
-                                val dismissState =
-                                    rememberSwipeToDismissBoxState(
-                                        confirmValueChange = { value ->
-                                            when (value) {
-                                                SwipeToDismissBoxValue.EndToStart -> {
-                                                    onDeleteBirthday(birthday)
-                                                    false
-                                                }
-                                                SwipeToDismissBoxValue.StartToEnd -> {
-                                                    onPinBirthday(birthday)
-                                                    false
-                                                }
-                                                else -> false
-                                            }
-                                        },
-                                    )
+                        if (soon.isNotEmpty()) {
+                            item(key = "soon-header") { SectionLabel(title = "Next up") }
+                            items(soon, key = { it.id }) { birthday ->
+                                SwipeablePersonRow(
+                                    birthday = birthday,
+                                    snapBack = birthdayToDelete == null,
+                                    onEdit = { onEditBirthday(birthday.id) },
+                                    onDelete = { onDeleteBirthday(birthday) },
+                                    onPin = { onPinBirthday(birthday) },
+                                )
+                            }
+                        }
 
-                                LaunchedEffect(birthdayToDelete) {
-                                    if (
-                                        birthdayToDelete == null &&
-                                        dismissState.currentValue != SwipeToDismissBoxValue.Settled
-                                    ) {
-                                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                                    }
-                                }
-
-                                SwipeToDismissBox(
-                                    state = dismissState,
-                                    backgroundContent = {
-                                        val offset =
-                                            try {
-                                                dismissState.requireOffset()
-                                            } catch (e: Exception) {
-                                                0f
-                                            }
-                                        val widthDp = with(LocalDensity.current) { abs(offset).toDp() }
-
-                                        Box(Modifier.fillMaxSize()) {
-                                            if (offset > 0) {
-                                                Box(
-                                                    modifier =
-                                                        Modifier
-                                                            .fillMaxHeight()
-                                                            .width(widthDp)
-                                                            .align(Alignment.CenterStart)
-                                                            .background(
-                                                                MaterialTheme.colorScheme.primary,
-                                                                RoundedCornerShape(12.dp),
-                                                            )
-                                                            .padding(start = 20.dp),
-                                                    contentAlignment = Alignment.CenterStart,
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.PushPin,
-                                                        contentDescription = null,
-                                                        tint = Color.White,
-                                                    )
-                                                }
-                                            } else if (offset < 0) {
-                                                Box(
-                                                    modifier =
-                                                        Modifier
-                                                            .fillMaxHeight()
-                                                            .width(widthDp)
-                                                            .align(Alignment.CenterEnd)
-                                                            .background(Color(0xFFD32F2F), RoundedCornerShape(12.dp))
-                                                            .padding(end = 20.dp),
-                                                    contentAlignment = Alignment.CenterEnd,
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.Delete,
-                                                        contentDescription = null,
-                                                        tint = Color.White,
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    },
-                                    content = {
-                                        LuminaBirthdayCard(
-                                            name = birthday.name,
-                                            imageUri = birthday.birthday.imageUri,
-                                            dateString =
-                                                birthday.birthDate.format(
-                                                    DateTimeFormatter.ofPattern("MMM dd"),
-                                                ),
-                                            age = birthday.age,
-                                            daysUntil = birthday.daysUntilNext,
-                                            isPinned = birthday.birthday.isPinned,
-                                            onClick = { onEditBirthday(birthday.id) },
-                                        )
-                                    },
+                        if (later.isNotEmpty()) {
+                            item(key = "later-header") { SectionLabel(title = "Later this year") }
+                            items(later, key = { it.id }) { birthday ->
+                                SwipeablePersonRow(
+                                    birthday = birthday,
+                                    snapBack = birthdayToDelete == null,
+                                    onEdit = { onEditBirthday(birthday.id) },
+                                    onDelete = { onDeleteBirthday(birthday) },
+                                    onPin = { onPinBirthday(birthday) },
                                 )
                             }
                         }
@@ -307,6 +250,131 @@ fun BirthdayListContent(
     }
 }
 
+/**
+ * A person row with swipe-to-pin (from the start) and swipe-to-delete (from
+ * the end). Both gestures snap back, because both need confirmation.
+ *
+ * @param birthday person and countdown
+ * @param snapBack when true, settles the row; used after a dialog closes
+ * @param onEdit opens the edit wizard
+ * @param onDelete requests deletion
+ * @param onPin toggles the pin flag
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeablePersonRow(
+    birthday: BirthdayWithCountdown,
+    snapBack: Boolean,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onPin: () -> Unit,
+) {
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("MMM dd") }
+    val dismissState =
+        rememberSwipeToDismissBoxState(
+            confirmValueChange = { value ->
+                when (value) {
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        onDelete()
+                        false
+                    }
+                    SwipeToDismissBoxValue.StartToEnd -> {
+                        onPin()
+                        false
+                    }
+                    else -> false
+                }
+            },
+        )
+
+    LaunchedEffect(snapBack) {
+        if (snapBack && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+        }
+    }
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            val offset =
+                try {
+                    dismissState.requireOffset()
+                } catch (e: Exception) {
+                    0f
+                }
+            val widthDp = with(LocalDensity.current) { abs(offset).toDp() }
+
+            Box(Modifier.fillMaxSize()) {
+                if (offset > 0) {
+                    SwipeAction(
+                        width = widthDp,
+                        color = MaterialTheme.colorScheme.primary,
+                        alignStart = true,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PushPin,
+                            contentDescription = "Pin",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    }
+                } else if (offset < 0) {
+                    SwipeAction(
+                        width = widthDp,
+                        color = MaterialTheme.colorScheme.error,
+                        alignStart = false,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = MaterialTheme.colorScheme.onError,
+                        )
+                    }
+                }
+            }
+        },
+        content = {
+            PersonRow(
+                name = birthday.name,
+                imageUri = birthday.birthday.imageUri,
+                dateString = birthday.birthDate.format(dateFormatter),
+                ageTurning = birthday.age,
+                daysUntil = birthday.daysUntilNext,
+                isPinned = birthday.birthday.isPinned,
+                onClick = onEdit,
+            )
+        },
+    )
+}
+
+/** Coloured reveal that sits behind a swiped row. */
+@Composable
+private fun SwipeAction(
+    width: Dp,
+    color: Color,
+    alignStart: Boolean,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxHeight()
+                .width(width)
+                .background(color, SaffronTokens.radiusLarge)
+                .padding(horizontal = SaffronTokens.space20),
+        contentAlignment = if (alignStart) Alignment.CenterStart else Alignment.CenterEnd,
+    ) {
+        content()
+    }
+}
+
+/**
+ * The lead birthday, given the app's signature surface.
+ *
+ * @param birthday person and countdown
+ * @param isPinned whether this person is pinned
+ * @param isToday whether it is their birthday today
+ * @param onClick opens the edit wizard
+ */
 @Composable
 fun HeroBirthdayCard(
     birthday: BirthdayWithCountdown,
@@ -314,17 +382,20 @@ fun HeroBirthdayCard(
     isToday: Boolean = false,
     onClick: () -> Unit,
 ) {
-    Column {
-        val label =
-            when {
-                isToday -> "TODAY"
-                isPinned -> "PINNED"
-                else -> "UPCOMING"
-            }
+    val label =
+        when {
+            isToday -> "Today"
+            isPinned -> "Pinned"
+            else -> "Upcoming"
+        }
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("d MMMM") }
+    val timeFormatter = remember { DateTimeFormatter.ofPattern("h:mm a") }
+    val time = birthday.birthday.notificationTime ?: LocalTime.of(9, 0)
 
+    Column(modifier = Modifier.padding(bottom = SaffronTokens.space8)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 8.dp),
+            modifier = Modifier.padding(bottom = SaffronTokens.space8),
         ) {
             Icon(
                 imageVector = if (isPinned) Icons.Default.PushPin else Icons.Default.Notifications,
@@ -332,105 +403,65 @@ fun HeroBirthdayCard(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(16.dp),
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(Modifier.width(SaffronTokens.space4))
             Text(
-                label,
+                text = label.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
             )
         }
 
-        LuminaGlassCard(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Surface(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = SaffronTokens.radiusCard,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ) {
             Row(
-                modifier = Modifier.padding(24.dp).fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(SaffronTokens.space20),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        LuminaAvatar(
-                            name = birthday.name,
-                            imageUri = birthday.birthday.imageUri,
-                            modifier = Modifier.size(48.dp),
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = birthday.name,
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.DateRange,
-                            null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = birthday.birthDate.format(DateTimeFormatter.ofPattern("MMMM dd")),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Notifications,
-                            null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        val time = birthday.birthday.notificationTime ?: LocalTime.of(9, 0)
-                        Text(
-                            text = time.format(DateTimeFormatter.ofPattern("h:mm a")),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
+                    Text(
+                        text = birthday.name,
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Spacer(Modifier.height(SaffronTokens.space8))
+                    Text(
+                        text =
+                            if (isToday) {
+                                "Turning ${birthday.age} today"
+                            } else {
+                                "Turns ${birthday.age} on ${birthday.birthDate.format(dateFormatter)}"
+                            },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Spacer(Modifier.height(SaffronTokens.space4))
+                    Text(
+                        text = "Reminds at ${time.format(timeFormatter)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(Modifier.width(SaffronTokens.space12))
 
-                // Right Countdown Box
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.size(90.dp),
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            text = "${birthday.daysUntilNext}",
-                            style = MaterialTheme.typography.displayMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Text(
-                            text = "DAYS",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
+                PersonAvatar(
+                    name = birthday.name,
+                    imageUri = birthday.birthday.imageUri,
+                    size = SaffronTokens.avatarLarge,
+                )
             }
         }
     }
 }
 
-// ... Loading/Error/Empty States ...
 @Composable
 private fun LoadingState(modifier: Modifier) {
     Box(modifier, contentAlignment = Alignment.Center) {
@@ -445,24 +476,56 @@ private fun ErrorState(
     modifier: Modifier,
 ) {
     Box(modifier, contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Oops!", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
-            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Button(onClick = onRetry) { Text("Retry") }
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = SaffronTokens.space24),
+        ) {
+            Text(
+                text = "Something went wrong",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(SaffronTokens.space8))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(SaffronTokens.space16))
+            SaffronButton(onClick = onRetry, label = "Try again")
         }
     }
 }
 
+/**
+ * First-run state: one sentence, one action, no sample data.
+ *
+ * @param onAddBirthday opens the add wizard
+ * @param modifier applied to the block
+ */
 @Composable
-private fun EmptyState(modifier: Modifier) {
+private fun EmptyState(
+    onAddBirthday: () -> Unit,
+    modifier: Modifier,
+) {
     Box(modifier, contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = SaffronTokens.space24),
+        ) {
             Text(
-                "No Birthdays",
+                text = "No birthdays yet",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Text("Add your first birthday!", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(SaffronTokens.space8))
+            Text(
+                text = "Add the people you'd be sad to forget. About fifteen seconds each.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(SaffronTokens.space24))
+            SaffronButton(onClick = onAddBirthday, label = "Add your first birthday")
         }
     }
 }

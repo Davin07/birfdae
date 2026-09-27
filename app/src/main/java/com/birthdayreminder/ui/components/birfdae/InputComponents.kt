@@ -43,7 +43,7 @@ import java.time.format.DateTimeFormatter
 /**
  * Themed text field on a flat container fill.
  *
- * Replaces `LuminaTextField`, which guessed dark mode by inspecting
+ * Replaces the old text field, which guessed dark mode by inspecting
  * `colorScheme.surface` and then hard-coded `Color.White` for light mode. All
  * colour now comes from the colour scheme, so light and dark are handled by
  * the theme instead of by branches inside the component.

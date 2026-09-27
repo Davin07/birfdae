@@ -28,7 +28,7 @@ import coil.compose.AsyncImage
 /**
  * Circular person avatar with deterministic accent tinting.
  *
- * Replaces [LuminaAvatar], which always used a primary-to-tertiary gradient,
+ * Replaces the old avatar, which always used a primary-to-tertiary gradient,
  * so a list of people rendered as a column of identical circles. Tinting now
  * derives from the name via [accentFor], which keeps a person visually stable
  * across screens while making neighbours distinguishable.
@@ -83,7 +83,7 @@ fun PersonAvatar(
 /**
  * A person as a list row: avatar, name, date line, and a days-until counter.
  *
- * Replaces [LuminaBirthdayCard]. The counter numeral is set in the display
+ * Replaces the old person card. The counter numeral is set in the display
  * serif because it is the first thing the eye lands on when scanning a list.
  *
  * @param name person's name

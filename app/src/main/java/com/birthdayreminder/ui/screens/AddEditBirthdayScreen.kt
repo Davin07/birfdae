@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
@@ -32,6 +31,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
@@ -44,18 +44,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.birthdayreminder.domain.util.AgeUtils
 import com.birthdayreminder.domain.util.ZodiacUtils
-import com.birthdayreminder.ui.components.LuminaAvatarPicker
-import com.birthdayreminder.ui.components.LuminaBackground
-import com.birthdayreminder.ui.components.LuminaChip
-import com.birthdayreminder.ui.components.LuminaGlassCard
-import com.birthdayreminder.ui.components.LuminaHeader
-import com.birthdayreminder.ui.components.LuminaTextField
 import com.birthdayreminder.ui.components.NotificationTimePicker
+import com.birthdayreminder.ui.components.birfdae.SaffronAvatarPicker
+import com.birthdayreminder.ui.components.birfdae.SaffronBackground
+import com.birthdayreminder.ui.components.birfdae.SaffronButton
+import com.birthdayreminder.ui.components.birfdae.SaffronChip
+import com.birthdayreminder.ui.components.birfdae.SaffronTextField
+import com.birthdayreminder.ui.components.birfdae.SaffronTokens
+import com.birthdayreminder.ui.components.birfdae.SectionHeader
+import com.birthdayreminder.ui.components.birfdae.SurfaceCard
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayUiState
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayViewModel
 import java.time.Instant
@@ -84,10 +85,10 @@ fun AddEditBirthdayScreen(
         }
     }
 
-    LuminaBackground {
+    SaffronBackground {
         Column(modifier = Modifier.fillMaxSize()) {
-            LuminaHeader(
-                title = if (uiState.isEditMode) "Edit Birthday" else "Add Birthday",
+            SectionHeader(
+                title = if (uiState.isEditMode) "Edit Birthday" else "Add a birthday",
                 onBackClick = {
                     if (uiState.step > 1) {
                         viewModel.previousStep()
@@ -102,9 +103,9 @@ fun AddEditBirthdayScreen(
                 modifier =
                     Modifier
                         .weight(1f)
-                        .padding(horizontal = 24.dp)
+                        .padding(horizontal = SaffronTokens.gutter)
                         .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(SaffronTokens.space20),
             ) {
                 // Step Indicator
                 Row(
@@ -121,7 +122,7 @@ fun AddEditBirthdayScreen(
                             when (uiState.step) {
                                 1 -> "Identity"
                                 2 -> "Date"
-                                else -> "Notify"
+                                else -> "Personalize"
                             },
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -133,7 +134,7 @@ fun AddEditBirthdayScreen(
                     modifier =
                         Modifier.fillMaxWidth().height(
                             4.dp,
-                        ).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+                        ).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
                 ) {
                     Box(
                         modifier =
@@ -159,7 +160,7 @@ fun AddEditBirthdayScreen(
                         .fillMaxWidth()
                         .padding(24.dp),
             ) {
-                Button(
+                SaffronButton(
                     onClick = {
                         if (uiState.step < 3) {
                             viewModel.nextStep()
@@ -167,11 +168,10 @@ fun AddEditBirthdayScreen(
                             viewModel.saveBirthday()
                         }
                     },
+                    label = if (uiState.step < 3) "Continue" else "Save birthday",
                     modifier = Modifier.fillMaxWidth(),
                     enabled = canProceed(uiState),
-                ) {
-                    Text(if (uiState.step < 3) "Next" else "Save")
-                }
+                )
             }
         }
     }
@@ -213,7 +213,7 @@ fun Step1Identity(
     ) {
         // Image Picker
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            LuminaAvatarPicker(
+            SaffronAvatarPicker(
                 imageUri = uiState.imageUri,
                 onClick = {
                     launcher.launch(
@@ -222,21 +222,21 @@ fun Step1Identity(
                 },
             )
             Text(
-                text = "Upload Photo",
-                style = MaterialTheme.typography.titleMedium,
+                text = if (uiState.imageUri == null) "Add a photo" else "Change photo",
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
         // Inputs
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            LuminaTextField(
+            SaffronTextField(
                 value = uiState.name,
                 onValueChange = { viewModel.updateName(it) },
                 label = "Name",
                 modifier = Modifier.fillMaxWidth(),
                 isError = uiState.nameError != null,
-                supportingText = uiState.nameError?.let { { Text(it) } },
+                errorMessage = uiState.nameError,
             )
 
             // Relationship
@@ -245,7 +245,6 @@ fun Step1Identity(
                     text = "RELATIONSHIP",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    letterSpacing = 1.sp,
                 )
                 Row(
                     modifier =
@@ -256,7 +255,7 @@ fun Step1Identity(
                 ) {
                     val relationships = listOf("Family", "Friend", "Work", "Acquaintance", "Other")
                     relationships.forEach { rel ->
-                        LuminaChip(
+                        SaffronChip(
                             selected = uiState.relationship == rel,
                             onClick = { viewModel.updateRelationship(rel) },
                             label = rel,
@@ -310,7 +309,7 @@ fun Step2Date(
         )
 
         // Selected Date Card
-        LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
+        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -329,7 +328,7 @@ fun Step2Date(
         }
 
         // Embedded Date Picker
-        LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
+        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.height(400.dp)) {
                 DatePicker(
                     state = datePickerState,
@@ -353,48 +352,31 @@ fun Step2Date(
             val zodiac = ZodiacUtils.getZodiacSign(uiState.birthDate.month, uiState.birthDate.dayOfMonth)
             val age = AgeUtils.calculateUpcomingAge(uiState.birthDate)
 
-            Row(
+            // This is the payoff for entering a year: say plainly what it buys.
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                shape = SaffronTokens.radiusCard,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
-                LuminaGlassCard(modifier = Modifier.weight(1f).height(90.dp)) {
-                    Column(
-                        modifier = Modifier.padding(12.dp).fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            "ZODIAC",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            zodiac,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
-
-                LuminaGlassCard(modifier = Modifier.weight(1f).height(90.dp)) {
-                    Column(
-                        modifier = Modifier.padding(12.dp).fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            "TURNING",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Text(
-                            "$age",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
+                Column(modifier = Modifier.padding(SaffronTokens.space20)) {
+                    Text(
+                        text = "THIS UNLOCKS",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Spacer(Modifier.height(SaffronTokens.space4))
+                    Text(
+                        text = "Turning $age · $zodiac",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Spacer(Modifier.height(SaffronTokens.space4))
+                    Text(
+                        text = "Their age and star sign come from this date.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
                 }
             }
         }
@@ -411,7 +393,7 @@ fun Step3Personalization(
         modifier = Modifier.fillMaxWidth(),
     ) {
         // Notification Preview Card
-        LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
+        SurfaceCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(16.dp),
             ) {
@@ -545,10 +527,11 @@ fun Step3Personalization(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            LuminaTextField(
+            SaffronTextField(
                 value = uiState.notes,
                 onValueChange = { viewModel.updateNotes(it) },
-                label = "Gift ideas, preferences...",
+                label = "Notes",
+                placeholder = "Gift ideas, preferences...",
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth(),
             )

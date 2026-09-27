@@ -5,10 +5,10 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,17 +37,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.birthdayreminder.ui.components.LuminaBackground
-import com.birthdayreminder.ui.components.LuminaGlassCard
-import com.birthdayreminder.ui.components.LuminaHeader
 import com.birthdayreminder.ui.components.NotificationTimePicker
+import com.birthdayreminder.ui.components.birfdae.SaffronBackground
+import com.birthdayreminder.ui.components.birfdae.SaffronTokens
+import com.birthdayreminder.ui.components.birfdae.SectionHeader
+import com.birthdayreminder.ui.components.birfdae.SectionLabel
 import com.birthdayreminder.ui.navigation.BirthdayNavigation
 import com.birthdayreminder.ui.viewmodel.NotificationSettingsViewModel
 
+/**
+ * Notification and appearance settings.
+ *
+ * Configure surface: rows that toggle or open a system setting, with the
+ * explanation below rather than in a dialog.
+ *
+ * @param onNavigateBack unused; the screen is a bottom-nav destination
+ * @param navController used to reach the backup screen
+ * @param viewModel screen ViewModel
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationSettingsScreen(
@@ -57,28 +68,38 @@ fun NotificationSettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    LuminaBackground {
+    SaffronBackground {
         Column(modifier = Modifier.fillMaxSize()) {
-            LuminaHeader(
-                title = "Settings",
-                onBackClick = null,
-            )
+            SectionHeader(title = "Settings")
 
             Column(
                 modifier =
                     Modifier
                         .weight(1f)
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = SaffronTokens.gutter),
+                verticalArrangement = Arrangement.spacedBy(SaffronTokens.space12),
             ) {
-                // Compact Notification Status Card
-                LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    shape = SaffronTokens.radiusCard,
+                    color =
+                        if (uiState.areNotificationsEnabled) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.errorContainer
+                        },
+                    contentColor =
+                        if (uiState.areNotificationsEnabled) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        },
+                ) {
                     Row(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
+                                .padding(SaffronTokens.space20),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
@@ -86,12 +107,7 @@ fun NotificationSettingsScreen(
                                 Modifier
                                     .size(48.dp)
                                     .background(
-                                        color =
-                                            if (uiState.areNotificationsEnabled) {
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                            } else {
-                                                MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
-                                            },
+                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
                                         shape = CircleShape,
                                     ),
                             contentAlignment = Alignment.Center,
@@ -104,29 +120,21 @@ fun NotificationSettingsScreen(
                                         Icons.Outlined.Notifications
                                     },
                                 contentDescription = null,
-                                tint =
-                                    if (uiState.areNotificationsEnabled) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.error
-                                    },
                                 modifier = Modifier.size(24.dp),
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(Modifier.width(SaffronTokens.space16))
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text =
                                     if (uiState.areNotificationsEnabled) {
-                                        "Notifications Active"
+                                        "Notifications are on"
                                     } else {
-                                        "Notifications Disabled"
+                                        "Notifications are off"
                                     },
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
                             )
                             if (!uiState.areNotificationsEnabled) {
                                 TextButton(
@@ -143,25 +151,26 @@ fun NotificationSettingsScreen(
                                             }
                                         context.startActivity(intent)
                                     },
-                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                                    contentPadding = PaddingValues(0.dp),
                                 ) {
-                                    Text("Enable", color = MaterialTheme.colorScheme.error)
+                                    Text("Turn on in system settings")
                                 }
                             }
                         }
                     }
                 }
 
-                // Default Time Card
-                LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(20.dp)) {
+                Surface(
+                    shape = SaffronTokens.radiusCard,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                ) {
+                    Column(modifier = Modifier.padding(SaffronTokens.space20)) {
                         Text(
-                            text = "Default Notification Time",
+                            text = "Default reminder time",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(Modifier.height(SaffronTokens.space12))
                         NotificationTimePicker(
                             hour = uiState.defaultHour,
                             minute = uiState.defaultMinute,
@@ -170,25 +179,25 @@ fun NotificationSettingsScreen(
                     }
                 }
 
-                // Appearance Card
-                LuminaGlassCard(modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    shape = SaffronTokens.radiusCard,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                ) {
                     Row(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
+                                .padding(SaffronTokens.space20),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Material You Theme",
+                                text = "Use wallpaper colours",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                text = "Use system dynamic colors",
+                                text = "Off keeps the Saffron palette. On follows your system theme.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -200,30 +209,23 @@ fun NotificationSettingsScreen(
                     }
                 }
 
-                // Backup Card
-                LuminaGlassCard(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                navController.navigate(BirthdayNavigation.BACKUP)
-                            },
+                Surface(
+                    onClick = { navController.navigate(BirthdayNavigation.BACKUP) },
+                    shape = SaffronTokens.radiusCard,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
                 ) {
                     Row(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
+                                .padding(SaffronTokens.space20),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier =
                                 Modifier
                                     .size(48.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                        CircleShape,
-                                    ),
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -233,17 +235,16 @@ fun NotificationSettingsScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(Modifier.width(SaffronTokens.space16))
 
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Backup & Restore",
+                                text = "Backup & restore",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                text = "Protect and transfer your data",
+                                text = "Export or import a .birfdae file",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -251,43 +252,29 @@ fun NotificationSettingsScreen(
                     }
                 }
 
-                // Info Section
-                Column(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = "About Notifications",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                    )
+                SectionLabel(title = "How reminders work")
 
-                    val infoPoints =
-                        listOf(
-                            "Reminders are sent at the time specified for each birthday.",
-                            "Default notification time is 9:00 AM if not specified.",
-                            "Advance reminders can be set for 1, 3, or 7 days prior.",
-                            "Tapping a notification opens the birthday details.",
+                listOf(
+                    "Reminders arrive as a normal notification at the time set for each person.",
+                    "The default time is 9:00 AM if a person has none.",
+                    "Advance reminders can be set for 1, 3 or 7 days before.",
+                    "Nothing opens on its own. Tapping a reminder takes you to that person.",
+                ).forEach { point ->
+                    Row(modifier = Modifier.padding(bottom = SaffronTokens.space8)) {
+                        Text(
+                            text = "•",
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(end = SaffronTokens.space8),
                         )
-
-                    infoPoints.forEach { point ->
-                        Row {
-                            Text(
-                                "•",
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(end = 8.dp),
-                            )
-                            Text(
-                                text = point,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        Text(
+                            text = point,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(100.dp))
+                Spacer(Modifier.height(SaffronTokens.navBarHeight))
             }
         }
     }
