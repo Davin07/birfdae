@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Birf Dae — UI Concept v2 (Saffron)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..800,0..100,0..1&family=Figtree:wght@400..800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   BIRF DAE — v2. Saffron. Tokens from Google HCT (@material-color-utilities)
+   source #C98A12. secondary/tertiary are separate HCT palettes.
+   ============================================================ */
+:root{
+  --prim:#815600; --on-prim:#FFFFFF; --prim-c:#FFDDB1; --on-prim-c:#291800;
+  --sec:#8F4B3D;  --on-sec:#FFFFFF; --sec-c:#FFDAD3;  --on-sec-c:#3A0A02;
+  --tert:#844788; --on-tert:#FFFFFF;--tert-c:#FFD6FB;--on-tert-c:#36003D;
+  --err:#BA1A1A;  --on-err:#FFFFFF; --err-c:#FFDAD6;  --on-err-c:#410002;
+  --surf:#FFF8F3; --on-surf:#291800;
+  --surf-var:#FFDDB1; --on-surf-var:#614000;
+  --lowest:#FFFFFF; --low:#FFF1E3; --cont:#FFEBD3; --high:#FFE4C2; --highest:#FFDDB1;
+  --outline:#A16C00; --outline-var:#E9C08A;
+  --inv-surf:#442B00; --inv-on-surf:#FFEEDB; --inv-prim:#FFBA49;
+  --disp:"Fraunces",Georgia,serif;
+  --body:"Figtree",system-ui,-apple-system,sans-serif;
+}
+html[data-theme="dark"]{
+  --prim:#FFBA49; --on-prim:#442B00; --prim-c:#614000; --on-prim-c:#FFDDB1;
+  --sec:#FFB4A5;  --on-sec:#3A0A02;  --sec-c:#6C2D22;  --on-sec-c:#FFDAD3;
+  --tert:#F7AEF7; --on-tert:#36003D;--tert-c:#6A2F6E;--on-tert-c:#FFD6FB;
+  --err:#FFB4AB;  --on-err:#690005; --err-c:#93000A;  --on-err-c:#FFDAD6;
+  --surf:#1E1100; --on-surf:#FFDDB1;
+  --surf-var:#614000; --on-surf-var:#FFBA49;
+  --lowest:#170C00; --low:#291800; --cont:#2E1C00; --high:#3C2600; --highest:#4A2F00;
+  --outline:#C28408; --outline-var:#614000;
+  --inv-surf:#FFDDB1; --inv-on-surf:#442B00; --inv-prim:#815600;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#17130F;font-family:var(--body);color:#F6EFE9;padding:0 0 72px}
+
+/* ---------- chrome ---------- */
+.bar{position:sticky;top:0;z-index:50;background:rgba(23,19,15,.93);backdrop-filter:blur(12px);
+  border-bottom:1px solid #33291F;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.bar h1{font-family:var(--disp);font-size:20px;font-weight:600;letter-spacing:-.02em;flex:1;
+  font-variation-settings:"opsz" 40,"SOFT" 40,"WONK" 1}
+.bar .tg{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#FFBA49}
+.tg2{margin-left:auto;display:flex;gap:8px;align-items:center}
+button.tg2 button{font:inherit;font-size:12px;font-weight:800;padding:7px 14px;border-radius:99px;cursor:pointer;
+  border:1px solid #4A3B2C;background:#241D16;color:#E8DCCF}
+button.tg2 button[aria-pressed="true"]{background:#FFBA49;border-color:#FFBA49;color:#442B00}
+.tabs{display:flex;gap:6px;padding:14px 24px 0;flex-wrap:wrap;max-width:1500px;margin:0 auto}
+.tabs button{font:inherit;font-size:12px;font-weight:800;padding:8px 15px;border-radius:99px;cursor:pointer;
+  border:1px solid #3A2E24;background:#1E1811;color:#B5A492}
+.tabs button[aria-pressed="true"]{background:#FFDDBA;border-color:#FFBA49;color:#291800}
+
+.rail{max-width:1500px;margin:0 auto;padding:22px 24px 0;display:flex;gap:30px;overflow-x:auto;
+  align-items:flex-start;scroll-snap-type:x proximity}
+.rail::-webkit-scrollbar{height:12px}
+.rail::-webkit-scrollbar-thumb{background:#3A2E24;border-radius:99px}
+.rail::-webkit-scrollbar-track{background:#141110;border-radius:99px}
+
+.group{display:flex;flex-direction:column;gap:11px;scroll-snap-align:start}
+.group>h2{font-family:var(--disp);font-size:14px;font-weight:600;color:#FFBA49;letter-spacing:-.01em;
+  font-variation-settings:"opsz" 20,"SOFT" 40,"WONK" 1;display:flex;align-items:center;gap:8px}
+.group>h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#3A2E24,transparent)}
+.group>h2 em{font-style:normal;font-family:var(--body);font-size:10.5px;font-weight:700;color:#8D7C6C;letter-spacing:0}
+
+.phones{display:flex;gap:18px;flex-wrap:wrap}
+.phone{width:308px;flex:none;scroll-snap-align:start}
+.phone .cap{font-size:11px;color:#9A8877;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.phone .cap b{color:#F0E3D4;font-size:12.5px;font-weight:800}
+.shell{width:308px;height:640px;border-radius:38px;background:#000;padding:5px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.screen{width:100%;height:100%;border-radius:33px;overflow:hidden;background:var(--surf);color:var(--on-surf);
+  position:relative;display:flex;flex-direction:column;font-family:var(--body)}
+
+/* ---------- phone primitives ---------- */
+.status{height:26px;flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;font-size:10.5px;font-weight:800;color:var(--on-surf);opacity:.9}
+.sys{display:flex;gap:5px;align-items:center}
+.sys i{width:15px;height:9px;border:1.4px solid currentColor;border-radius:2px;display:block;position:relative}
+.sys i::after{content:"";position:absolute;inset:1.4px;background:currentColor;border-radius:1px}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:96px;height:22px;
+  background:#000;border-radius:0 0 15px 15px;z-index:6}
+
+.appbar{flex:none;padding:6px 18px 10px;display:flex;align-items:center;gap:11px;min-height:50px}
+.appbar .ttl{font-family:var(--disp);font-size:20px;font-weight:600;letter-spacing:-.02em;flex:1;
+  font-variation-settings:"opsz" 44,"SOFT" 42,"WONK" 1}
+.ic{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;cursor:pointer;
+  background:var(--cont);color:var(--on-surf);font-size:16px;font-weight:800;min-height:44px;min-width:44px}
+.ic.ghost{background:transparent}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 18px 14px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.pad-b{border-radius:22px 22px 0 0;background:var(--surf)}
+
+.nav{flex:none;margin:0 12px 10px;padding:7px;border-radius:22px;background:var(--cont);
+  display:flex;align-items:center;gap:2px}
+.nav a{flex:1;min-height:46px;border-radius:16px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;text-decoration:none;min-width:0}
+.nav a span{font-size:8.5px;font-weight:800;letter-spacing:.01em;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:100%;padding:0 1px}
+.nav a i{font-style:normal;font-size:16px;line-height:1}
+.nav a.on{background:var(--prim-c);color:var(--on-prim-c)}
+.nav a:not(.on){color:var(--on-surf-var)}
+.fab{width:46px;height:46px;border-radius:16px;background:var(--prim);color:var(--on-prim);display:grid;
+  place-items:center;font-size:22px;font-weight:600;flex:none;box-shadow:0 5px 14px rgba(0,0,0,.18)}
+
+.eyebrow{font-size:9.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--prim)}
+.h2{font-family:var(--disp);font-size:22px;font-weight:600;line-height:1.14;letter-spacing:-.02em;
+  font-variation-settings:"opsz" 48,"SOFT" 44,"WONK" 1}
+.h3{font-family:var(--disp);font-size:16px;font-weight:600;letter-spacing:-.01em;
+  font-variation-settings:"opsz" 30,"SOFT" 44,"WONK" 1}
+.body{font-size:12.5px;line-height:1.5;color:var(--on-surf-var)}
+.tiny{font-size:10.5px;line-height:1.45;color:var(--on-surf-var)}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:18px 0 9px}
+.sec-h h3{font-size:12px;font-weight:800;letter-spacing:.01em}
+.sec-h a{font-size:11px;font-weight:800;color:var(--prim);text-decoration:none}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;
+  border-radius:15px;font-size:14px;font-weight:800;cursor:pointer;border:none;font-family:var(--body);
+  width:100%;text-align:center}
+.btn.pri{background:var(--prim);color:var(--on-prim)}
+.btn.sec{background:var(--cont);color:var(--on-surf)}
+.btn.out{background:transparent;color:var(--prim);box-shadow:inset 0 0 0 1.5px var(--outline)}
+.btn.sm{min-height:44px;font-size:12.5px;border-radius:13px;padding:0 14px}
+.press:active{transform:scale(.975)}
+.press{transition:transform .1s ease}
+
+.card{background:var(--cont);border-radius:20px;padding:15px}
+
+/* person row */
+.prow{display:flex;align-items:center;gap:12px;background:var(--cont);border-radius:17px;padding:12px;cursor:pointer}
+.prow .av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:15px;
+  font-weight:800;flex:none;font-family:var(--disp);font-variation-settings:"opsz" 30,"SOFT" 40,"WONK" 1}
+.prow .tx{flex:1;min-width:0}
+.prow .nm{font-size:14px;font-weight:800;line-height:1.2}
+.prow .mt{font-size:11px;color:var(--on-surf-var);margin-top:2px}
+.prow .rt{text-align:right;flex:none}
+.prow .dy{font-size:17px;font-weight:800;font-family:var(--disp);line-height:1;
+  font-variation-settings:"opsz" 24,"SOFT" 40,"WONK" 1}
+.prow .dl{font-size:9.5px;color:var(--on-surf-var);margin-top:3px;font-weight:700}
+.pill{display:inline-block;font-size:9.5px;font-weight:800;padding:4px 9px;border-radius:99px;background:var(--high);
+  color:var(--on-surf-var)}
+.pill.hot{background:var(--prim-c);color:var(--on-prim-c)}
+.pill.soon{background:var(--sec-c);color:var(--on-sec-c)}
+.stack{display:flex;flex-direction:column;gap:8px}
+
+/* */
+.hr{height:1px;background:var(--outline-var);opacity:.5;margin:12px 0;border:0}
+.fld{background:var(--cont);border-radius:14px;padding:12px 14px;margin-bottom:9px}
+.fld .lb{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--on-surf-var)}
+.fld .vl{font-size:14.5px;font-weight:700;margin-top:4px}
+.fld.ph .vl{color:var(--on-surf-var);font-weight:500}
+.inp{width:100%;background:var(--cont);border:none;outline:none;border-radius:14px;padding:13px 14px;
+  font:inherit;font-size:14px;font-weight:600;color:var(--on-surf);margin-bottom:9px;min-height:48px}
+.inp::placeholder{color:var(--on-surf-var);font-weight:500;opacity:.75}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:10px 14px;border-radius:99px;background:var(--cont);
+  font-size:12.5px;font-weight:700;cursor:pointer;min-height:44px;min-width:44px;margin:0 5px 5px 0;color:var(--on-surf)}
+.chip.on{background:var(--prim);color:var(--on-prim)}
+
+.steps{display:flex;align-items:center;gap:7px;padding:2px 18px 12px;flex:none}
+.steps i{height:4px;flex:1;border-radius:99px;background:var(--cont)}
+.steps i.on{background:var(--prim)}
+
+.tgl{width:46px;height:27px;border-radius:99px;background:var(--cont);position:relative;flex:none;cursor:pointer;
+  transition:background .18s ease}
+.tgl::before{content:"";position:absolute;top:-9px;bottom:-9px;left:-8px;right:-8px}
+.tgl::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;
+  background:var(--on-surf-var);transition:transform .18s ease,background .18s ease}
+.tgl.on{background:var(--prim)}
+.tgl.on::after{transform:translateX(19px);background:var(--on-prim)}
+.setrow{display:flex;align-items:center;gap:12px;padding:13px 0;cursor:pointer}
+.setrow .tx{flex:1;min-width:0}
+.setrow .t1{font-size:14px;font-weight:700}
+.setrow .t2{font-size:11px;color:var(--on-surf-var);margin-top:2px;line-height:1.4}
+.setrow+.setrow{border-top:1px solid var(--outline-var);opacity:.4}
+
+/* mesh card (stands in for MeshGradientPainter) — kept in a light band so dark
+   ink always clears AA; the colour VARIETY comes from per-person hue rotation,
+   not from lightness range. */
+.mesh{border-radius:24px;padding:20px;position:relative;overflow:hidden;min-height:300px;display:flex;
+  flex-direction:column;background:linear-gradient(145deg,#FFECCD 0%,#FFD696 38%,#F7B560 72%,#E29242 100%)}
+.mesh::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 80% at 18% 12%,rgba(255,255,255,.55),transparent 58%),
+             radial-gradient(90% 70% at 88% 92%,rgba(140,60,20,.22),transparent 60%);pointer-events:none}
+.mesh>*{position:relative;z-index:2}
+.mesh .k{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(58,20,4,.88)}
+.mesh .who{font-family:var(--disp);font-size:38px;font-weight:600;line-height:1;letter-spacing:-.03em;margin-top:10px;
+  color:#3B1603;font-variation-settings:"opsz" 90,"SOFT" 46,"WONK" 1}
+.mesh .sub{font-size:12.5px;font-weight:700;color:rgba(59,22,3,.78);margin-top:7px}
+.mesh .quote{font-family:var(--disp);font-size:15px;line-height:1.4;margin-top:auto;padding-top:18px;
+  color:#3B1603;font-variation-settings:"opsz" 26,"SOFT" 60,"WONK" 1;font-style:italic}
+.mesh .sig{font-size:11px;font-weight:800;color:rgba(59,22,3,.88);margin-top:11px;letter-spacing:.03em}
+html[data-theme="dark"] .mesh{background:linear-gradient(145deg,#48260A 0%,#55300F 40%,#6B3E08 74%,#774713 100%)}
+html[data-theme="dark"] .mesh::after{background:radial-gradient(120% 80% at 18% 12%,rgba(255,214,150,.3),transparent 58%),
+  radial-gradient(90% 70% at 88% 92%,rgba(0,0,0,.28),transparent 60%)}
+html[data-theme="dark"] .mesh .k,html[data-theme="dark"] .mesh .sub,html[data-theme="dark"] .mesh .quote,
+html[data-theme="dark"] .mesh .sig,html[data-theme="dark"] .mesh .who{color:#FFE8C4}
+html[data-theme="dark"] .mesh .k,html[data-theme="dark"] .mesh .sub,html[data-theme="dark"] .mesh .sig{opacity:.78}
+
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:34px 16px;gap:5px}
+.empty .orb{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;font-size:30px;margin-bottom:12px;
+  background:var(--prim-c);color:var(--on-prim-c)}
+
+.note{max-width:1500px;margin:34px auto 0;padding:0 24px;font-size:12.5px;line-height:1.7;color:#A08E7C}
+.note h3{font-family:var(--disp);font-size:15px;color:#F0E3D4;margin-bottom:8px;
+  font-variation-settings:"opsz" 24,"SOFT" 40,"WONK" 1}
+.note code{background:#241D16;padding:2px 6px;border-radius:5px;font-size:11.5px;color:#FFDDBA}
+.note b{color:#E8DCCF}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div>
+    <div class="tg">Birf Dae · Concept v2</div>
+    <h1>Saffron — full app</h1>
+  </div>
+  <div class="tg2">
+    <button id="theme" aria-pressed="false">Dark</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button data-g="core" aria-pressed="true">Core</button>
+  <button data-g="add" aria-pressed="false">Add flow</button>
+  <button data-g="more" aria-pressed="false">Settings &amp; backup</button>
+  <button data-g="edge" aria-pressed="false">Edge cases</button>
+  <button data-g="all" aria-pressed="false">Show all</button>
+</div>
+
+<div class="rail" id="rail"></div>
+
+<div class="note">
+  <h3>What changed from v1</h3>
+  <p><b>Palette</b> — Saffron, generated from source <code>#C98A12</code> with Google's own HCT algorithm. Every
+  text pairing clears WCAG AA in both themes. <b>Nav</b> now matches the real app: Upcoming · Calendar · + · Search · Settings.
+  <b>Wizard step 3</b> is Personalization, not notifications, matching <code>AddEditBirthdayScreen</code>.
+  All 13 screens that exist in the real route graph are shown, including backup, notification settings and the empty state.</p>
+</div>
+
+<script>
+/* ---------- data ---------- */
+const PEOPLE = [
+  {n:"Amma",    ini:"A", bd:"2 Mar",  in:"in 6 days",  dy:"6",  tone:"prim", hot:true,  note:"She turns 53"},
+  {n:"Appa",    ini:"A", bd:"2 Mar",  in:"in 6 days",  dy:"6",  tone:"sec",  hot:true,  note:"He turns 55"},
+  {n:"Karthik", ini:"K", bd:"17 Oct", in:"in 29 days", dy:"29", tone:"tert", hot:false, note:"Turning 33"},
+  {n:"Priya",   ini:"P", bd:"28 Jul", in:"in 342 days",dy:"342",tone:"prim", hot:false, note:"Turning 41"},
+  {n:"Nikhil",  ini:"N", bd:"9 Nov",  in:"in 52 days", dy:"52", tone:"sec",  hot:false, note:"Turning 29"},
+  {n:"Bijoy",   ini:"B", bd:"14 Feb", in:"in 160 days",dy:"160",tone:"tert", hot:false, note:"Turning 38"},
+];
+const C = {prim:'var(--prim-c)',onprim:'var(--on-prim-c)',sec:'var(--sec-c)',onsec:'var(--on-sec-c)',
+           tert:'var(--tert-c)',ontert:'var(--on-tert-c)'};
+
+/* ---------- builders ---------- */
+const el = (h) => { const t=document.createElement('template'); t.innerHTML=h.trim(); return t.content.firstElementChild; };
+
+function status(){ return `<div class="status"><span>9:41</span><div class="sys"><i></i></div></div>`; }
+function nav(active, opts={}){
+  const it=(ic,l,on,id)=>`<a href="#" class="${on?'on':''}" data-go="${id||''}"><i>${ic}</i><span>${l}</span></a>`;
+  return `<div class="nav">
+    ${it('◷','Upcoming',active==='up',opts.goUp)}
+    ${it('▦','Calendar',active==='cal',opts.goCal)}
+    <div class="fab">+</div>
+    ${it('⌕','Search',active==='sea',opts.goSea)}
+    ${it('⚙','Settings',active==='set',opts.goSet)}
+  </div>`;
+}
+function sheet(screen, inner){
+  return `<div class="shell"><div class="screen"><div class="notch"></div>${status()}${inner}</div></div>`;
+}
+function phone(title, note, inner){
+  return `<div class="phone"><div class="cap"><b>${title}</b><span>${note}</span></div>${sheet('',inner)}</div>`;
+}
+
+/* ---------- SCREENS ---------- */
+const S = {};
+
+/* 1. Upcoming */
+S.up = phone('Upcoming','Explore', `
+  <div class="appbar"><div class="ttl">Upcoming</div><div class="ic ghost">⚙</div></div>
+  <div class="scroll">
+    <div class="eyebrow">✦ Today</div>
+    <div class="h2" style="margin-top:7px">Amma &amp; Appa<br>share a birthday</div>
+    <div class="body" style="margin-top:8px">They turn 53 and 55. You've remembered 11 of their last 11.</div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn pri press" style="flex:1" data-go="card">Send a wish</button>
+    </div>
+    <div class="sec-h"><h3>Next up</h3><a href="#" data-go="sea">See all</a></div>
+    <div class="stack">
+      ${PEOPLE.slice(2,5).map(p=>prow(p)).join('')}
+    </div>
+    <div class="sec-h"><h3>Later this year</h3></div>
+    <div class="stack">${PEOPLE.slice(5).map(p=>prow(p)).join('')}</div>
+  </div>
+  ${nav('up')}`);
+
+function prow(p){
+  return `<div class="prow press" data-go="card">
+    <div class="av" style="background:${C[p.tone]};color:${C['on'+p.tone]}">${p.ini}</div>
+    <div class="tx"><div class="nm">${p.n}</div><div class="mt">${p.bd} · ${p.note}</div></div>
+    <div class="rt"><div class="dy">${p.dy}</div><div class="dl">${p.in.replace('in ','')}</div></div>
+  </div>`;
+}
+
+/* 2. Birthday card — the artifact */
+S.card = phone('Birthday card','The shareable artifact', `
+  <div class="appbar">
+    <div class="ic ghost">←</div>
+    <div class="ttl" style="font-size:17px">Amma's card</div>
+    <div class="ic ghost">⋯</div>
+  </div>
+  <div class="scroll">
+    <div class="mesh">
+      <div class="k">Happy birthday</div>
+      <div class="who">Amma</div>
+      <div class="sub">53 years · Pisces · born 2 March</div>
+      <div class="quote">"Every year you somehow get more patient. That's the whole trick, isn't it?"</div>
+      <div class="sig">Made with Birf Dae</div>
+    </div>
+    <div class="tiny" style="margin-top:11px;text-align:center">The gradient is generated from her birth date and zodiac — hers will never repeat.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+      <button class="btn pri press">Share on WhatsApp</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn sec sm press" style="flex:1">Copy text</button>
+        <button class="btn sec sm press" style="flex:1">Save image</button>
+      </div>
+    </div>
+    <div class="sec-h"><h3>Try another line</h3></div>
+    <div class="tiny" style="margin-bottom:9px">Re-rolls the words, never the colours.</div>
+    <div><span class="chip">Warm</span><span class="chip">Funny</span><span class="chip on">Sincerest</span><span class="chip">Short</span></div>
+  </div>`);
+
+/* 3. Calendar */
+S.cal = phone('Calendar','Explore', `
+  <div class="appbar"><div class="ttl">September 2026</div>
+    <div class="ic ghost">‹</div><div class="ic ghost">›</div></div>
+  <div class="scroll">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">
+      ${['M','T','W','T','F','S','S'].map(d=>`<div style="text-align:center;font-size:9.5px;font-weight:800;color:var(--on-surf-var);padding:4px 0">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">
+      ${calCells()}
+    </div>
+    <div class="sec-h"><h3>This month</h3></div>
+    <div class="stack">
+      ${PEOPLE.slice(0,2).map(p=>prow(p)).join('')}
+    </div>
+  </div>
+  ${nav('cal')}`);
+
+function calCells(){
+  // September 2026 starts on a Tuesday
+  const lead=1, days=30, today=27;
+  let out='';
+  for(let i=0;i<lead;i++) out+=`<div></div>`;
+  const marks={2:['A','A'],10:['K'],14:['N'],27:['P']};
+  for(let d=1;d<=days;d++){
+    const m=marks[d];
+    const isT=d===today;
+    out+=`<div style="aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+      background:${m?'var(--prim-c)':'transparent'};box-shadow:${isT?'inset 0 0 0 1.5px var(--prim)':'none'}">
+      <span style="font-size:11.5px;font-weight:${m||isT?800:600};color:${m?'var(--on-prim-c)':'var(--on-surf)'}">${d}</span>
+      ${m?`<span style="display:flex;gap:1px">${m.map(x=>`<i style="width:4px;height:4px;border-radius:50%;background:var(--prim);display:block"></i>`).join('')}</span>`:''}
+    </div>`;
+  }
+  return out;
+}
+
+/* 4-6. Add wizard */
+S.a1 = phone('Add · 1 Identity','Configure', `
+  <div class="appbar"><div class="ic ghost">✕</div><div class="ttl" style="font-size:17px">Add a birthday</div></div>
+  <div class="steps"><i class="on"></i><i></i><i></i></div>
+  <div class="scroll">
+    <div class="eyebrow">Step 1 of 3</div>
+    <div class="h2" style="margin-top:7px">Who are we<br>remembering?</div>
+    <div class="body" style="margin-top:8px">Just a name to start. Nothing leaves this phone.</div>
+    <div style="margin-top:20px">
+      <input class="inp" placeholder="Name" value="Amma">
+    </div>
+    <div class="tiny" style="margin:2px 0 16px">Relationship</div>
+    <div>
+      <span class="chip">Family</span><span class="chip on">Parents</span><span class="chip">Friends</span>
+      <span class="chip">Partner</span><span class="chip">Colleagues</span><span class="chip">Other</span>
+    </div>
+    <div class="hr"></div>
+    <div class="tiny" style="margin-bottom:9px">Their photo</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:56px;height:56px;border-radius:18px;background:var(--cont);display:grid;place-items:center;
+        font-size:22px;flex:none">👤</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:700">Add a photo</div>
+      <div class="tiny" style="margin-top:2px">Optional — makes the card personal</div></div>
+    </div>
+  </div>
+  <div style="padding:0 18px 16px"><button class="btn pri press" data-go="a2">Continue</button></div>`);
+
+S.a2 = phone('Add · 2 Date','Configure', `
+  <div class="appbar"><div class="ic ghost">←</div><div class="ttl" style="font-size:17px">Add a birthday</div></div>
+  <div class="steps"><i class="on"></i><i class="on"></i><i></i></div>
+  <div class="scroll">
+    <div class="eyebrow">Step 2 of 3</div>
+    <div class="h2" style="margin-top:7px">When were they born?</div>
+    <div class="body" style="margin-top:8px">Year is optional — it unlocks their turning age.</div>
+    <div class="fld" style="margin-top:18px"><div class="lb">Date of birth</div><div class="vl">2 March 1973</div></div>
+    <div class="tiny" style="margin:14px 0 8px">Quick pick</div>
+    <div><span class="chip on">2 Mar</span><span class="chip">Today</span><span class="chip">No year</span></div>
+    <div class="hr"></div>
+    <div class="fld" style="background:var(--prim-c)">
+      <div class="lb" style="color:var(--on-prim-c);opacity:.8">This unlocks</div>
+      <div class="vl" style="color:var(--on-prim-c);margin-top:6px">53 years · Pisces</div>
+      <div class="tiny" style="color:var(--on-prim-c);margin-top:4px;opacity:.86">Her card gradient and her age line are built from this.</div>
+    </div>
+  </div>
+  <div style="padding:0 18px 16px"><button class="btn pri press" data-go="a3">Continue</button></div>`);
+
+S.a3 = phone('Add · 3 Personalize','Configure', `
+  <div class="appbar"><div class="ic ghost">←</div><div class="ttl" style="font-size:17px">Add a birthday</div></div>
+  <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <div class="scroll">
+    <div class="eyebrow">Step 3 of 3</div>
+    <div class="h2" style="margin-top:7px">Make it<br>worth sending</div>
+    <div class="body" style="margin-top:8px">Reminders and the message tone. Both changeable later.</div>
+    <div class="card" style="margin-top:18px;background:var(--cont)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="flex:1"><div style="font-size:14px;font-weight:700">Remind me</div>
+        <div class="tiny" style="margin-top:2px">9:00 AM · on the day</div></div>
+        <div class="tgl on"></div>
+      </div>
+    </div>
+    <div class="sec-h"><h3>Remind me earlier</h3></div>
+    <div><span class="chip">1 day</span><span class="chip on">3 days</span><span class="chip">1 week</span></div>
+    <div class="sec-h"><h3>Message tone</h3></div>
+    <div><span class="chip on">Warm</span><span class="chip">Funny</span><span class="chip">Sincerest</span><span class="chip">Short</span></div>
+    <div class="tiny" style="margin-top:6px">Only changes the wording. The colours come from her birth date.</div>
+  </div>
+  <div style="padding:0 18px 16px"><button class="btn pri press" data-go="up">Save birthday</button></div>`);
+
+/* 7. Search / people */
+S.sea = phone('Search','Explore + filter', `
+  <div class="appbar"><div class="ttl">People</div><div class="ic ghost">⚙</div></div>
+  <div class="scroll">
+    <input class="inp" placeholder="Search 12 people" value="k">
+    <div style="display:flex;gap:6px;overflow:hidden;margin-bottom:4px">
+      <span class="chip on" style="margin:0">All</span><span class="chip" style="margin:0">Family</span>
+      <span class="chip" style="margin:0">Friends</span><span class="chip" style="margin:0">This month</span>
+    </div>
+    <div class="sec-h"><h3>2 matches</h3></div>
+    <div class="stack">
+      ${PEOPLE.filter(p=>/k/i.test(p.n)).map(p=>prow(p)).join('')}
+      <div class="prow press">
+        <div class="av" style="background:var(--sec-c);color:var(--on-sec-c)">K</div>
+        <div class="tx"><div class="nm">Kavya</div><div class="mt">3 Jun · Turning 27</div></div>
+        <div class="rt"><div class="pill soon">Zodiac</div></div>
+      </div>
+    </div>
+    <div class="sec-h"><h3>Recently added</h3></div>
+    <div class="stack">${PEOPLE.slice(3,5).map(p=>prow(p)).join('')}</div>
+  </div>
+  ${nav('sea')}`);
+
+/* 8. Notification settings */
+S.set = phone('Settings','Configure', `
+  <div class="appbar"><div class="ttl">Settings</div></div>
+  <div class="scroll">
+    <div class="sec-h" style="margin-top:4px"><h3>Reminders</h3></div>
+    <div class="setrow"><div class="tx"><div class="t1">Notifications</div><div class="t2">Birthday alerts and heads-up</div></div><div class="tgl on"></div></div>
+    <div class="setrow"><div class="tx"><div class="t1">Reminder time</div><div class="t2">9:00 AM</div></div><div style="color:var(--on-surf-var);font-size:18px">›</div></div>
+    <div class="setrow"><div class="tx"><div class="t1">Lead time</div><div class="t2">3 days before</div></div><div style="color:var(--on-surf-var);font-size:18px">›</div></div>
+    <div class="sec-h"><h3>Your data</h3></div>
+    <div class="setrow" data-go="notif"><div class="tx"><div class="t1">Per-person reminders</div><div class="t2">Override the default for anyone</div></div><div style="color:var(--on-surf-var);font-size:18px">›</div></div>
+    <div class="setrow" data-go="bk"><div class="tx"><div class="t1">Backup &amp; restore</div><div class="t2">Export or import a .birfdae file</div></div><div style="color:var(--on-surf-var);font-size:18px">›</div></div>
+    <div class="sec-h"><h3>Appearance</h3></div>
+    <div class="setrow"><div class="tx"><div class="t1">Theme</div><div class="t2">Saffron · follows system</div></div><div style="color:var(--on-surf-var);font-size:18px">›</div></div>
+    <div class="setrow"><div class="tx"><div class="t1">Use wallpaper colours</div><div class="t2">Off — the brand palette is fixed</div></div><div class="tgl"></div></div>
+  </div>
+  ${nav('set')}`);
+
+/* 9. Per-person reminder override */
+S.notif = phone('Per-person','Configure', `
+  <div class="appbar"><div class="ic ghost">←</div><div class="ttl" style="font-size:17px">Amma's reminder</div></div>
+  <div class="scroll">
+    <div class="card" style="display:flex;align-items:center;gap:12px;background:var(--cont)">
+      <div class="av" style="width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+        font-size:15px;font-weight:800;background:var(--prim-c);color:var(--on-prim-c);font-family:var(--disp)">A</div>
+      <div><div style="font-size:14px;font-weight:800">Amma</div><div class="tiny" style="margin-top:2px">2 March · 53 · Pisces</div></div>
+    </div>
+    <div class="sec-h"><h3>Lead time</h3></div>
+    <div><span class="chip">On the day</span><span class="chip">1 day</span><span class="chip on">3 days</span><span class="chip">1 week</span></div>
+    <div class="sec-h"><h3>Time</h3></div>
+    <div><span class="chip">7:00 AM</span><span class="chip on">9:00 AM</span><span class="chip">12:00 PM</span><span class="chip">8:00 PM</span></div>
+    <div class="hr"></div>
+    <div class="tiny">A reminder arrives as a normal notification. Nothing opens on its own.</div>
+  </div>
+  <div style="padding:0 18px 16px"><button class="btn pri press">Save</button></div>`);
+
+/* 10. Backup */
+S.bk = phone('Backup','Configure', `
+  <div class="appbar"><div class="ic ghost">←</div><div class="ttl" style="font-size:17px">Backup &amp; restore</div></div>
+  <div class="scroll">
+    <div class="card" style="background:var(--prim-c);color:var(--on-prim-c)">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;opacity:.72">Last backup</div>
+      <div style="font-family:var(--disp);font-size:22px;font-weight:600;margin-top:7px;
+        font-variation-settings:'opsz' 40,'SOFT' 42,'WONK' 1">12 people · today</div>
+      <div style="font-size:11.5px;margin-top:5px;opacity:.8">birfdae-2026-09-27.birfdae · 24 KB</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+      <button class="btn pri press">Export a backup</button>
+      <button class="btn sec press">Import a backup</button>
+    </div>
+    <div class="hr"></div>
+    <div class="tiny">Restore replaces everything on this device. It asks first, and importing a bad file never leaves things half-done — either all 12 people land, or none do.</div>
+  </div>`);
+
+/* 11. Empty state */
+S.empty = phone('First run','Empty state', `
+  <div class="appbar"><div class="ttl">Upcoming</div></div>
+  <div class="scroll">
+    <div class="empty">
+      <div class="orb">🎂</div>
+      <div class="h2" style="text-align:center">No birthdays<br>yet</div>
+      <div class="body" style="text-align:center;margin-top:10px;max-width:230px">
+        Add the people you'd be sad to forget. It takes about fifteen seconds each.
+      </div>
+      <button class="btn pri press" style="margin-top:22px;max-width:230px" data-go="a1">Add your first birthday</button>
+    </div>
+    <div class="hr"></div>
+    <div class="sec-h" style="margin-top:4px"><h3>Why it matters</h3></div>
+    <div class="stack">
+      <div class="prow" style="cursor:default">
+        <div class="av" style="background:var(--cont);color:var(--on-surf)">1</div>
+        <div class="tx"><div class="nm">Nothing leaves the phone</div><div class="mt">No account, no server, no tracking.</div></div>
+      </div>
+      <div class="prow" style="cursor:default">
+        <div class="av" style="background:var(--cont);color:var(--on-surf)">2</div>
+        <div class="tx"><div class="nm">Cards worth forwarding</div><div class="mt">Share a card to WhatsApp in one tap.</div></div>
+      </div>
+    </div>
+  </div>
+  ${nav('up')}`);
+
+/* 12. Error state */
+S.err = phone('Validation','Error state', `
+  <div class="appbar"><div class="ic ghost">✕</div><div class="ttl" style="font-size:17px">Add a birthday</div></div>
+  <div class="steps"><i class="on"></i><i></i><i></i></div>
+  <div class="scroll">
+    <div class="eyebrow">Step 1 of 3</div>
+    <div class="h2" style="margin-top:7px">Who are we<br>remembering?</div>
+    <div style="margin-top:20px">
+      <input class="inp" style="box-shadow:inset 0 0 0 1.5px var(--err)" value="">
+      <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--err);margin:-4px 0 4px 2px">
+        <span>⚠</span> A name is needed so we know who this is
+      </div>
+    </div>
+    <div class="fld"><div class="lb">Relationship</div><div class="vl" style="color:var(--on-surf-var);font-weight:500">Choose one</div></div>
+    <div class="tiny" style="margin-top:14px">Both are needed to save. We keep what you already typed when something's missing.</div>
+  </div>
+  <div style="padding:0 18px 16px"><button class="btn pri press" style="opacity:.42">Continue</button></div>`);
+
+/* 13. Overdue / catch-up */
+S.late = phone('Overdue','High-arousal state', `
+  <div class="appbar"><div class="ttl">Upcoming</div><div class="ic ghost">⚙</div></div>
+  <div class="scroll">
+    <div class="card" style="background:var(--err-c);color:var(--on-err-c)">
+      <div class="eyebrow" style="color:var(--on-err-c)">Yesterday</div>
+      <div class="h2" style="margin-top:7px;color:var(--on-err-c)">You missed<br>Priya's 41st</div>
+      <div style="font-size:12.5px;line-height:1.5;margin-top:8px;color:var(--on-err-c);opacity:.88">
+        No lecture. Send the card now and it's still on time for today.
+      </div>
+      <button class="btn press" style="margin-top:14px;background:var(--err);color:var(--on-err)">Send a belated wish</button>
+      <button class="btn sm press" style="margin-top:8px;background:transparent;color:var(--on-err-c);
+        box-shadow:inset 0 0 0 1.5px currentColor">Not this year</button>
+    </div>
+    <div class="sec-h"><h3>Coming up</h3></div>
+    <div class="stack">
+      <div class="prow"><div class="av" style="background:var(--prim-c);color:var(--on-prim-c)">A</div>
+        <div class="tx"><div class="nm">Amma &amp; Appa</div><div class="mt">2 March · 6 days</div></div>
+        <div class="rt"><div class="pill hot">Soon</div></div></div>
+      ${PEOPLE.slice(2,4).map(p=>prow(p)).join('')}
+    </div>
+  </div>
+  ${nav('up')}`);
+
+/* ---------- render ---------- */
+const GROUPS = {
+  core: [['up',S.up],['card',S.card],['cal',S.cal],['empty',S.empty]],
+  add:  [['a1',S.a1],['a2',S.a2],['a3',S.a3],['err',S.err]],
+  more: [['sea',S.sea],['set',S.set],['notif',S.notif],['bk',S.bk],['late',S.late]],
+  edge: [['empty',S.empty],['err',S.err],['late',S.late]],
+};
+const ALL = ['up','card','cal','a1','a2','a3','sea','set','notif','bk','empty','err','late'];
+const BY = {};
+for (const pair of Object.values(GROUPS)) for (const [k, html] of pair) BY[k] = html;
+
+const LABELS = {
+  core:'Everyday', add:'The add flow', more:'Everything else', edge:'Hard states',
+};
+
+function render(which){
+  const keys = which==='all' ? ALL : GROUPS[which].map(x=>x[0]);
+  const rail=document.getElementById('rail');
+  rail.innerHTML = keys.length ? `<div class="group">
+      <h2>${LABELS[which]||''} <em>${keys.length} screens</em></h2>
+      <div class="phones">${keys.map(k=>BY[k]).join('')}</div>
+    </div>` : '';
+  document.querySelectorAll('#tabs button').forEach(b=>
+    b.setAttribute('aria-pressed', String(b.dataset.g===which)));
+}
+
+document.getElementById('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  render(b.dataset.g);
+  document.getElementById('rail').scrollLeft=0;
+});
+document.getElementById('rail').addEventListener('click',e=>{
+  const t=e.target.closest('[data-go]'); if(!t||!t.dataset.go) return;
+  e.preventDefault();
+  const k=t.dataset.go;
+  render(ALL.includes(k)?'all':document.querySelector('#tabs button[aria-pressed="true"]').dataset.g);
+  requestAnimationFrame(()=>{
+    const target=[...document.querySelectorAll('.phone')].find(p=>p.querySelector('.cap b').textContent.startsWith(byLabel(k)));
+    if(target) target.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+  });
+});
+function byLabel(k){ return {up:'Upcoming',card:'Birthday card',cal:'Calendar',a1:'Add · 1',a2:'Add · 2',
+  a3:'Add · 3',sea:'Search',set:'Settings',notif:'Per-person',bk:'Backup',empty:'First run',err:'Validation',late:'Overdue'}[k]||''; }
+
+document.getElementById('theme').addEventListener('click',e=>{
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme', d?'light':'dark');
+  e.target.textContent = d?'Dark':'Light';
+  e.target.setAttribute('aria-pressed', String(!d));
+});
+render('core');
+</script>
+</body>
+</html>
