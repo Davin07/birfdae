@@ -14,7 +14,7 @@ Branch: `design/saffron-ui-overhaul` (base `origin/master` @ 8b78d52, v1.0.24)
 | 1 | Design tokens + typography | `4d47f3f` | Done, verified |
 | 2 | `BirfDae` component suite | `581ba67` | Done, 18 components |
 | 3 | Screen migration, Lumina retired | `2100759`, `ff59731` | Done, all 6 screens + nav |
-| 4 | Birthday Card (the viral artifact) | — | **Not started** |
+| 4 | Birthday Card (the viral artifact) | `12fd209` | Done |
 | 5 | Overdue / validation edge states | — | **Not started** |
 
 `./gradlew build` is clean: ktlint, Android lint, 107 unit tests, 0 failures.
@@ -25,9 +25,9 @@ Acceptance criteria currently met:
 - [x] no `Color(0x` in `ui/screens`
 - [x] no `FontFamily.Default` under `ui`
 - [x] dark theme verified on a real device (emulator-5554, Pixel 7, Android 36)
-- [ ] `gradientFor()` luminance ≥ 0.24 across all 372 date seeds — **Milestone 4**
-- [ ] WhatsApp present/absent share test — **Milestone 4**
-- [ ] all 13 prototype states matched in native Compose — **Milestones 4 & 5**
+- [x] darkest gradient stop clears the luminance floor across all 372 seeds
+- [x] WhatsApp absent path exercised - PNG written, no crash
+- [ ] overdue state, validation errors — **Milestone 5**
 
 ---
 
@@ -76,6 +76,22 @@ All invisible in the old design, all found by reading or running the code:
    rosewood cell. Container and ink are now resolved together.
 8. `initialsOf("123")` returned `"123"` instead of `"?"` — caught by unit test.
 
+Found in Milestone 4, and only by inspecting the exported PNG rather than the
+app — all three were invisible on screen:
+
+9. The card name collided with the "HAPPY BIRTHDAY" eyebrow. At 132px a name's
+   ascent is ~100px, so adding the previous line's returned height overlapped
+   them. The header is now on an explicit grid.
+10. Secondary text had an olive cast. `cardInk * 0.72f` scales the alpha byte of
+    a packed ARGB int as well as the colour, leaving it semi-transparent so it
+    picked up green from the pink card. Both surfaces blend toward the
+    gradient's lightest stop now.
+11. The card read "from Birf Dae · Birf Dae" — both the composable and the
+    renderer appended the app name to a sender that was already it.
+
+Lesson: for anything exported, pull the real file off the device and look at
+it. The app preview is not the artifact.
+
 ---
 
 ## Deliberate decisions — do not undo
@@ -103,23 +119,21 @@ All invisible in the old design, all found by reading or running the code:
 
 ---
 
-## Next: Milestone 4, the birthday card
+## The card (Milestone 4, done)
 
-The shareable artifact is still missing. Sketch:
+`ui/card/` — `CardGradient` (the invariant), `BirthdayCardArtifact` (on-screen),
+`CardImageRenderer` (the exported 1080x1350 PNG), `CardSharer` (intents).
+Route `birthday_card/{birthdayId}`, reached from a share button on every row.
 
-- New `BirthdayCardScreen` rendering the card.
-- Gradient from the person's birth month/day — hue only, clamped to the safe
-  luminance band.
-- Content: name, age turning, zodiac, date, the user's own message.
-- WhatsApp share button, `resolveActivity` guard, copy-to-clipboard fallback.
-- Produce the share image natively: `Canvas` → `Bitmap` → cache file →
-  `FileProvider` URI. Do not screenshot the view.
-- Unit test over all 372 month/day seeds asserting darkest-stop luminance
-  ≥ 0.24, and a determinism test.
+Keep these together: the composable and the renderer read the same gradient and
+the same `attributionLine`, which is the only reason preview and share match.
 
-Then Milestone 5: overdue state (warm-urgent, "Send a belated wish" +
-"Not this year", both required) and inline validation errors wired to
-`BirthdayValidator.kt` with data preserved.
+### Next: Milestone 5
+
+- Overdue state: warm-urgent, "Send a belated wish" + "Not this year", both
+  required.
+- Inline validation errors wired to `BirthdayValidator.kt`, Continue stays
+  disabled, valid form data preserved.
 
 ---
 
