@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -284,19 +282,36 @@ private fun CalendarDaysGrid(
             }
         }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(7),
-        modifier = Modifier.fillMaxWidth().height(310.dp),
-        userScrollEnabled = false,
+    // A plain Column/Row rather than LazyVerticalGrid.
+    //
+    // Every cell is aspectRatio(1f), so each row must be exactly one seventh of
+    // the available width. LazyVerticalGrid was pinned to a fixed height, and a
+    // fixed height that does not equal cell width squeezed every cell
+    // vertically: the 19th and 26th grew into rounded bars that nearly touched
+    // across the row gap. Chunks of seven with fillMaxWidth each and a width
+    // derived row height cannot drift.
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        // The gap is load-bearing, not decoration. Two square cells in adjacent
+        // weeks filled the full column width and met exactly, so the 19th and
+        // the 26th read as one tall bar with a notch in it. A few dp of row
+        // spacing separates them.
+        verticalArrangement = Arrangement.spacedBy(SaffronTokens.space4),
     ) {
-        items(cells) { date ->
-            CalendarDayCell(
-                date = date,
-                birthdays = date?.let { birthdaysInMonth[it] } ?: emptyList(),
-                isSelected = date == selectedDate,
-                isToday = date == today,
-                onClick = { date?.let(onDateClick) },
-            )
+        cells.chunked(7).forEach { week ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                week.forEach { date ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        CalendarDayCell(
+                            date = date,
+                            birthdays = date?.let { birthdaysInMonth[it] } ?: emptyList(),
+                            isSelected = date == selectedDate,
+                            isToday = date == today,
+                            onClick = { date?.let(onDateClick) },
+                        )
+                    }
+                }
+            }
         }
     }
 }
