@@ -15,13 +15,12 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -35,37 +34,59 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.birthdayreminder.ui.components.LuminaGlassCard
+import com.birthdayreminder.ui.components.birfdae.SaffronTokens
 import com.birthdayreminder.ui.navigation.BirthdayNavigation
 import com.birthdayreminder.ui.screens.AddEditBirthdayScreen
 import com.birthdayreminder.ui.screens.BackupScreen
+import com.birthdayreminder.ui.screens.BirthdayCardScreen
 import com.birthdayreminder.ui.screens.BirthdayListScreen
 import com.birthdayreminder.ui.screens.CalendarScreen
 import com.birthdayreminder.ui.screens.NotificationSettingsScreen
+import com.birthdayreminder.ui.screens.PerPersonReminderScreen
+import com.birthdayreminder.ui.screens.PerPersonScreen
 import com.birthdayreminder.ui.screens.SearchScreen
+import com.birthdayreminder.ui.viewmodel.BirthdayCardViewModel
 
 /**
  * Main app composable that sets up navigation and bottom navigation bar
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BirthdayApp(navController: NavHostController = rememberNavController()) {
+fun BirthdayApp(
+    navController: NavHostController = rememberNavController(),
+    // The person a notification was tapped for, or null. Consumed once, so
+    // rotating the device does not navigate again.
+    notificationBirthdayId: Long? = null,
+    onNotificationHandled: () -> Unit = {},
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+    // A tap on a birthday notification should land on that person's card.
+    // Before this existed the intent carried the id and nothing read it, so
+    // tapping a reminder just opened the app to Home.
+    LaunchedEffect(notificationBirthdayId) {
+        val id = notificationBirthdayId
+        if (id != null) {
+            navController.navigate(BirthdayNavigation.createCardRoute(id))
+            onNotificationHandled()
+        }
+    }
     val currentDestination = navBackStackEntry?.destination
     val showBottomBar =
         currentDestination?.route in
@@ -148,6 +169,24 @@ fun BirthdayApp(navController: NavHostController = rememberNavController()) {
                         onNavigateToEditBirthday = { birthdayId ->
                             navController.navigate(BirthdayNavigation.createAddEditBirthdayRoute(birthdayId))
                         },
+                        onShareCard = { birthdayId ->
+                            navController.navigate(BirthdayNavigation.createCardRoute(birthdayId))
+                        },
+                    )
+                }
+
+                composable(BirthdayNavigation.CARD_WITH_ID) { backStackEntry ->
+                    // The id travels in the route and is read by the ViewModel
+                    // from its SavedStateHandle.
+                    val vm: BirthdayCardViewModel = hiltViewModel(backStackEntry)
+                    val uiState by vm.uiState.collectAsStateWithLifecycle()
+                    BirthdayCardScreen(
+                        birthday = uiState.birthday,
+                        nextOccurrence = uiState.nextOccurrence,
+                        ageTurning = uiState.ageTurning,
+                        senderName = uiState.senderName,
+                        onNavigateBack = { navController.popBackStack() },
+                        onShared = { birthdayId, year -> vm.recordShare(year) },
                     )
                 }
 
@@ -185,7 +224,39 @@ fun BirthdayApp(navController: NavHostController = rememberNavController()) {
                 composable(BirthdayNavigation.NOTIFICATION_SETTINGS) {
                     NotificationSettingsScreen(
                         onNavigateBack = { navController.popBackStack() },
-                        navController = navController,
+                        // Lead time is per person too, so both rows open the
+                        // same list rather than a global default that is not
+                        // stored anywhere.
+                        onNavigateToPerPerson = {
+                            navController.navigate(BirthdayNavigation.PER_PERSON_REMINDERS)
+                        },
+                        onNavigateToLeadTime = {
+                            navController.navigate(BirthdayNavigation.PER_PERSON_REMINDERS)
+                        },
+                        onNavigateToBackup = {
+                            navController.navigate(BirthdayNavigation.BACKUP)
+                        },
+                    )
+                }
+
+                composable(BirthdayNavigation.PER_PERSON_REMINDERS) {
+                    PerPersonReminderScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onOpenPerson = { personId ->
+                            navController.navigate(BirthdayNavigation.perPerson(personId))
+                        },
+                    )
+                }
+
+                // One person, one screen: the concept gives a single person
+                // their own page because the lead-time and time chips need
+                // room next to the name they belong to.
+                composable(BirthdayNavigation.PER_PERSON) { backStackEntry ->
+                    val personId =
+                        backStackEntry.arguments?.getString("personId")?.toLongOrNull() ?: 0L
+                    PerPersonScreen(
+                        personId = personId,
+                        onNavigateBack = { navController.popBackStack() },
                     )
                 }
 
@@ -241,12 +312,16 @@ private fun BirthdayBottomNavigation(
             // Reduced by 2dp
             contentAlignment = Alignment.BottomCenter,
         ) {
-            // Glass Background
-            LuminaGlassCard(
+            // Flat dock. The glass treatment is gone: without a real
+            // elevation system behind it, the translucency only muddied the
+            // nav labels against scrolling content.
+            Surface(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(72.dp),
+                        .height(SaffronTokens.navBarHeight),
+                shape = SaffronTokens.radiusSheet,
+                color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
                 Row(
                     modifier =
@@ -307,16 +382,9 @@ private fun BirthdayBottomNavigation(
                 Box(
                     modifier =
                         Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(
-                                        MaterialTheme.colorScheme.primary,
-                                        MaterialTheme.colorScheme.tertiary,
-                                    ),
-                                ),
-                            )
+                            .size(SaffronTokens.fabSize)
+                            .clip(SaffronTokens.radiusMedium)
+                            .background(MaterialTheme.colorScheme.primary)
                             .clickable { navigateTo(navController, BirthdayNavigation.ADD_EDIT_BIRTHDAY) },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -324,7 +392,7 @@ private fun BirthdayBottomNavigation(
                         imageVector = Icons.Rounded.Add,
                         contentDescription = "Add",
                         tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
@@ -356,42 +424,35 @@ private fun BottomNavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val contentColor =
+        if (selected) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
+
     Column(
         modifier =
             modifier
-                .clip(CircleShape)
+                .clip(SaffronTokens.radiusMedium)
+                .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                 .clickable(onClick = onClick)
-                .padding(vertical = 8.dp),
+                .heightIn(min = SaffronTokens.minTouchTarget)
+                .padding(vertical = SaffronTokens.space6),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            modifier =
-                if (selected) {
-                    Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
-                } else {
-                    Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp),
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(22.dp),
+        )
         Text(
             text = label,
-            style =
-                MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 10.sp,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                ),
-            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
+            maxLines = 1,
         )
     }
 }

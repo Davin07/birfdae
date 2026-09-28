@@ -19,7 +19,9 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Instrumented tests need Hilt's own Application to build the graph;
+        // HiltTestRunner swaps it in for the real one.
+        testInstrumentationRunner = "com.birthdayreminder.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -57,11 +59,23 @@ android {
         abortOnError = false
         checkReleaseBuilds = false
     }
+    sourceSets {
+        // MigrationTestHelper reads exported schemas from the test APK's
+        // assets. Without this the migration tests fail with
+        // "Cannot find the schema file in the assets folder".
+        getByName("androidTest") {
+            assets.srcDir("$projectDir/schemas")
+        }
+    }
+
     testOptions {
         unitTests.all {
             // Mockito's bundled ByteBuddy predates this JVM; allow it to instrument anyway.
             it.jvmArgs("-Dnet.bytebuddy.experimental=true")
         }
+        // The card renderer draws into a real android.graphics.Bitmap, which
+        // is a stub on the JVM. Robolectric supplies a working shadow.
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -133,9 +147,16 @@ dependencies {
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("app.cash.turbine:turbine:1.0.0")
     testImplementation("androidx.test:core:1.5.0")
+    // Real Bitmap/Canvas shadows, needed by the card image renderer tests.
+    testImplementation("org.robolectric:robolectric:4.11.1")
+    testImplementation("androidx.test.ext:junit:1.1.5")
     kaptTest("com.google.dagger:hilt-compiler:2.48")
 
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    // Hilt-aware host activity, needed by any test that renders screens with
+    // injected ViewModels.
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.48")
+    kaptAndroidTest("com.google.dagger:hilt-compiler:2.48")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")

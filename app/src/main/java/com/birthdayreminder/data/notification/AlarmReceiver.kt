@@ -3,6 +3,7 @@ package com.birthdayreminder.data.notification
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.birthdayreminder.domain.util.BirthdayYear
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -87,6 +88,7 @@ class AlarmReceiver : BroadcastReceiver() {
                             birthdayId = birthday.id,
                             personName = birthday.name,
                             age = age,
+                            birthdayYear = BirthdayYear.occurrenceYear(birthday.birthDate),
                         )
                         Timber.d("AlarmReceiver: Showed birthday notification for ${birthday.name}")
                     } else {
@@ -101,6 +103,7 @@ class AlarmReceiver : BroadcastReceiver() {
                             birthdayId = birthday.id,
                             personName = birthday.name,
                             daysUntil = advanceDays,
+                            birthdayYear = BirthdayYear.occurrenceYear(birthday.birthDate),
                         )
                         Timber.d("AlarmReceiver: Showed advance notification for ${birthday.name} ($advanceDays days)")
                     } else {

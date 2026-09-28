@@ -5,11 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.birthdayreminder.domain.error.ErrorHandler
 import com.birthdayreminder.domain.error.ErrorResult
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
+import com.birthdayreminder.domain.model.HeroPerson
+import com.birthdayreminder.domain.model.HomeHero
+import com.birthdayreminder.domain.model.HomeHeroCopy
+import com.birthdayreminder.domain.model.OverdueBirthday
+import com.birthdayreminder.domain.model.OverdueCalculator
 import com.birthdayreminder.domain.usecase.AddBirthdayResult
 import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
 import com.birthdayreminder.domain.usecase.DeleteBirthdayResult
 import com.birthdayreminder.domain.usecase.DeleteBirthdayUseCase
 import com.birthdayreminder.domain.usecase.GetAllBirthdaysUseCase
+import com.birthdayreminder.domain.usecase.GetReminderStreakUseCase
+import com.birthdayreminder.domain.usecase.SkipBirthdayForYearUseCase
 import com.birthdayreminder.domain.usecase.UpdateBirthdayResult
 import com.birthdayreminder.domain.usecase.UpdateBirthdayUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
@@ -38,7 +46,9 @@ class BirthdayListViewModel
         private val addBirthdayUseCase: AddBirthdayUseCase,
         private val updateBirthdayUseCase: UpdateBirthdayUseCase,
         private val deleteBirthdayUseCase: DeleteBirthdayUseCase,
+        private val skipBirthdayForYearUseCase: SkipBirthdayForYearUseCase,
         private val errorHandler: ErrorHandler,
+        private val getReminderStreakUseCase: GetReminderStreakUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(BirthdayListUiState())
         val uiState: StateFlow<BirthdayListUiState> = _uiState.asStateFlow()
@@ -84,12 +94,62 @@ class BirthdayListViewModel
                             _uiState.value =
                                 _uiState.value.copy(
                                     birthdays = birthdays,
+                                    overdue = computeOverdue(birthdays),
                                     isLoading = false,
                                     errorResult = null,
                                 )
+                            // The hero needs a streak, which needs a database
+                            // read, so it is recomputed alongside the list
+                            // rather than derived from it.
+                            loadHero(birthdays)
                         }
                 }
         }
+
+        /**
+         * Builds the home screen hero for the current list.
+         *
+         * Read on every emission so a streak recorded moments ago -- by
+         * opening the notification, or by coming back from sharing a card --
+         * shows up without a manual refresh.
+         *
+         * @param birthdays the list, already sorted by next occurrence
+         */
+        private suspend fun loadHero(birthdays: List<BirthdayWithCountdown>) {
+            val dueToday =
+                birthdays
+                    .filter { it.isToday && !isSkipped(it) }
+                    .map { it.toHeroPerson() }
+            val nextUp = birthdays.firstOrNull { !it.isToday && !isSkipped(it) }?.toHeroPerson()
+
+            val hero =
+                if (dueToday.isEmpty() && nextUp == null) {
+                    null
+                } else {
+                    val subject = dueToday.firstOrNull() ?: nextUp!!
+                    val birthday = birthdays.first { it.birthday.id == subject.birthdayId }.birthday
+                    val streak =
+                        getReminderStreakUseCase(
+                            birthdayId = birthday.id,
+                            name = birthday.name,
+                            birthDate = birthday.birthDate,
+                            createdAt = birthday.createdAt,
+                        )
+                    HomeHeroCopy.build(dueOn = dueToday, nextUp = nextUp, streak = streak)
+                }
+
+            _uiState.value = _uiState.value.copy(hero = hero)
+        }
+
+        /** A skipped birthday is not "next up" in any sense. */
+        private fun isSkipped(item: BirthdayWithCountdown): Boolean = item.birthday.skippedYear == LocalDate.now().year
+
+        private fun BirthdayWithCountdown.toHeroPerson(): HeroPerson =
+            HeroPerson(
+                birthdayId = birthday.id,
+                name = birthday.name,
+                ageTurning = age,
+            )
 
         /**
          * Refreshes the birthday list.
@@ -117,6 +177,7 @@ class BirthdayListViewModel
                             _uiState.value =
                                 _uiState.value.copy(
                                     birthdays = birthdays,
+                                    overdue = computeOverdue(birthdays),
                                     isRefreshing = false,
                                     errorResult = null,
                                 )
@@ -414,6 +475,44 @@ class BirthdayListViewModel
             }
         }
 
+        /**
+         * Records that the user is not celebrating this birthday this year.
+         *
+         * The overdue card has no dismiss, because a dismiss that does not
+         * persist brings the same prompt back on the next launch.
+         *
+         * @param birthdayId the person being skipped
+         */
+        fun skipForThisYear(birthdayId: Long) {
+            viewModelScope.launch {
+                try {
+                    if (skipBirthdayForYearUseCase(birthdayId)) {
+                        // Drop it from the prompt immediately rather than
+                        // waiting for the database flow to round-trip.
+                        _uiState.update { it.copy(overdue = it.overdue.filterNot { o -> o.id == birthdayId }) }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to skip birthday for this year")
+                    _uiState.update { it.copy(errorResult = errorHandler.createErrorResult(e, "skip birthday")) }
+                }
+            }
+        }
+
+        /**
+         * Works out which birthdays are currently overdue.
+         *
+         * The countdown flow always rolls forward to the next occurrence, so a
+         * date that has already passed is invisible to it. Overdue is derived
+         * here from the same rows, and is sorted most-recently-missed first.
+         *
+         * @param birthdays the loaded birthdays with countdowns
+         * @return the ones needing acknowledgement, oldest miss first
+         */
+        private fun computeOverdue(birthdays: List<BirthdayWithCountdown>): List<OverdueBirthday> =
+            birthdays
+                .mapNotNull { OverdueCalculator.overdueFor(it.birthday) }
+                .sortedByDescending { it.daysOverdue }
+
         fun togglePin(birthdayId: Long) {
             viewModelScope.launch {
                 try {
@@ -447,12 +546,23 @@ class BirthdayListViewModel
  */
 data class BirthdayListUiState(
     val birthdays: List<BirthdayWithCountdown> = emptyList(),
+    /**
+     * Birthdays whose date has passed and which the user has not yet
+     * acknowledged. Surfaced above the list, because a missed birthday is more
+     * urgent than an upcoming one.
+     */
+    val overdue: List<OverdueBirthday> = emptyList(),
+    /**
+     * The home screen's opening statement, or null when there is nothing due
+     * and nothing upcoming to lead with.
+     */
+    val hero: HomeHero? = null,
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val errorResult: ErrorResult? = null,
     val operationInProgress: Boolean = false,
 ) {
-    val isEmpty: Boolean get() = birthdays.isEmpty() && !isLoading && !isRefreshing
+    val isEmpty: Boolean get() = birthdays.isEmpty() && overdue.isEmpty() && !isLoading && !isRefreshing
     val hasError: Boolean get() = errorResult != null
     val showEmptyState: Boolean get() = isEmpty && !hasError
     val errorMessage: String? get() = errorResult?.message

@@ -152,7 +152,11 @@ app/release/
 logcat.txt
 
 # Database schema files
-app/schemas/
+# These ARE committed: MigrationTestHelper reads them from the test APK's
+# assets, so without them every migration test fails with
+# "Cannot find the schema file in the assets folder". The exported JSON is the
+# contract between old and new database versions -- losing it makes upgrades
+# unverifiable.
 
 # Android cache folders
 .cache/

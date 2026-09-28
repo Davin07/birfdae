@@ -3,6 +3,7 @@ package com.birthdayreminder.data.notification
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.birthdayreminder.domain.util.BirthdayYear
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
@@ -62,6 +63,7 @@ class BirthdayNotificationWorker(
                             birthdayId = birthday.id,
                             personName = birthday.name,
                             age = age,
+                            birthdayYear = BirthdayYear.occurrenceYear(birthday.birthDate),
                         )
                     }
                 }
@@ -76,6 +78,7 @@ class BirthdayNotificationWorker(
                             birthdayId = birthday.id,
                             personName = birthday.name,
                             daysUntil = advanceDays,
+                            birthdayYear = BirthdayYear.occurrenceYear(birthday.birthDate),
                         )
                     }
                 }

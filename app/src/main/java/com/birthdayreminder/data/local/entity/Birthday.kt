@@ -78,9 +78,36 @@ data class Birthday(
     @Contextual
     val notificationTime: LocalTime? = null,
     /**
+     * The tone the birthday card's message is written in.
+     *
+     * Persisted so the card opens in the tone the user chose when they added
+     * the person, rather than re-asking on every visit. Stored as the enum's
+     * name; an unknown value falls back to [com.birthdayreminder.ui.card.CardTone.WARM]
+     * at read time so a value written by a newer build cannot break an older one.
+     */
+    val cardTone: String? = null,
+    /**
+     * The most recent year the user explicitly said they are not celebrating
+     * this person's birthday.
+     *
+     * The overdue state offers "Not this year", and without somewhere to record
+     * that answer the same person would be prompted again on every launch. Null
+     * means the user has not skipped them.
+     *
+     * Stores a year rather than a date because the decision is per-year: skip
+     * 2026 and the prompt returns in 2027.
+     */
+    @androidx.room.ColumnInfo(defaultValue = "-1")
+    val skippedYear: Int = NO_SKIPPED_YEAR,
+    /**
      * Timestamp when this birthday entry was created.
      * Used for sorting and data management.
      */
     @Contextual
     val createdAt: LocalDateTime = java.time.Instant.now().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
-)
+) {
+    companion object {
+        /** Sentinel for "never skipped", since Room has no null for a primitive Int. */
+        const val NO_SKIPPED_YEAR: Int = -1
+    }
+}

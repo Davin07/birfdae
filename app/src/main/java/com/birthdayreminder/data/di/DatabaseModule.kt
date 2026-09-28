@@ -3,9 +3,12 @@ package com.birthdayreminder.data.di
 import android.content.Context
 import androidx.room.Room
 import com.birthdayreminder.data.local.dao.BirthdayDao
+import com.birthdayreminder.data.local.dao.ReminderEventDao
 import com.birthdayreminder.data.local.database.AppDatabase
 import com.birthdayreminder.data.repository.BirthdayRepository
 import com.birthdayreminder.data.repository.BirthdayRepositoryImpl
+import com.birthdayreminder.data.repository.ReminderEventRepository
+import com.birthdayreminder.data.repository.ReminderEventRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -27,6 +30,15 @@ abstract class DatabaseModule {
     @Binds
     @Singleton
     abstract fun bindBirthdayRepository(birthdayRepositoryImpl: BirthdayRepositoryImpl): BirthdayRepository
+
+    /**
+     * Binds the ReminderEventRepositoryImpl to the ReminderEventRepository interface.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindReminderEventRepository(
+        reminderEventRepositoryImpl: ReminderEventRepositoryImpl,
+    ): ReminderEventRepository
 
     companion object {
         /**
@@ -53,6 +65,14 @@ abstract class DatabaseModule {
         @Provides
         fun provideBirthdayDao(database: AppDatabase): BirthdayDao {
             return database.birthdayDao()
+        }
+
+        /**
+         * Provides the ReminderEventDao from the database.
+         */
+        @Provides
+        fun provideReminderEventDao(database: AppDatabase): ReminderEventDao {
+            return database.reminderEventDao()
         }
     }
 }

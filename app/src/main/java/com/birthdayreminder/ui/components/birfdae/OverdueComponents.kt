@@ -1,0 +1,199 @@
+package com.birthdayreminder.ui.components.birfdae
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.birthdayreminder.domain.model.OverdueBirthday
+import com.birthdayreminder.ui.theme.LocalOverdueColors
+
+/**
+ * A missed birthday, with a decision attached.
+ *
+ * Both actions are deliberately required. "Send a belated wish" opens the card,
+ * and "Not this year" records that the user is done with it for now. There is
+ * no dismiss, because a dismiss that does not persist brings the same prompt
+ * back on the next launch.
+ *
+ * The tone is warm rather than alarming. A forgotten birthday is not an error,
+ * and the app has no business making it feel like one.
+ *
+ * @param overdue the missed birthday
+ * @param onSendBelatedWish open the card for this person
+ * @param onNotThisYear record the skip for the current year
+ * @param modifier applied to the card
+ */
+@Composable
+fun OverdueBirthdayCard(
+    overdue: OverdueBirthday,
+    onSendBelatedWish: () -> Unit,
+    onNotThisYear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val overdueColors = LocalOverdueColors.current
+
+    SurfaceCard(
+        modifier = modifier.fillMaxWidth(),
+        containerColor = overdueColors.container,
+        contentColor = overdueColors.onContainer,
+    ) {
+        Column(modifier = Modifier.padding(SaffronTokens.space16)) {
+            Text(
+                text = overdueHeadline(overdue.daysOverdue),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+
+            Spacer(Modifier.height(SaffronTokens.space4))
+
+            Text(
+                text = overdue.name,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            Spacer(Modifier.height(SaffronTokens.space4))
+
+            Text(
+                text = overdueSubtitle(overdue),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+
+            Spacer(Modifier.height(SaffronTokens.space16))
+
+            // Full width, not half. The concept gives this the whole card
+            // width: it is the one thing the card is asking for, and splitting
+            // the row with a second button made it read as one of two equals.
+            SaffronButton(
+                onClick = onSendBelatedWish,
+                label = "Send a belated wish",
+                modifier = Modifier.fillMaxWidth(),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = overdueColors.accent,
+                        contentColor = overdueColors.onAccent,
+                    ),
+            )
+
+            Spacer(Modifier.height(SaffronTokens.space4))
+
+            // A ghost button, not an outlined one: the concept gives this a
+            // transparent fill with a hairline of its own text colour. Outlined
+            // picked up the theme's border colour, which is a grey that reads
+            // as disabled against the overdue container.
+            TextButton(
+                onClick = onNotThisYear,
+                modifier = Modifier.fillMaxWidth(),
+                colors =
+                    ButtonDefaults.textButtonColors(
+                        contentColor = overdueColors.onContainer,
+                    ),
+                contentPadding = PaddingValues(vertical = SaffronTokens.space12),
+                border = BorderStroke(1.5.dp, overdueColors.onContainer),
+                shape = SaffronTokens.radiusMedium,
+            ) {
+                Text(
+                    text = "Not this year",
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The line under a missed birthday's name: the age they turned and when.
+ *
+ * @param overdue the missed birthday
+ * @return a single line, e.g. "Turned 41 · 12 August"
+ */
+fun overdueSubtitle(overdue: OverdueBirthday): String {
+    val month = overdue.occurredOn.month.name.lowercase().replaceFirstChar { it.uppercase() }
+    return "Turned ${overdue.ageTurned} · ${overdue.occurredOn.dayOfMonth} $month"
+}
+
+/**
+ * The headline above a missed birthday's name.
+ *
+ * @param daysOverdue how many days past the date it is
+ * @return a phrase, not a countdown
+ */
+fun overdueHeadline(daysOverdue: Int): String =
+    when (daysOverdue) {
+        0 -> "TODAY"
+        1 -> "YESTERDAY"
+        in 2..6 -> "$daysOverdue DAYS AGO"
+        else -> "OVERDUE"
+    }
+
+/**
+ * The overdue birthdays that are not shown as a full card.
+ *
+ * A single quiet row rather than a list: the point of the collapsed state is
+ * that the rest are less urgent than the one on screen, and rendering them
+ * with the same weight would undo that. Every name is still a tap target, so
+ * none of them becomes unreachable.
+ *
+ * @param remaining the overdue birthdays after the first
+ * @param onSelect opens that person
+ */
+@Composable
+fun OverdueRemainderRow(
+    remaining: List<OverdueBirthday>,
+    onSelect: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SurfaceCard(
+        modifier = modifier.fillMaxWidth(),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(modifier = Modifier.padding(SaffronTokens.space16)) {
+            Text(
+                text = if (remaining.size == 1) "1 more" else "${remaining.size} more",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(SaffronTokens.space4))
+            remaining.forEach { overdue ->
+                Surface(
+                    onClick = { onSelect(overdue.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = SaffronTokens.space12),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = overdue.birthday.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            text = overdueHeadline(overdue.daysOverdue),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

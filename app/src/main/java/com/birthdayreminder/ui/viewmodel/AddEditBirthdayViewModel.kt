@@ -11,6 +11,7 @@ import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
 import com.birthdayreminder.domain.usecase.UpdateBirthdayResult
 import com.birthdayreminder.domain.usecase.UpdateBirthdayUseCase
 import com.birthdayreminder.domain.validation.BirthdayValidator
+import com.birthdayreminder.ui.card.CardTone
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,7 +76,12 @@ class AddEditBirthdayViewModel
                                     notificationMinute = birthday.notificationMinute ?: 0,
                                     // New fields
                                     imageUri = birthday.imageUri,
-                                    relationship = birthday.relationship ?: "Friend",
+                                    // Kept verbatim so an untagged or
+                                    // legacy value still round-trips; the chip row
+                                    // resolves it for display, and a Save with no
+                                    // change must not quietly retag the person.
+                                    relationship = birthday.relationship.orEmpty(),
+                                    cardTone = CardTone.fromName(birthday.cardTone),
                                     isPinned = birthday.isPinned,
                                     notificationOffsets = birthday.notificationOffsets.ifEmpty { listOf(0) },
                                     notificationTime = birthday.notificationTime,
@@ -142,6 +148,24 @@ class AddEditBirthdayViewModel
             _uiState.update { it.copy(relationship = relationship) }
         }
 
+        /**
+         * Turns reminders for this person on or off.
+         *
+         * @param enabled whether a reminder should be delivered
+         */
+        fun updateNotificationsEnabled(enabled: Boolean) {
+            _uiState.update { it.copy(notificationsEnabled = enabled) }
+        }
+
+        /**
+         * Chooses the card's message tone.
+         *
+         * @param tone the tone to write the message in
+         */
+        fun updateCardTone(tone: CardTone) {
+            _uiState.update { it.copy(cardTone = tone) }
+        }
+
         fun updateIsPinned(isPinned: Boolean) {
             _uiState.update { it.copy(isPinned = isPinned) }
         }
@@ -154,13 +178,56 @@ class AddEditBirthdayViewModel
             _uiState.update { it.copy(notificationTime = time) }
         }
 
+        /**
+         * Advances the wizard, validating the step being left first.
+         *
+         * Previously this just incremented, so a user who typed an invalid name
+         * either met a disabled Continue with no explanation, or discovered the
+         * problem on step 3 when the use case rejected the save. Validation now
+         * runs per step and lands inline on the field that caused it.
+         *
+         * Form data is never cleared here, so backing out of a step preserves
+         * everything already entered.
+         */
         fun nextStep() {
-            _uiState.update { it.copy(step = it.step + 1) }
+            val current = _uiState.value
+            val stepError = validateStep(current.step, current)
+            if (stepError != null) {
+                _uiState.update { it.withFieldError(current.step, stepError) }
+                return
+            }
+            _uiState.update { it.copy(step = it.step + 1, nameError = null, birthDateError = null, notesError = null) }
         }
 
         fun previousStep() {
             _uiState.update { if (it.step > 1) it.copy(step = it.step - 1) else it }
         }
+
+        /**
+         * Why the wizard cannot leave the current step, or null if it can.
+         *
+         * Surfaced next to the Continue button so a disabled control always
+         * comes with a reason.
+         */
+        fun currentStepError(): String? = _uiState.value.currentStepError(birthdayValidator)
+
+        /**
+         * Validates one step of the wizard.
+         *
+         * @param step the 1-based step number
+         * @param state the current form state
+         * @return an error to show, or null when the step may be left
+         */
+        private fun validateStep(
+            step: Int,
+            state: AddEditBirthdayUiState,
+        ): String? =
+            when (step) {
+                1 -> birthdayValidator.validateName(state.name)
+                2 -> birthdayValidator.validateBirthDate(state.birthDate)
+                3 -> birthdayValidator.validateNotes(state.notes)
+                else -> null
+            }
 
         fun saveBirthday() {
             val currentState = _uiState.value
@@ -186,6 +253,7 @@ class AddEditBirthdayViewModel
                                 isPinned = currentState.isPinned,
                                 notificationOffsets = currentState.notificationOffsets,
                                 notificationTime = currentState.notificationTime,
+                                cardTone = currentState.cardTone.name,
                             )
 
                         when (result) {
@@ -231,6 +299,7 @@ class AddEditBirthdayViewModel
                                 isPinned = currentState.isPinned,
                                 notificationOffsets = currentState.notificationOffsets,
                                 notificationTime = currentState.notificationTime,
+                                cardTone = currentState.cardTone.name,
                             )
 
                         when (result) {
@@ -319,10 +388,20 @@ data class AddEditBirthdayUiState(
     val notificationMinute: Int = 0,
     // New Fields
     val imageUri: String? = null,
-    val relationship: String = "Friend",
+    /**
+     * Empty until the user picks a chip. The wizard used to default this to
+     * "Friend", which pre-selected a relationship nobody had chosen and
+     * gave every person saved without touching the chips a relationship.
+     */
+    val relationship: String = "",
     val isPinned: Boolean = false,
     val notificationOffsets: List<Int> = listOf(0),
     val notificationTime: LocalTime? = null,
+    /**
+     * The tone the card's message should be written in. Chosen on the wizard's
+     * last step and persisted, so the card does not re-ask on every open.
+     */
+    val cardTone: CardTone = CardTone.DEFAULT,
     val step: Int = 1,
     // State
     val isLoading: Boolean = false,
@@ -341,4 +420,38 @@ data class AddEditBirthdayUiState(
 
     val errorMessage: String? get() = errorResult?.message
     val hasError: Boolean get() = errorResult != null
+
+    /**
+     * Routes a step's validation failure to the field that caused it.
+     *
+     * Step 1 owns the name, step 2 the birth date, step 3 the notes, so the
+     * error lands under the right input instead of in a generic banner.
+     *
+     * @param step the 1-based step that failed
+     * @param message the message from `BirthdayValidator`
+     */
+    fun withFieldError(
+        step: Int,
+        message: String,
+    ): AddEditBirthdayUiState =
+        when (step) {
+            1 -> copy(nameError = message)
+            2 -> copy(birthDateError = message)
+            3 -> copy(notesError = message)
+            else -> this
+        }
+
+    /**
+     * The validation error for the current step, if any.
+     *
+     * Used by the wizard's Continue button so it can explain itself instead of
+     * sitting disabled with no reason.
+     */
+    fun currentStepError(validator: BirthdayValidator): String? =
+        when (step) {
+            1 -> validator.validateName(name)
+            2 -> validator.validateBirthDate(birthDate)
+            3 -> validator.validateNotes(notes)
+            else -> null
+        }
 }
