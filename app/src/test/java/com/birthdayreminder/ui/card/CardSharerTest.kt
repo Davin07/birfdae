@@ -19,9 +19,17 @@ import org.robolectric.RobolectricTestRunner
 class CardSharerTest {
     private val ink = androidx.compose.ui.graphics.Color(0xFF1A1A17)
 
+    /** A rendered message, as the picker would hand the renderer. */
+    private fun message(text: String) =
+        CardMessage(
+            text = text,
+            tone = CardTone.WARM,
+            isPersonalNote = text == "Call you tonight",
+        )
+
     @Test
     fun `share message names the recipient and the age`() {
-        val message = CardSharer.shareMessage("Amma", 59)
+        val message = CardSharer.shareMessage("Amma", 59, "Some line about you.")
 
         assertTrue(message.contains("Amma"))
         assertTrue(message.contains("59"))
@@ -30,7 +38,7 @@ class CardSharerTest {
 
     @Test
     fun `share message does not claim a streak`() {
-        val message = CardSharer.shareMessage("Amma", 59)
+        val message = CardSharer.shareMessage("Amma", 59, "Some line about you.")
 
         // The schema has no reminder history, so a count would be invented.
         listOf("streak", "times you've", "11 of", "remembered").forEach { forbidden ->
@@ -42,6 +50,16 @@ class CardSharerTest {
     }
 
     @Test
+    fun `share text carries the line shown on the card`() {
+        val line = "Some line about you."
+        val text = CardSharer.shareMessage("Amma", 59, line)
+
+        // The recipient reads the text in WhatsApp next to the image. If they
+        // differ, the sender has chosen a wording that the image ignores.
+        assertTrue(text.contains(line))
+    }
+
+    @Test
     fun `renderer produces a correctly sized opaque bitmap`() {
         val bitmap =
             CardImageRenderer.render(
@@ -50,7 +68,7 @@ class CardSharerTest {
                 birthDate = java.time.LocalDate.of(1967, 9, 27),
                 occasionDate = java.time.LocalDate.of(2026, 9, 27),
                 senderName = "Birf Dae",
-                personalMessage = "Happy birthday.",
+                message = message("Happy birthday."),
                 createdAtYear = 2024,
             )
 
@@ -71,7 +89,7 @@ class CardSharerTest {
                 birthDate = java.time.LocalDate.of(1984, 2, 29),
                 occasionDate = java.time.LocalDate.of(2024, 2, 29),
                 senderName = "Birf Dae",
-                personalMessage = null,
+                message = message("Happy birthday."),
                 createdAtYear = null,
             )
 
@@ -79,7 +97,7 @@ class CardSharerTest {
     }
 
     @Test
-    fun `renderer works with no message and no provenance year`() {
+    fun `renderer works with no provenance year`() {
         val bitmap =
             CardImageRenderer.render(
                 name = "Sam",
@@ -87,7 +105,7 @@ class CardSharerTest {
                 birthDate = java.time.LocalDate.of(1996, 1, 1),
                 occasionDate = java.time.LocalDate.of(2026, 1, 1),
                 senderName = "Birf Dae",
-                personalMessage = null,
+                message = message("Happy birthday."),
                 createdAtYear = null,
             )
 

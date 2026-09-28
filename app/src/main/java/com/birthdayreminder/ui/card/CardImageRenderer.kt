@@ -1,5 +1,6 @@
 package com.birthdayreminder.ui.card
 
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -7,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -51,7 +53,7 @@ object CardImageRenderer {
      * @param birthDate drives the gradient and the zodiac
      * @param occasionDate the date printed on the card
      * @param senderName attribution line
-     * @param personalMessage the sender's words, or null
+     * @param message the message shown on the card, with the tone it came from
      * @param createdAtYear the year the person was added, or null to omit
      * @param fileName stable, filesystem-safe base name
      * @return a content URI, or null if rendering or writing failed
@@ -63,13 +65,13 @@ object CardImageRenderer {
         birthDate: LocalDate,
         occasionDate: LocalDate,
         senderName: String,
-        personalMessage: String?,
+        message: CardMessage,
         createdAtYear: Int?,
         fileName: String,
     ): Uri? {
         val bitmap =
             runCatching {
-                render(name, ageTurning, birthDate, occasionDate, senderName, personalMessage, createdAtYear)
+                render(name, ageTurning, birthDate, occasionDate, senderName, message, createdAtYear)
             }.getOrNull()
                 ?: return null
 
@@ -86,7 +88,75 @@ object CardImageRenderer {
     }
 
     /**
+     * Writes the card into the device's shared Pictures collection.
+     *
+     * Sharing writes to the cache, which is right for a temporary handoff but
+     * wrong for "Save image": the system is free to purge the cache, so a card
+     * the sender believes they have kept can vanish. MediaStore needs no
+     * storage permission from API 29 and produces a file the gallery shows.
+     *
+     * @param context used to reach MediaStore
+     * @param name recipient's name
+     * @param ageTurning the age they turn
+     * @param birthDate used for the gradient
+     * @param occasionDate the date printed on the card
+     * @param senderName the sender
+     * @param message the message shown on the card
+     * @param createdAtYear the year the person was added, or null to omit
+     * @return the content URI of the saved image, or null if it could not be written
+     */
+    fun saveToGallery(
+        context: Context,
+        name: String,
+        ageTurning: Int,
+        birthDate: LocalDate,
+        occasionDate: LocalDate,
+        senderName: String,
+        message: CardMessage,
+        createdAtYear: Int?,
+    ): Uri? =
+        runCatching {
+            val bitmap =
+                render(name, ageTurning, birthDate, occasionDate, senderName, message, createdAtYear)
+                    ?: return null
+
+            val values =
+                ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, "birf-dae-$name.png")
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    // RELATIVE_PATH is what puts it in Pictures/ on API 29+.
+                    // IS_PENDING hides it from the gallery until the write lands,
+                    // so a half-written file never appears.
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Birf Dae")
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            if (uri == null) return null
+
+            val written =
+                resolver.openOutputStream(uri)?.use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                } == true
+
+            if (!written) {
+                resolver.delete(uri, null, null)
+                return null
+            }
+
+            values.clear()
+            values.put(MediaStore.Images.Media.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+
+            uri
+        }.getOrNull()
+
+    /**
      * Draws the card onto a fresh bitmap.
+     *
+     * Renders natively rather than screenshotting, so the exported image has
+     * no navigation chrome and is deterministic for a given birthday.
      *
      * @return an opaque bitmap, or null if a gradient could not be built
      */
@@ -96,7 +166,7 @@ object CardImageRenderer {
         birthDate: LocalDate,
         occasionDate: LocalDate,
         senderName: String,
-        personalMessage: String?,
+        message: CardMessage,
         createdAtYear: Int?,
     ): Bitmap? {
         val stops = CardGradient.forBirthDate(birthDate)
@@ -154,7 +224,7 @@ object CardImageRenderer {
             )
 
         y += 20f
-        drawCenteredText(canvas, "turning $ageTurning", 52f, y, muted)
+        drawCenteredText(canvas, "turning $ageTurning", 52f, y, ink, bold = true)
 
         y += 48f
 
@@ -162,31 +232,33 @@ object CardImageRenderer {
         // locale cannot misread it.
         drawCenteredText(canvas, occasionDate.format(CARD_DATE_FORMAT), 40f, y, muted)
 
-        y += 78f
+        y += 96f
 
-        // Zodiac
+        // Zodiac, in a pill to match the on-screen card. Without it the export
+        // and the preview look like two different artefacts.
         val sign = com.birthdayreminder.domain.util.ZodiacUtils.getZodiacSign(birthDate.month, birthDate.dayOfMonth)
-        drawCenteredText(canvas, sign, 44f, y, ink, bold = true)
+        drawCenteredPill(canvas, sign, 44f, y, ink, stops.first().toArgb())
 
         // The sender's words are centred in the space between the header block
         // and the footer, so the card never has a hole in the middle or a
         // footer adrift at the bottom.
         val footerTop = HEIGHT_PX - MARGIN - 250f
-        if (!personalMessage.isNullOrBlank()) {
-            val messageLines = 4
-            val messageHeight = messageLines * 48f * 1.3f
-            val centre = (y + footerTop) / 2f
-            drawWrappedCenteredText(
-                canvas = canvas,
-                text = personalMessage,
-                textSize = 48f,
-                maxLines = messageLines,
-                y = centre - messageHeight / 2f + 48f,
-                color = ink,
-                bold = false,
-                maxWidth = WIDTH_PX - MARGIN * 2 - 80f,
-            )
-        }
+        // The message is always present: the picker never returns a blank
+        // line and an empty personal note falls back to a tone, so this is
+        // unconditional rather than a guard.
+        val messageLines = 4
+        val messageHeight = messageLines * 48f * 1.3f
+        val centre = (y + footerTop) / 2f
+        drawWrappedCenteredText(
+            canvas = canvas,
+            text = "\u201C${message.text}\u201D",
+            textSize = 48f,
+            maxLines = messageLines,
+            y = centre - messageHeight / 2f + 48f,
+            color = ink,
+            bold = false,
+            maxWidth = WIDTH_PX - MARGIN * 2 - 80f,
+        )
 
         // Truthful provenance: no streak exists in the schema, so report the
         // year added rather than a number of times remembered.
@@ -257,6 +329,44 @@ object CardImageRenderer {
                     if (bold) Typeface.BOLD else Typeface.NORMAL,
                 )
         }
+
+    /**
+     * Draws text inside a rounded pill, centred on [y].
+     *
+     * Mirrors the zodiac chip on the Compose card so the exported PNG and the
+     * preview read as the same object.
+     */
+    private fun drawCenteredPill(
+        canvas: Canvas,
+        text: String,
+        textSize: Float,
+        y: Float,
+        ink: Int,
+        lightTint: Int,
+    ) {
+        val paint = textPaint(textSize, ink, bold = true)
+        val textWidth = paint.measureText(text)
+        val padH = textSize * 1.1f
+        val padV = textSize * 0.62f
+        val left = (WIDTH_PX - (textWidth + padH * 2)) / 2f
+        val top = y - textSize - padV
+        val rect = RectF(left, top, left + textWidth + padH * 2, y + padV)
+        val radius = rect.height() / 2f
+
+        canvas.drawRoundRect(
+            rect,
+            radius,
+            radius,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                // A light wash of the card's own tint, not a dark one. The
+                // Compose chip is 14% ink over a light background; blending
+                // towards the ink here produced a near-black pill and the sign
+                // became unreadable.
+                color = blend(lightTint, ink, 0.14f)
+            },
+        )
+        canvas.drawText(text, left + padH, y - padV * 0.35f, paint)
+    }
 
     private fun drawCenteredText(
         canvas: Canvas,

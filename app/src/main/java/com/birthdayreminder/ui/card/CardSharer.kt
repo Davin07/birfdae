@@ -143,13 +143,21 @@ object CardSharer {
      * Built from data that actually exists. There is no reminder-history
      * table in the schema, so this never claims a streak.
      *
+     * Carries the card's own message so the text a recipient reads in WhatsApp
+     * matches the line printed on the image. Sending a generic "is turning 53
+     * today" caption next to a personalised card reads as two different
+     * artefacts, and the sender had just chosen that wording deliberately.
+     *
      * @param name the recipient's name
      * @param age the age they are turning
+     * @param message the line shown on the card
+     * @return the accompanying share text
      */
     fun shareMessage(
         name: String,
         age: Int,
-    ): String = "$name is turning $age today. Made with Birf Dae"
+        message: String,
+    ): String = "$message\n\n$name is turning $age today \u2014 made with Birf Dae"
 
     /**
      * Removes previously shared card files.

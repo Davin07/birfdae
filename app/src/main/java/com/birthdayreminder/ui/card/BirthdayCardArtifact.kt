@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.birthdayreminder.domain.util.ZodiacUtils
 import com.birthdayreminder.ui.components.birfdae.SaffronTokens
 import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
+import com.birthdayreminder.ui.theme.Fraunces
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -63,7 +65,7 @@ fun BirthdayCardArtifact(
     birthDate: LocalDate,
     occasionDate: LocalDate,
     senderName: String,
-    personalMessage: String?,
+    message: CardMessage,
     createdAtYear: Int?,
     modifier: Modifier = Modifier,
 ) {
@@ -132,24 +134,37 @@ fun BirthdayCardArtifact(
             // Zodiac chip, computed locally from the birth date
             zodiacChip(ZodiacUtils.getZodiacSign(birthDate.month, birthDate.dayOfMonth), ink)
 
+            // One flexible gap, then a fixed gap. The card is a fixed aspect
+            // ratio, so the message block has to be given room explicitly --
+            // a lone weight(1f) collapses to nothing as the message grows and
+            // the text then rides into the attribution.
             Spacer(Modifier.weight(1f))
 
-            // The sender's own words, if they wrote any
-            if (!personalMessage.isNullOrBlank()) {
-                Text(
-                    text = personalMessage,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = ink,
-                    textAlign = TextAlign.Center,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = SaffronTokens.space8),
-                )
-                Spacer(Modifier.height(SaffronTokens.space16))
-            }
+            // The message. Set in the display face at a reading size, the way
+            // the approved prototype sets it, and quoted so it reads as
+            // something said *about* the person rather than by the app.
+            Text(
+                text = "\u201C${message.text}\u201D",
+                // bodyLarge in the display face, not titleLarge. The card is a
+                // fixed aspect ratio with a header and a footer already
+                // committed, and at titleLarge a four-line message runs into
+                // the attribution below.
+                style = MaterialTheme.typography.bodyLarge,
+                fontFamily = Fraunces,
+                fontSize = MaterialTheme.typography.titleMedium.fontSize,
+                fontStyle = FontStyle.Italic,
+                lineHeight = MaterialTheme.typography.titleMedium.lineHeight,
+                color = ink,
+                textAlign = TextAlign.Center,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = SaffronTokens.space8),
+            )
+
+            Spacer(Modifier.height(SaffronTokens.space12))
 
             onYourListSince(createdAtYear, mutedInk)
 
@@ -274,7 +289,14 @@ private fun birthdayCardArtifactPreview() {
                 birthDate = LocalDate.of(1967, 9, 27),
                 occasionDate = LocalDate.of(2026, 9, 27),
                 senderName = "Davin",
-                personalMessage = "Happy birthday Amma. Call you tonight.",
+                message =
+                    CardMessagePicker.initial(
+                        name = "Amma",
+                        ageTurning = 59,
+                        zodiac = "Libra",
+                        personalNote = null,
+                        tone = CardTone.SINCEREST,
+                    ),
                 createdAtYear = 2024,
             )
         }

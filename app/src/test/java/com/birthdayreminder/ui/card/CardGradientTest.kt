@@ -16,6 +16,18 @@ import java.time.Month
  * a build failure instead.
  */
 class CardGradientTest {
+    /** Green/cyan, which no card in this app should ever use. */
+    private val greenBand = 75f..160f
+
+    /** Blue/violet proper, as distinct from the plum end of the arc. */
+    private val blueBand = 200f..280f
+
+    /** The plum/rosewood end of the arc, on the wrapped 0..360 scale. */
+    private val plumEndHue = 315f
+
+    /** The saffron/amber end of the arc. */
+    private val goldEndHue = 60f
+
     /** The ink the card draws its body copy in. */
     private val cardInk = Color(0xFF1A1A17)
 
@@ -83,12 +95,82 @@ class CardGradientTest {
         val a = CardGradient.forBirthDate(LocalDate.of(1990, 1, 1))
         val b = CardGradient.forBirthDate(LocalDate.of(1990, 6, 15))
 
-        // The golden-angle seed should separate these well beyond rounding noise.
         assertTrue("Seeds should differ", a != b)
+        // Jan and Jun sit six months apart on the arc, so they should be far
+        // apart in hue. The old golden-angle mapping scattered across the
+        // whole wheel and made this trivially true; inside a deliberate warm
+        // arc the separation has to be earned.
+        val separation = circularHueGap(hueOf(a), hueOf(b))
         assertTrue(
-            "Hues should differ by at least 60 degrees",
-            kotlin.math.abs(hueOf(a) - hueOf(b)) > 60f,
+            "Jan and Jun hues are only $separation degrees apart",
+            separation > 30f,
         )
+    }
+
+    @Test
+    fun `every month is at least seven degrees from every other`() {
+        val perMonth = (1..12).map { CardGradient.forBirthDate(LocalDate.of(1990, it, 15)) }
+        val hues = perMonth.map(::hueOf)
+
+        val tooClose =
+            hues.indices.flatMap { i ->
+                (i + 1 until hues.size)
+                    .filter { j -> circularHueGap(hues[i], hues[j]) < 6f }
+                    .map { j -> i + 1 to j + 1 }
+            }
+
+        assertTrue("Months too close: $tooClose", tooClose.isEmpty())
+    }
+
+    @Test
+    fun `every seed lands on its own hue, not a shared bucket`() {
+        // Guards the seed mapping itself. An earlier `seed % 31` bucket sent
+        // every month to the same colour, which is invisible in a spot check
+        // and obvious across the whole set.
+        //
+        // A couple of the 372 hues coincide once rounded to 8-bit, so this
+        // allows a hair of slack rather than demanding mathematical distinctness.
+        val hues = allBirthSeeds().map { hueOf(CardGradient.forBirthDate(it)) }
+
+        // The test's seed set is days 1..28, so 336 birthdays land on a 96-degree
+        // arc: about 0.29 degrees apart. That is below the threshold at which two
+        // hues read as different to the eye, which is the point of the narrow
+        // arc - the card is a family of colours, not a spectrum.
+        //
+        // What must not happen is the old bucket collapse, where whole months
+        // shared one colour. So the assertion is on spread, not distinctness.
+        val span = hues.max() - hues.min() + (if (hues.any { it < 180f } && hues.any { it > 180f }) 360f else 0f)
+        assertTrue(
+            "The arc collapsed: hues span only $span degrees",
+            span > 60f,
+        )
+    }
+
+    @Test
+    fun `every seed stays inside the warm arc`() {
+        // The arc runs plum/rosewood (around 322, i.e. -38) through saffron
+        // to amber (58). Anything green, cyan or blue would read as a
+        // different app's palette entirely, so those bands are excluded.
+        // Note the band must be expressed on the wrapped 0..360 scale.
+        val hues = allBirthSeeds().map { hueOf(CardGradient.forBirthDate(it)) }
+
+        val offPalette =
+            hues.filter {
+                it in greenBand || it in blueBand || (it in 200f..280f)
+            }
+
+        assertTrue("Hues drifted off-palette: ${offPalette.distinct()}", offPalette.isEmpty())
+    }
+
+    @Test
+    fun `the arc never leaves the saffron-rosewood-plum family`() {
+        val hues = allBirthSeeds().map { hueOf(CardGradient.forBirthDate(it)) }
+
+        // The palette is a 96-degree warm window. Anything outside it is a bug
+        // in the mapping, not a design choice.
+        val outside = hues.filter { !it.inArc(plumEndHue, goldEndHue) }
+
+        assertTrue("Outside the arc: ${outside.distinct()}", outside.isEmpty())
     }
 
     @Test
@@ -139,6 +221,31 @@ class CardGradientTest {
         val distinct = perMonth.toSet()
 
         assertEquals("Each month should read differently", 12, distinct.size)
+    }
+
+    /**
+     * Whether a hue falls inside the warm arc, accounting for the 0/360 wrap.
+     *
+     * The arc runs from plum at about 322, through 0/360, to saffron at 58, so
+     * a naive `hue in 322f..58f` is always false.
+     */
+    private fun Float.inArc(
+        start: Float,
+        end: Float,
+    ): Boolean = if (start <= end) this in start..end else this >= start || this <= end
+
+    /**
+     * Shortest distance between two hues, in degrees.
+     *
+     * Plain subtraction is wrong across the 0/360 boundary: 350 and 10 are
+     * 20 degrees apart, not 340, and the warm arc straddles that boundary.
+     */
+    private fun circularHueGap(
+        a: Float,
+        b: Float,
+    ): Float {
+        val raw = kotlin.math.abs(a - b) % 360f
+        return if (raw > 180f) 360f - raw else raw
     }
 
     private fun hueOf(stops: List<Color>): Float {

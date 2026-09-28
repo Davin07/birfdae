@@ -40,8 +40,41 @@ object CardGradient {
     /** Contrast the card's body ink must achieve against its own stop. */
     const val MIN_CONTRAST: Double = 4.5
 
-    private const val GOLDEN_ANGLE = 137.508f
     private const val MAX_SATURATION = 0.42f
+
+    /**
+     * Width of the hue arc the generated gradients are allowed to roam.
+     *
+     * The first implementation hashed the seed with the golden angle, which
+     * spreads every person across the whole colour wheel. That produced lilac
+     * cards in a saffron app - a Libra born in October landed on violet, and
+     * the artefact that is supposed to look designed looked arbitrary.
+     *
+     * The palette is a deliberate one: saffron, rosewood and plum are
+     * neighbouring warm hues. Variety within a narrow arc reads as a family;
+     * variety across the wheel reads as random. So the hue is centred on
+     * saffron and only wanders a limited distance from it.
+     */
+    private const val HUE_CENTER = 10f
+
+    /**
+     * Total span of the arc, in degrees.
+     *
+     * The range is chosen to cover exactly the app's three hue families -
+     * saffron through rosewood to plum - and no further. A wider arc reaches
+     * green and cyan, which reads as a different app's palette entirely.
+     */
+    private const val HUE_ARC = 96f
+
+    /**
+     * The seed's own range, so it can be mapped linearly onto the arc.
+     *
+     * month * 31 + day puts Jan 1 at 32 and Dec 31 at 403. Using the true
+     * range rather than a modulo is what keeps every one of the 372 seeds on
+     * its own hue.
+     */
+    private const val MIN_SEED = 32f
+    private const val MAX_SEED = 403f
 
     // Lightness steps for the three stops, lightest to darkest.
     private const val L_LIGHTEST = 0.88f
@@ -64,7 +97,13 @@ object CardGradient {
      */
     fun forBirthDate(birthDate: LocalDate): List<Color> {
         val seed = birthDate.monthValue * 31 + birthDate.dayOfMonth
-        val hue = (seed * GOLDEN_ANGLE) % 360f
+        // Map the seed range straight onto the arc, with no modulo. Bucketing
+        // by `seed % n` collapses birthdays onto the same colour, and with a
+        // 31-day month stride `seed % 31` sends every month to the same
+        // bucket, which made all twelve months render one colour. A linear
+        // map keeps all 372 seeds distinct and spreads the months evenly.
+        val spread = (seed - MIN_SEED) / (MAX_SEED - MIN_SEED).toFloat() - 0.5f
+        val hue = HUE_CENTER + spread * HUE_ARC
         val saturation = 0.26f + (seed % 5) * 0.035f // 0.26..0.40
         return forHueAndSaturation(hue, saturation)
     }
