@@ -314,6 +314,22 @@ Verified on device: `user_version: 6`, 4 birthdays and 24 events intact.
 - The overdue window is 14 days, so a fixture dated months back shows no card at
   all. Test fixtures must sit inside it.
 
+### Unset values show no chip
+
+On the per-person screen, a chip row shows **no selection** when the stored
+value is absent or has no matching chip:
+
+- no stored time -> the Time row is entirely unselected, because null means the
+  global setting in Settings owns this person;
+- a stored offset with no chip (5 days) -> the Lead time row is entirely
+  unselected.
+
+Showing 9:00 AM or "On the day" in those cases would claim a decision nobody
+made, and would hide that changing the global default changes it here too. The
+list line above stays honest instead, reading "your default time". This reads
+like a bug to a future pass, so `PerPersonCopyTest` pins all four cases in both
+directions.
+
 ### Known remaining differences (approved, do not "fix")
 
 - First run shows no example people, where the concept previews two.

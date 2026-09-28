@@ -127,9 +127,11 @@ fun PerPersonScreen(
                 SectionSubhead("Lead time")
                 SaffronChipRow(
                     chips = LeadTimeChipLabel.options,
-                    selected =
-                        LeadTimeChipLabel.optionForDays(draftLead ?: person.leadTimeDays)
-                            ?: LeadTimeChipLabel.ON_THE_DAY,
+                    // Null rather than a fallback for the same reason the
+                    // time row does: a stored offset with no chip (5 days, say)
+                    // is a real value, and pretending it is one of the four
+                    // describes a reminder the user did not set.
+                    selected = LeadTimeChipLabel.optionForDays(draftLead ?: person.leadTimeDays),
                     labelOf = { it.label },
                     onSelect = {
                         draftLead = it.days
@@ -140,12 +142,13 @@ fun PerPersonScreen(
                 SectionSubhead("Time")
                 SaffronChipRow(
                     chips = ReminderTimeChoice.options,
-                    // No stored time means the app default applies, which is
-                    // 9:00 AM -- so that is the chip shown as chosen. Showing
-                    // nothing selected would imply reminders are unset.
-                    selected =
-                        ReminderTimeChoice.of(draftTime ?: person.reminderTime)
-                            ?: ReminderTimeChoice.MORNING,
+                    // Nothing selected when no time is stored, and that is the
+                    // honest state rather than an empty one: null means the
+                    // global setting in Settings owns this person, so showing
+                    // 9:00 AM chosen would claim a decision nobody made and
+                    // hide the fact that changing the global default will
+                    // change it here too.
+                    selected = ReminderTimeChoice.of(draftTime ?: person.reminderTime),
                     labelOf = { it.label },
                     onSelect = {
                         draftTime = LocalTime.of(it.hour, it.minute)

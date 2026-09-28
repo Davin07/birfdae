@@ -98,6 +98,34 @@ class PerPersonCopyTest {
     }
 
     @Test
+    fun `an unset time selects no chip, rather than the default looking chosen`() {
+        // The chip row must not claim a choice nobody made. Null means the
+        // global setting in Settings owns this person, so showing 9:00 AM
+        // selected would hide that changing the global default changes it here
+        // too. This reads like a bug, so it is pinned.
+        assertNull(
+            "An unset time must leave every time chip unselected",
+            ReminderTimeChoice.of(null),
+        )
+    }
+
+    @Test
+    fun `an offset with no chip leaves every lead-time chip unselected`() {
+        // Same rule for the same reason: 5 days is a real stored value, and
+        // falling back to "On the day" would describe a reminder the user did
+        // not set.
+        assertNull(LeadTimeChipLabel.optionForDays(5))
+    }
+
+    @Test
+    fun `a stored time or offset does select its chip`() {
+        // The other direction: showing nothing when a value IS set would be
+        // just as wrong as claiming one that is not.
+        assertEquals(ReminderTimeChoice.NOON, ReminderTimeChoice.of(LocalTime.of(12, 0)))
+        assertEquals(LeadTimeChipLabel.ONE_WEEK, LeadTimeChipLabel.optionForDays(7))
+    }
+
+    @Test
     fun `the clock reads the way the concept shows it`() {
         // A 12-hour clock with a space before the meridiem: "9:00 AM", and
         // midnight and noon both correct.
