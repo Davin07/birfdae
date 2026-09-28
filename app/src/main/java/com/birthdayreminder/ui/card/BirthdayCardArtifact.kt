@@ -37,7 +37,8 @@ import androidx.compose.ui.unit.dp
 import com.birthdayreminder.domain.util.ZodiacUtils
 import com.birthdayreminder.ui.components.birfdae.SaffronTokens
 import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
-import com.birthdayreminder.ui.theme.Fraunces
+import com.birthdayreminder.ui.theme.CardArtifactName
+import com.birthdayreminder.ui.theme.CardArtifactQuote
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -105,7 +106,7 @@ fun BirthdayCardArtifact(
             // Recipient name, the hero of the card
             Text(
                 text = name,
-                style = MaterialTheme.typography.displayMedium,
+                style = CardArtifactName,
                 fontWeight = FontWeight.Bold,
                 color = ink,
                 textAlign = TextAlign.Center,
@@ -149,11 +150,8 @@ fun BirthdayCardArtifact(
                 // fixed aspect ratio with a header and a footer already
                 // committed, and at titleLarge a four-line message runs into
                 // the attribution below.
-                style = MaterialTheme.typography.bodyLarge,
-                fontFamily = Fraunces,
-                fontSize = MaterialTheme.typography.titleMedium.fontSize,
+                style = CardArtifactQuote,
                 fontStyle = FontStyle.Italic,
-                lineHeight = MaterialTheme.typography.titleMedium.lineHeight,
                 color = ink,
                 textAlign = TextAlign.Center,
                 maxLines = 4,

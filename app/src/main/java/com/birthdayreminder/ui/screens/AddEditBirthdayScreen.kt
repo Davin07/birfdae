@@ -5,8 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,23 +14,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -41,21 +34,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.birthdayreminder.domain.model.Relationship
 import com.birthdayreminder.domain.util.AgeUtils
 import com.birthdayreminder.domain.util.ZodiacUtils
-import com.birthdayreminder.ui.components.NotificationTimePicker
+import com.birthdayreminder.ui.card.CardTone
 import com.birthdayreminder.ui.components.birfdae.SaffronAvatarPicker
 import com.birthdayreminder.ui.components.birfdae.SaffronBackground
 import com.birthdayreminder.ui.components.birfdae.SaffronButton
-import com.birthdayreminder.ui.components.birfdae.SaffronChip
+import com.birthdayreminder.ui.components.birfdae.SaffronChipRow
 import com.birthdayreminder.ui.components.birfdae.SaffronTextField
 import com.birthdayreminder.ui.components.birfdae.SaffronTokens
 import com.birthdayreminder.ui.components.birfdae.SectionHeader
+import com.birthdayreminder.ui.components.birfdae.SectionSubhead
 import com.birthdayreminder.ui.components.birfdae.SurfaceCard
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayUiState
 import com.birthdayreminder.ui.viewmodel.AddEditBirthdayViewModel
@@ -269,22 +263,23 @@ fun Step1Identity(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    val relationships = listOf("Family", "Friend", "Work", "Acquaintance", "Other")
-                    relationships.forEach { rel ->
-                        SaffronChip(
-                            selected = uiState.relationship == rel,
-                            onClick = { viewModel.updateRelationship(rel) },
-                            label = rel,
-                        )
-                    }
-                }
+                // The same vocabulary Search filters by. The two used to be
+                // independent lists, which meant a person saved as "Work" could
+                // not be found by the relationship they were tagged with.
+                SaffronChipRow(
+                    chips = Relationship.all,
+                    // A person saved under the old wizard's vocabulary ("Friend",
+                    // "Work", "Acquaintance") must still show its chip as chosen,
+                    // or the value silently looks unset and saving would clear it.
+                    // Null when nothing is stored or the stored value is not
+                    // one of the six, so no chip is shown as chosen. Defaulting
+                    // to the first would pre-select a relationship the user
+                    // never picked, and every saved person would silently
+                    // acquire it.
+                    selected = Relationship.fromStored(uiState.relationship),
+                    labelOf = { it.label },
+                    onSelect = { viewModel.updateRelationship(it.stored) },
+                )
             }
         }
     }
@@ -418,160 +413,176 @@ fun Step2Date(
     }
 }
 
+/**
+ * The wizard's last step: when to remind, and the tone of the message.
+ *
+ * Matches the approved concept, which frames this step as "make it worth
+ * sending" rather than a notifications form. Two things changed as a result:
+ * the reminder is one toggle plus three lead-time chips instead of a time
+ * picker and four checkboxes, and the tone is chosen here so the card does not
+ * have to ask for it on first open.
+ *
+ * The time picker was not a gratuitous cut -- it moves to the per-person screen,
+ * where a person who cares about 9:00 AM can set it without walking the wizard
+ * again. Onboarding should not ask for a preference most people will never
+ * change, and asking for it here cost a whole step's worth of attention for a
+ * field the user had to accept as-is.
+ *
+ * @param uiState the current wizard state
+ * @param viewModel the wizard's view model
+ */
 @Composable
 fun Step3Personalization(
     uiState: AddEditBirthdayUiState,
     viewModel: AddEditBirthdayViewModel,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(SaffronTokens.space16),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // Notification Preview Card
+        // The reminder toggle, as a card so it reads as the primary thing this
+        // step is about rather than as one row in a form.
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(16.dp),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Cake,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Birf Dae",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        text = "now",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "🎉 Birthday Today!",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text =
-                        if (uiState.birthDate != null) {
-                            val age = AgeUtils.calculateUpcomingAge(uiState.birthDate)
-                            "${uiState.name.ifBlank { "Friend" }} is turning $age today!"
-                        } else {
-                            "It's ${uiState.name.ifBlank { "Friend" }}'s birthday today!"
-                        },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-
-        // Pin Option
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
-                Text(
-                    text = "Pin to Top",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Text(
-                    text = "Show this birthday as the hero card",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(
-                checked = uiState.isPinned,
-                onCheckedChange = { viewModel.updateIsPinned(it) },
-            )
-        }
-
-        // Notification Settings
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(
-                "NOTIFICATIONS",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            NotificationTimePicker(
-                hour = uiState.notificationTime?.hour ?: 9,
-                minute = uiState.notificationTime?.minute ?: 0,
-                onTimeChange = { h, m ->
-                    viewModel.updateNotificationTime(LocalTime.of(h, m))
-                },
-            )
-
-            val options =
-                listOf(
-                    0 to "On the day",
-                    1 to "1 day before",
-                    3 to "3 days before",
-                    7 to "1 week before",
-                )
-
-            options.forEach { (days, label) ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val newOffsets = uiState.notificationOffsets.toMutableList()
-                                if (newOffsets.contains(days)) {
-                                    newOffsets.remove(days)
-                                } else {
-                                    newOffsets.add(days)
-                                }
-                                viewModel.updateNotificationOffsets(newOffsets)
-                            }
-                            .padding(vertical = 8.dp),
-                ) {
-                    Checkbox(
-                        checked = uiState.notificationOffsets.contains(days),
-                        onCheckedChange = null,
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyLarge,
+                        text = "Remind me",
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
+                    Text(
+                        text = ReminderSummary.of(uiState),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
+                Switch(
+                    checked = uiState.notificationsEnabled,
+                    onCheckedChange = viewModel::updateNotificationsEnabled,
+                    colors =
+                        SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                        ),
+                )
             }
         }
 
-        // Notes
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                "NOTES",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            SaffronTextField(
-                value = uiState.notes,
-                onValueChange = { viewModel.updateNotes(it) },
-                label = "Notes",
-                placeholder = "Gift ideas, preferences...",
-                minLines = 3,
-                isError = uiState.notesError != null,
-                errorMessage = uiState.notesError,
-                modifier = Modifier.fillMaxWidth(),
+        // Lead time. Hidden rather than disabled when reminders are off: a row
+        // of unselectable chips reads as broken, and turning reminders back on
+        // should not require a second decision about when.
+        if (uiState.notificationsEnabled) {
+            SectionSubhead("Remind me earlier")
+            SaffronChipRow(
+                chips = LeadTime.options,
+                selected = LeadTime.of(uiState.advanceNotificationDays),
+                labelOf = { it.label },
+                onSelect = { viewModel.updateAdvanceNotificationDays(it.days) },
             )
         }
+
+        SectionSubhead("Message tone")
+        SaffronChipRow(
+            chips = CardTone.entries.toList(),
+            selected = uiState.cardTone,
+            labelOf = { it.label },
+            onSelect = viewModel::updateCardTone,
+        )
+
+        // Says out loud what the tone control does not, because the one
+        // surprising thing about the card is that re-picking a tone never
+        // changes its colours.
+        Text(
+            text = "Only changes the wording. The colours come from ${uiState.name.ifBlank { "their" }} birth date.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * How long before the birthday to remind someone.
+ *
+ * Days, not a label: the wizard stores an offset in days and the concept's
+ * chips are the only place it is chosen, so the mapping lives here and is
+ * tested rather than being spelled out at each call site.
+ *
+ * @property days the offset stored on the birthday
+ * @property label what the chip shows
+ */
+enum class LeadTime(
+    val days: Int,
+    val label: String,
+) {
+    ONE_DAY(days = 1, label = "1 day"),
+    THREE_DAYS(days = 3, label = "3 days"),
+    ONE_WEEK(days = 7, label = "1 week"),
+    ;
+
+    companion object {
+        val options: List<LeadTime> = entries.toList()
+
+        /**
+         * The option matching a stored offset, falling back to the safest one.
+         *
+         * A birthday saved before this step existed carries 0, meaning "on the
+         * day", which is not a chip. Falling back to 3 days would silently
+         * change when someone is notified, so this returns 1: the reminder
+         * still arrives, just not further ahead than before.
+         *
+         * @param days the stored advance offset
+         */
+        fun of(days: Int): LeadTime = entries.firstOrNull { it.days == days } ?: ONE_DAY
+    }
+}
+
+/**
+ * The line under the "Remind me" toggle, describing what is actually set.
+ *
+ * @param uiState the current wizard state
+ */
+object ReminderSummary {
+    /**
+     * @param uiState the current wizard state
+     */
+    fun of(uiState: AddEditBirthdayUiState): String {
+        if (!uiState.notificationsEnabled) return "Off"
+        val time = uiState.notificationTime
+        val clock = if (time == null) DEFAULT_CLOCK else ReminderClock.format(time)
+        // The label for the value actually stored, not the nearest chip. A
+        // 5-day offset has no chip but is storable, and a line claiming
+        // "1 day" for it would describe a reminder the user did not ask for.
+        // Never the enum instance either: that prints "ONE_DAY".
+        val lead = LeadTimeChipLabel.forDays(uiState.advanceNotificationDays)
+        return "$clock · $lead before"
+    }
+
+    /** The app's default reminder time, when nothing has been chosen. */
+    const val DEFAULT_CLOCK: String = "9:00 AM"
+}
+
+/**
+ * Formats a reminder time the way the concept shows it.
+ *
+ * 12-hour with a space before the meridiem, so "9:00 AM" and not "9:00AM" or
+ * "09:00". The app's users are not all in a 24-hour locale, and the am/pm
+ * marker is the version that reads correctly to both.
+ */
+object ReminderClock {
+    /**
+     * @param time the time of day
+     */
+    fun format(time: java.time.LocalTime): String {
+        val hour24 = time.hour
+        val meridiem = if (hour24 < 12) "AM" else "PM"
+        val hour12 =
+            when (val h = hour24 % 12) {
+                0 -> 12
+                else -> h
+            }
+        return "%d:%02d %s".format(hour12, time.minute, meridiem)
     }
 }

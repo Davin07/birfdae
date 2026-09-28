@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -130,6 +133,80 @@ fun SectionHeader(
             actions()
         }
     }
+}
+
+/**
+ * A hairline rule between groups inside a card or a form.
+ *
+ * The concept separates the reminder controls from the reassurance text with
+ * one of these. A rule rather than extra spacing, because the two groups are
+ * close enough in tone that space alone reads as a mistake.
+ *
+ * @param modifier applied to the rule
+ */
+@Composable
+fun SurfaceDivider(modifier: Modifier = Modifier) {
+    HorizontalDivider(
+        modifier = modifier,
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
+}
+
+/**
+ * A tappable card: the surface shape, with a row of content inside it.
+ *
+ * The concept's per-person block is a card the user taps to go deeper, so it
+ * needs the card's radius and fill but not the button treatment -- an
+ * interactive card should not read as a primary action. Kept separate from
+ * [SurfaceCard] so a non-interactive card cannot accidentally grow a click.
+ *
+ * @param onClick invoked when the card is tapped
+ * @param modifier applied to the card
+ * @param content the card's contents
+ */
+@Composable
+fun SaffronCardRow(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = SaffronTokens.radiusCard,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = contentColorFor(MaterialTheme.colorScheme.surfaceContainer),
+    ) {
+        Row(
+            modifier = Modifier.padding(SaffronTokens.space16),
+            verticalAlignment = Alignment.CenterVertically,
+            content = content,
+        )
+    }
+}
+
+/**
+ * A quiet heading that groups the controls beneath it inside scrolling content.
+ *
+ * [SectionHeader] is a screen title: large, and the first thing read. This is
+ * the label above a group of chips, and it has to be quieter than the values it
+ * introduces or it competes with the value the user is choosing.
+ *
+ * @param title the group label
+ * @param modifier applied to the text
+ */
+@Composable
+fun SectionSubhead(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier,
+    )
 }
 
 /**
@@ -286,6 +363,12 @@ fun SaffronButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     enabled: Boolean = true,
+    /**
+     * Overrides for surfaces that need their own button colour, such as the
+     * overdue card, whose accent is not the app's saffron primary. Null keeps
+     * the theme default, so no existing caller changes.
+     */
+    colors: ButtonColors? = null,
 ) {
     Button(
         onClick = onClick,
@@ -293,10 +376,11 @@ fun SaffronButton(
         enabled = enabled,
         shape = SaffronTokens.radiusMedium,
         colors =
-            ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ),
+            colors
+                ?: ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
         contentPadding = PaddingValues(horizontal = SaffronTokens.space20),
     ) {
         if (icon != null) {

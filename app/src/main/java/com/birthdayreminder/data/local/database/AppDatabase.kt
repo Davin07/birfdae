@@ -17,7 +17,7 @@ import com.birthdayreminder.data.local.entity.ReminderEvent
  */
 @Database(
     entities = [Birthday::class, ReminderEvent::class],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(DateConverters::class)
@@ -122,6 +122,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
         /**
+         * Adds the card's message tone.
+         *
+         * Nullable with no default, so every existing row lands on null and
+         * reads as "never chosen", which the card treats as its default tone
+         * rather than as a value the user picked.
+         */
+        val MIGRATION_5_6 =
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE `birthdays` ADD COLUMN `cardTone` TEXT")
+                }
+            }
+
+        /**
          * Every migration, in order.
          *
          * A test that opens a migrated file with [androidx.room.Room] directly
@@ -131,7 +145,7 @@ abstract class AppDatabase : RoomDatabase() {
          * the schema is bumped.
          */
         val ALL_MIGRATIONS: Array<Migration> =
-            arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
 
         /**
          * Creates and configures the Room database instance.

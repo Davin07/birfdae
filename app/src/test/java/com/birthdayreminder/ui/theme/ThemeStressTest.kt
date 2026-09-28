@@ -360,28 +360,42 @@ class ThemeStressTest {
 
     @Test
     fun `empirical verification - typography hierarchies follow strictly decreasing font sizes`() {
-        // Display & Headline scale
-        assertTrue(Typography.displayLarge.fontSize.value > Typography.displayMedium.fontSize.value)
-        assertTrue(Typography.displayMedium.fontSize.value > Typography.displaySmall.fontSize.value)
-        assertTrue(Typography.displaySmall.fontSize.value > Typography.headlineLarge.fontSize.value)
-        assertTrue(Typography.headlineLarge.fontSize.value > Typography.headlineMedium.fontSize.value)
-        assertTrue(Typography.headlineMedium.fontSize.value > Typography.headlineSmall.fontSize.value)
+        // The prototype's scale is not strictly decreasing, so Material's
+        // invariant cannot be asserted here: headlineLarge, headlineMedium and
+        // headlineSmall are all 20px, and displaySmall (the hero headline) is
+        // 22px against a 20px screen title, which is deliberate.
+        //
+        // The exact values are pinned in ThemeTokensTest and
+        // SaffronTypographyTest. What this test keeps is the structural
+        // guarantee that matters: no display or title role may end up smaller
+        // than the body copy it sits above.
+        val aboveBody =
+            listOf(
+                Typography.displaySmall,
+                Typography.headlineLarge,
+                Typography.headlineMedium,
+                Typography.titleLarge,
+                Typography.titleMedium,
+                Typography.titleSmall,
+            )
+        for (style in aboveBody) {
+            assertTrue(
+                "A display or title role must not be smaller than body copy",
+                style.fontSize.value >= Typography.bodyMedium.fontSize.value,
+            )
+        }
 
-        // Title scale
-        assertTrue(Typography.titleLarge.fontSize.value > Typography.titleMedium.fontSize.value)
-        assertTrue(Typography.titleMedium.fontSize.value > Typography.titleSmall.fontSize.value)
-
-        // Body scale
-        assertTrue(Typography.bodyLarge.fontSize.value > Typography.bodyMedium.fontSize.value)
-        assertTrue(Typography.bodyMedium.fontSize.value > Typography.bodySmall.fontSize.value)
-
-        // Label scale
-        assertTrue(Typography.labelLarge.fontSize.value > Typography.labelMedium.fontSize.value)
-        assertTrue(Typography.labelMedium.fontSize.value > Typography.labelSmall.fontSize.value)
+        assertTrue(
+            "Display must remain the largest role in the scale",
+            Typography.displayLarge.fontSize.value >= aboveBody.map { it.fontSize.value }.max(),
+        )
     }
 
     @Test
     fun `empirical verification - font family assignment follows Fraunces for display and Figtree for body`() {
+        // The prototype sets the countdown (.dy) and section heading (.h3) in
+        // the display face, not Figtree, so titleLarge and titleMedium are
+        // Fraunces too. Title roles are not automatically body roles.
         val frauncesRoles =
             listOf(
                 Typography.displayLarge,
@@ -390,17 +404,21 @@ class ThemeStressTest {
                 Typography.headlineLarge,
                 Typography.headlineMedium,
                 Typography.headlineSmall,
+                Typography.titleLarge,
+                Typography.titleMedium,
             )
 
         for (style in frauncesRoles) {
             assertEquals("Display and headline roles use Fraunces", Fraunces, style.fontFamily)
-            assertEquals("Display and headline roles use SemiBold", FontWeight.SemiBold, style.fontWeight)
+            // The countdown (.dy) is 800 in the prototype; everything else in
+            // this group is 600.
+            val expected =
+                if (style === Typography.titleLarge) FontWeight.Bold else FontWeight.SemiBold
+            assertEquals("Display and headline roles use 600, or 800 for the countdown", expected, style.fontWeight)
         }
 
         val figtreeRoles =
             listOf(
-                Typography.titleLarge,
-                Typography.titleMedium,
                 Typography.titleSmall,
                 Typography.bodyLarge,
                 Typography.bodyMedium,
@@ -414,15 +432,22 @@ class ThemeStressTest {
             assertEquals("Title, body, and label roles use Figtree", Figtree, style.fontFamily)
         }
 
-        val bodyRoles = listOf(Typography.bodyLarge, Typography.bodyMedium, Typography.bodySmall)
-        for (style in bodyRoles) {
-            assertEquals("Body roles use Normal weight", FontWeight.Normal, style.fontWeight)
+        // bodyLarge is the text field (prototype .inp, weight 600); the other
+        // two are running copy and stay Normal.
+        val bodyRoles =
+            listOf(
+                Typography.bodyLarge to FontWeight.SemiBold,
+                Typography.bodyMedium to FontWeight.Normal,
+                Typography.bodySmall to FontWeight.Normal,
+            )
+        for ((style, expected) in bodyRoles) {
+            assertEquals("Body roles use 400, except the field at 600", expected, style.fontWeight)
         }
 
+        // The countdown is 800; the section heading is 600 like the other
+        // Fraunces roles. Only the name and the labels are Bold.
         val boldRoles =
             listOf(
-                Typography.titleLarge,
-                Typography.titleMedium,
                 Typography.titleSmall,
                 Typography.labelLarge,
                 Typography.labelMedium,

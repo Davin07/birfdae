@@ -2,8 +2,11 @@ package com.birthdayreminder.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.data.repository.BirthdayRepository
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
+import com.birthdayreminder.domain.model.Relationship
+import com.birthdayreminder.domain.model.SearchFilter
 import com.birthdayreminder.domain.usecase.CalculateCountdownUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,8 +14,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
+/**
+ * Search, scoped by the relationship filters in the approved concept.
+ *
+ * The filters are All / Family / Friends / This month, matching the
+ * [Relationship] vocabulary the add wizard writes, so a person saved as
+ * "Parents" is findable by the same idea they were tagged with. The previous
+ * Name/Month split filtered on text the app already had a better filter for,
+ * and left `Birthday.relationship` unsearchable.
+ */
 @HiltViewModel
 class SearchViewModel
     @Inject
@@ -36,8 +49,14 @@ class SearchViewModel
             performSearch()
         }
 
-        fun onSearchTypeChanged(type: SearchType) {
-            _uiState.value = _uiState.value.copy(searchType = type)
+        /**
+         * Narrows the list to one of the concept's filters.
+         *
+         * @param filter which slice to show
+         */
+        fun onFilterChanged(filter: SearchFilter) {
+            if (_uiState.value.filter == filter) return
+            _uiState.value = _uiState.value.copy(filter = filter)
             performSearch()
         }
 
@@ -49,89 +68,70 @@ class SearchViewModel
         }
 
         private fun performSearch() {
-            val query = _uiState.value.query
-            val type = _uiState.value.searchType
-
             viewModelScope.launch {
-                // An empty query means "show me everyone", not "show nobody".
-                // Returning empty here made the screen read "No birthdays yet"
-                // while the home screen listed the same people, which reads as
-                // data loss rather than as a filter.
-                if (query.isBlank()) {
-                    birthdayRepository.getAllBirthdays().collectLatest { birthdays ->
-                        _uiState.value =
-                            _uiState.value.copy(
-                                results =
-                                    birthdays
-                                        .map { calculateCountdownUseCase.calculateCountdown(it) }
-                                        .sortedBy { it.daysUntilNext },
-                            )
-                    }
-                    return@launch
-                }
+                // Every path reads the whole list and narrows in memory. The
+                // database holds a person's name and their relationship but no
+                // index on either, and a phone's worth of birthdays is a few
+                // hundred rows, so a SQL filter would add a query surface
+                // without changing what the user sees.
+                birthdayRepository.getAllBirthdays().collectLatest { birthdays ->
+                    val query = _uiState.value.query.trim()
+                    val filter = _uiState.value.filter
 
-                if (type == SearchType.NAME) {
-                    birthdayRepository.searchBirthdaysByName(query).collectLatest { birthdays ->
-                        val results =
-                            birthdays.map {
-                                calculateCountdownUseCase.calculateCountdown(it)
-                            }.sortedBy { it.daysUntilNext }
-                        _uiState.value = _uiState.value.copy(results = results)
-                    }
-                } else {
-                    val month = mapMonthToNumber(query)
-                    if (month != null) {
-                        birthdayRepository.getBirthdaysForMonth(month).collectLatest { birthdays ->
-                            val results =
-                                birthdays.map {
-                                    calculateCountdownUseCase.calculateCountdown(it)
-                                }.sortedBy { it.daysUntilNext }
-                            _uiState.value = _uiState.value.copy(results = results)
-                        }
-                    } else {
-                        _uiState.value = _uiState.value.copy(results = emptyList())
-                    }
+                    val results =
+                        birthdays
+                            .filter { it.matchesFilter(filter) }
+                            .filter { it.matchesQuery(query) }
+                            .map { calculateCountdownUseCase.calculateCountdown(it) }
+                            .sortedBy { it.daysUntilNext }
+
+                    _uiState.value = _uiState.value.copy(results = results)
                 }
             }
-        }
-
-        private fun mapMonthToNumber(query: String): String? {
-            val months =
-                listOf(
-                    "january",
-                    "february",
-                    "march",
-                    "april",
-                    "may",
-                    "june",
-                    "july",
-                    "august",
-                    "september",
-                    "october",
-                    "november",
-                    "december",
-                )
-            val index = months.indexOfFirst { it.startsWith(query.lowercase()) }
-
-            // Also support numbers 1-12
-            if (index == -1) {
-                val num = query.toIntOrNull()
-                if (num != null && num in 1..12) {
-                    return String.format("%02d", num)
-                }
-            }
-
-            return if (index != -1) String.format("%02d", index + 1) else null
         }
     }
 
+/**
+ * Whether this person belongs under the active relationship filter.
+ *
+ * @param filter the selected chip
+ */
+private fun Birthday.matchesFilter(filter: SearchFilter): Boolean =
+    when (filter) {
+        SearchFilter.ALL -> true
+        // "Family" is one chip and covers parents, because the concept's chip
+        // is the only place a parent could be reached and a separate Parents
+        // filter would leave someone tagged Parents unfindable.
+        SearchFilter.FAMILY ->
+            Relationship.FAMILY.matches(relationship) ||
+                Relationship.PARENTS.matches(relationship)
+        SearchFilter.FRIENDS -> Relationship.FRIENDS.matches(relationship)
+        // From today to the end of the month, so someone whose date is in three
+        // weeks still counts as "this month".
+        SearchFilter.THIS_MONTH -> {
+            val now = LocalDate.now()
+            birthDate.monthValue == now.monthValue && birthDate.dayOfMonth >= now.dayOfMonth
+        }
+    }
+
+/**
+ * Whether this person matches the typed query.
+ *
+ * A blank query matches everyone, which is what makes Search show the full list
+ * on open rather than an empty state. The name is the primary match; the
+ * relationship is also matched so that typing "parents" reaches a parent, which
+ * costs nothing and is what someone would expect to work.
+ *
+ * @param query the text typed, possibly empty
+ */
+private fun Birthday.matchesQuery(query: String): Boolean {
+    if (query.isEmpty()) return true
+    return name.contains(query, ignoreCase = true) ||
+        relationship?.contains(query, ignoreCase = true) == true
+}
+
 data class SearchUiState(
     val query: String = "",
-    val searchType: SearchType = SearchType.NAME,
+    val filter: SearchFilter = SearchFilter.ALL,
     val results: List<BirthdayWithCountdown> = emptyList(),
 )
-
-enum class SearchType {
-    NAME,
-    MONTH,
-}

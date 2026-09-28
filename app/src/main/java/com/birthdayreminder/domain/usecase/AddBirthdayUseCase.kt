@@ -44,6 +44,12 @@ class AddBirthdayUseCase
             isPinned: Boolean = false,
             notificationOffsets: List<Int> = emptyList(),
             notificationTime: java.time.LocalTime? = null,
+            /**
+             * The tone the birthday card's message is written in, as the
+             * enum's name. Null means never chosen, and the card falls back
+             * to its default.
+             */
+            cardTone: String? = null,
         ): AddBirthdayResult {
             // Validate input using centralized validator
             val validationResult =
@@ -80,6 +86,7 @@ class AddBirthdayUseCase
                         isPinned = isPinned,
                         notificationOffsets = notificationOffsets,
                         notificationTime = notificationTime,
+                        cardTone = cardTone,
                     )
 
                 val birthdayId = birthdayRepository.addBirthday(birthday)

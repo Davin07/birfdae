@@ -51,6 +51,7 @@ class PerPersonReminderViewModel
                                 birthDate = person.birthDate,
                                 leadTimeDays = person.advanceNotificationDays,
                                 notificationsEnabled = person.notificationsEnabled,
+                                reminderTime = person.notificationTime,
                             )
                         }
                 }.stateIn(
@@ -94,6 +95,24 @@ class PerPersonReminderViewModel
                 updateBirthdayUseCase.updateBirthdayPartial(
                     birthdayId = birthdayId,
                     notificationsEnabled = enabled,
+                )
+            }
+        }
+
+        /**
+         * Sets the time of day this person's reminder arrives.
+         *
+         * @param birthdayId the person being changed
+         * @param time when to deliver the reminder
+         */
+        fun setReminderTime(
+            birthdayId: Long,
+            time: java.time.LocalTime,
+        ) {
+            persist(birthdayId) {
+                updateBirthdayUseCase.updateBirthdayPartial(
+                    birthdayId = birthdayId,
+                    notificationTime = time,
                 )
             }
         }
@@ -150,6 +169,13 @@ data class PerPersonReminderRow(
     val birthDate: LocalDate,
     val leadTimeDays: Int,
     val notificationsEnabled: Boolean,
+    /**
+     * When this person's reminder arrives, or null when the app default
+     * applies. Null is not the same as 9:00 AM: the global setting owns the
+     * default, and writing 9:00 AM here would silently detach this person from
+     * a change made in Settings.
+     */
+    val reminderTime: java.time.LocalTime?,
 )
 
 /** The lead-time choices the app offers, in the order they are shown. */

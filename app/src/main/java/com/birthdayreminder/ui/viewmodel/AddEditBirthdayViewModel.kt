@@ -11,6 +11,7 @@ import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
 import com.birthdayreminder.domain.usecase.UpdateBirthdayResult
 import com.birthdayreminder.domain.usecase.UpdateBirthdayUseCase
 import com.birthdayreminder.domain.validation.BirthdayValidator
+import com.birthdayreminder.ui.card.CardTone
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,7 +76,12 @@ class AddEditBirthdayViewModel
                                     notificationMinute = birthday.notificationMinute ?: 0,
                                     // New fields
                                     imageUri = birthday.imageUri,
-                                    relationship = birthday.relationship ?: "Friend",
+                                    // Kept verbatim so an untagged or
+                                    // legacy value still round-trips; the chip row
+                                    // resolves it for display, and a Save with no
+                                    // change must not quietly retag the person.
+                                    relationship = birthday.relationship.orEmpty(),
+                                    cardTone = CardTone.fromName(birthday.cardTone),
                                     isPinned = birthday.isPinned,
                                     notificationOffsets = birthday.notificationOffsets.ifEmpty { listOf(0) },
                                     notificationTime = birthday.notificationTime,
@@ -140,6 +146,24 @@ class AddEditBirthdayViewModel
 
         fun updateRelationship(relationship: String) {
             _uiState.update { it.copy(relationship = relationship) }
+        }
+
+        /**
+         * Turns reminders for this person on or off.
+         *
+         * @param enabled whether a reminder should be delivered
+         */
+        fun updateNotificationsEnabled(enabled: Boolean) {
+            _uiState.update { it.copy(notificationsEnabled = enabled) }
+        }
+
+        /**
+         * Chooses the card's message tone.
+         *
+         * @param tone the tone to write the message in
+         */
+        fun updateCardTone(tone: CardTone) {
+            _uiState.update { it.copy(cardTone = tone) }
         }
 
         fun updateIsPinned(isPinned: Boolean) {
@@ -229,6 +253,7 @@ class AddEditBirthdayViewModel
                                 isPinned = currentState.isPinned,
                                 notificationOffsets = currentState.notificationOffsets,
                                 notificationTime = currentState.notificationTime,
+                                cardTone = currentState.cardTone.name,
                             )
 
                         when (result) {
@@ -274,6 +299,7 @@ class AddEditBirthdayViewModel
                                 isPinned = currentState.isPinned,
                                 notificationOffsets = currentState.notificationOffsets,
                                 notificationTime = currentState.notificationTime,
+                                cardTone = currentState.cardTone.name,
                             )
 
                         when (result) {
@@ -362,10 +388,20 @@ data class AddEditBirthdayUiState(
     val notificationMinute: Int = 0,
     // New Fields
     val imageUri: String? = null,
-    val relationship: String = "Friend",
+    /**
+     * Empty until the user picks a chip. The wizard used to default this to
+     * "Friend", which pre-selected a relationship nobody had chosen and
+     * gave every person saved without touching the chips a relationship.
+     */
+    val relationship: String = "",
     val isPinned: Boolean = false,
     val notificationOffsets: List<Int> = listOf(0),
     val notificationTime: LocalTime? = null,
+    /**
+     * The tone the card's message should be written in. Chosen on the wizard's
+     * last step and persisted, so the card does not re-ask on every open.
+     */
+    val cardTone: CardTone = CardTone.DEFAULT,
     val step: Int = 1,
     // State
     val isLoading: Boolean = false,

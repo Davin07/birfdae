@@ -59,6 +59,7 @@ import com.birthdayreminder.ui.screens.BirthdayListScreen
 import com.birthdayreminder.ui.screens.CalendarScreen
 import com.birthdayreminder.ui.screens.NotificationSettingsScreen
 import com.birthdayreminder.ui.screens.PerPersonReminderScreen
+import com.birthdayreminder.ui.screens.PerPersonScreen
 import com.birthdayreminder.ui.screens.SearchScreen
 import com.birthdayreminder.ui.viewmodel.BirthdayCardViewModel
 
@@ -240,6 +241,21 @@ fun BirthdayApp(
 
                 composable(BirthdayNavigation.PER_PERSON_REMINDERS) {
                     PerPersonReminderScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onOpenPerson = { personId ->
+                            navController.navigate(BirthdayNavigation.perPerson(personId))
+                        },
+                    )
+                }
+
+                // One person, one screen: the concept gives a single person
+                // their own page because the lead-time and time chips need
+                // room next to the name they belong to.
+                composable(BirthdayNavigation.PER_PERSON) { backStackEntry ->
+                    val personId =
+                        backStackEntry.arguments?.getString("personId")?.toLongOrNull() ?: 0L
+                    PerPersonScreen(
+                        personId = personId,
                         onNavigateBack = { navController.popBackStack() },
                     )
                 }

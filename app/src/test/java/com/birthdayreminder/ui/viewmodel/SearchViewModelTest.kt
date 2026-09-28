@@ -3,6 +3,7 @@ package com.birthdayreminder.ui.viewmodel
 import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.data.repository.BirthdayRepository
 import com.birthdayreminder.domain.error.ErrorHandler
+import com.birthdayreminder.domain.model.SearchFilter
 import com.birthdayreminder.domain.usecase.CalculateCountdownUseCase
 import com.birthdayreminder.domain.util.SafeDateCalculator
 import kotlinx.coroutines.Dispatchers
@@ -44,13 +45,16 @@ class SearchViewModelTest {
     private fun person(
         id: Long,
         name: String,
+        relationship: String? = null,
+        birthDate: LocalDate = LocalDate.of(1990, 6, 15),
     ) = Birthday(
         id = id,
         name = name,
-        birthDate = LocalDate.of(1990, 6, 15),
+        birthDate = birthDate,
         notes = null,
         notificationsEnabled = true,
         advanceNotificationDays = 0,
+        relationship = relationship,
         createdAt = LocalDateTime.now(),
     )
 
@@ -106,9 +110,11 @@ class SearchViewModelTest {
     @Test
     fun `a name query filters the list`() =
         runTest {
-            whenever(repository.getAllBirthdays()).thenReturn(flowOf(emptyList()))
-            whenever(repository.searchBirthdaysByName("K")).thenReturn(
-                flowOf(listOf(person(2, "Karthik"))),
+            // One list, filtered in memory. The previous test stubbed a
+            // repository search that the screen no longer calls, so it passed
+            // against a code path the screen had left behind.
+            whenever(repository.getAllBirthdays()).thenReturn(
+                flowOf(listOf(person(1, "Amma"), person(2, "Karthik"))),
             )
             viewModel = SearchViewModel(repository, countdownUseCase)
 
@@ -116,6 +122,134 @@ class SearchViewModelTest {
 
             assertEquals(1, viewModel.uiState.value.results.size)
             assertEquals("Karthik", viewModel.uiState.value.results.first().birthday.name)
+        }
+
+    @Test
+    fun `the Family filter finds a parent`() =
+        runTest {
+            // The reason the relationship vocabulary is shared with the wizard:
+            // someone saved as Parents has to be reachable by the relationship
+            // they were tagged with.
+            whenever(repository.getAllBirthdays()).thenReturn(
+                flowOf(
+                    listOf(
+                        person(1, "Amma", relationship = "Parents"),
+                        person(2, "Karthik", relationship = "Friends"),
+                    ),
+                ),
+            )
+            viewModel = SearchViewModel(repository, countdownUseCase)
+
+            viewModel.onFilterChanged(SearchFilter.FAMILY)
+
+            assertEquals(
+                listOf("Amma"),
+                viewModel.uiState.value.results.map { it.birthday.name },
+            )
+        }
+
+    @Test
+    fun `the Friends filter returns only friends`() =
+        runTest {
+            whenever(repository.getAllBirthdays()).thenReturn(
+                flowOf(
+                    listOf(
+                        person(1, "Amma", relationship = "Parents"),
+                        person(2, "Karthik", relationship = "Friends"),
+                    ),
+                ),
+            )
+            viewModel = SearchViewModel(repository, countdownUseCase)
+
+            viewModel.onFilterChanged(SearchFilter.FRIENDS)
+
+            assertEquals(
+                listOf("Karthik"),
+                viewModel.uiState.value.results.map { it.birthday.name },
+            )
+        }
+
+    @Test
+    fun `All shows a person with no relationship at all`() =
+        runTest {
+            whenever(repository.getAllBirthdays()).thenReturn(
+                flowOf(
+                    listOf(
+                        person(1, "Untagged", relationship = null),
+                        person(2, "Karthik", relationship = "Friends"),
+                    ),
+                ),
+            )
+            viewModel = SearchViewModel(repository, countdownUseCase)
+
+            viewModel.onFilterChanged(SearchFilter.ALL)
+
+            assertEquals(2, viewModel.uiState.value.results.size)
+        }
+
+    @Test
+    fun `This month returns only birthdays still ahead this month`() =
+        runTest {
+            val today = LocalDate.now()
+            whenever(repository.getAllBirthdays()).thenReturn(
+                flowOf(
+                    listOf(
+                        person(1, "Later this month", birthDate = today.withDayOfMonth(28)),
+                        // Earlier in the month, so its next occurrence is next
+                        // year and it is not "this month".
+                        person(2, "Earlier this month", birthDate = today.withDayOfMonth(1)),
+                    ),
+                ),
+            )
+            viewModel = SearchViewModel(repository, countdownUseCase)
+
+            viewModel.onFilterChanged(SearchFilter.THIS_MONTH)
+
+            assertTrue(
+                "A birthday earlier this month recurs next year, so it is not " +
+                    "still ahead this month",
+                viewModel.uiState.value.results.none { it.birthday.name == "Earlier this month" },
+            )
+        }
+
+    @Test
+    fun `a filter and a query combine`() =
+        runTest {
+            whenever(repository.getAllBirthdays()).thenReturn(
+                flowOf(
+                    listOf(
+                        person(1, "Amma", relationship = "Parents"),
+                        person(2, "Amit", relationship = "Parents"),
+                        person(3, "Karthik", relationship = "Friends"),
+                    ),
+                ),
+            )
+            viewModel = SearchViewModel(repository, countdownUseCase)
+
+            viewModel.onFilterChanged(SearchFilter.FAMILY)
+            viewModel.onQueryChanged("Ami")
+
+            assertEquals(
+                listOf("Amit"),
+                viewModel.uiState.value.results.map { it.birthday.name },
+            )
+        }
+
+    @Test
+    fun `choosing the filter twice is not an error`() =
+        runTest {
+            // The guard exists so a re-tap does not re-run the query. It must
+            // not leave the state wrong when the same filter is chosen again.
+            whenever(repository.getAllBirthdays()).thenReturn(
+                flowOf(listOf(person(1, "Amma", relationship = "Parents"))),
+            )
+            viewModel = SearchViewModel(repository, countdownUseCase)
+
+            viewModel.onFilterChanged(SearchFilter.FAMILY)
+            viewModel.onFilterChanged(SearchFilter.FAMILY)
+
+            assertEquals(SearchFilter.FAMILY, viewModel.uiState.value.filter)
+            assertEquals(1, viewModel.uiState.value.results.size)
         }
 
     @Test

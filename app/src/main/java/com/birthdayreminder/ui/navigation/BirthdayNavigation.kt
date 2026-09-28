@@ -12,6 +12,14 @@ object BirthdayNavigation {
     const val BACKUP = "backup"
     const val PER_PERSON_REMINDERS = "per_person_reminders"
 
+    /** One person's reminder settings. */
+    const val PER_PERSON = "per_person/{personId}"
+
+    /**
+     * @param personId the person to open
+     */
+    fun perPerson(personId: Long): String = "per_person/$personId"
+
     // The shareable birthday card. This is the growth surface, so it gets its
     // own route rather than living inside the edit screen.
     const val CARD_WITH_ID = "birthday_card/{birthdayId}"

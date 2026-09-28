@@ -46,6 +46,11 @@ class UpdateBirthdayUseCase
             isPinned: Boolean = false,
             notificationOffsets: List<Int> = emptyList(),
             notificationTime: java.time.LocalTime? = null,
+            /**
+             * The tone the birthday card's message is written in, as the
+             * enum's name. Null means never chosen.
+             */
+            cardTone: String? = null,
         ): UpdateBirthdayResult {
             // Validate input using centralized validator
             val validationResult =
@@ -126,6 +131,11 @@ class UpdateBirthdayUseCase
             isPinned: Boolean? = null,
             notificationOffsets: List<Int>? = null,
             notificationTime: java.time.LocalTime? = null,
+            /**
+             * The tone the birthday card's message is written in, as the
+             * enum's name. Null means never chosen.
+             */
+            cardTone: String? = null,
         ): UpdateBirthdayResult {
             try {
                 // Get existing birthday
@@ -148,6 +158,7 @@ class UpdateBirthdayUseCase
                         isPinned = isPinned ?: existingBirthday.isPinned,
                         notificationOffsets = notificationOffsets ?: existingBirthday.notificationOffsets,
                         notificationTime = notificationTime ?: existingBirthday.notificationTime,
+                        cardTone = cardTone ?: existingBirthday.cardTone,
                     )
 
                 // Validate the updated birthday

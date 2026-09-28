@@ -1,6 +1,8 @@
 # Birf Dae — Saffron UI Overhaul: Agent Handoff Document
 
-> Updated: 2026-09-28. **All five milestones are done, and the plan-vs-prototype
+> Updated: 2026-09-28. **All nine milestones are done.** Comparing design *tokens* is not comparing *design*: a structural pass found nine screens with missing or extra components.
+>
+> The earlier note, kept for history: **All five milestones are done, and the plan-vs-prototype
 > fidelity pass that followed is also committed.** Milestone completion is not
 > design completion: the card was missing three features the plan called for,
 > and several screens still diverged from the approved concept.
@@ -20,8 +22,10 @@ Branch: `design/saffron-ui-overhaul` (base `origin/master` @ 8b78d52, v1.0.24)
 | 5 | Overdue / validation edge states | `1d3a2dd` | Done, verified on device |
 | 6 | Card tone chips, re-roll, save image | `db85fba` | Done, verified on device |
 | 7 | Screen fidelity vs the approved concept | `507b978`, `3aab686`, `e04da65`, `f010459` | Done, verified on device |
+| 8 | Reminder history + text-first hero | `e2d2f49` | Done |
+| 9 | Component parity: type scale, one relationship vocabulary, Search/Add/Per-person/Overdue | (this branch, uncommitted) | Done, verified on device |
 
-`./gradlew build` is clean: ktlint, Android lint, **174 unit tests**, 0 failures.
+`./gradlew build` is clean: ktlint, Android lint, **251 unit tests**, 0 failures.
 `./gradlew connectedDebugAndroidTest` is **76 tests, 0 failures** — the whole
 instrumented source set now compiles and runs, which it did not before.
 
@@ -216,6 +220,105 @@ help — Room has not checkpointed. Pull all three files and read with the `-wal
 and `-shm` beside the main db. This cost a long false bug hunt.
 
 ---
+
+PLACEHOLDER — will be written once the instrumented run reports.
+## Component parity with the concept (Milestone 9, done)
+
+The typography pass proved that comparing *tokens* is not comparing *design*.
+A script that extracted every screen's structure from the concept and diffed it
+against the Compose screens found **nine screens with real differences** — missing
+and extra components, not styling drift. All 32 colour tokens and every shared
+spacing/radius value already matched exactly; the divergence was in what the
+screens contained.
+
+### Type scale
+
+`Type.kt` had been left on Material 3's stock scale. It now follows the
+concept's, with the two sub-11sp steps (9.5px, 10.5px) lifted to 11sp for
+Android legibility — the one approved intentional difference, and the only one.
+`SaffronTypographyTest` pins every size, weight, line height and letter spacing.
+
+The concept's scale is **not monotonically decreasing**: `.who` (the card name at
+38px) is legitimately larger than `.ttl` (a 20px screen title). Two consequences:
+
+- The card's artifact styles could not live in M3's `headlineSmall`, because
+  dialogs share that slot and 38sp would blow them up. `CardArtifactName`,
+  `CardArtifactQuote` and `CardArtifactSignature` are separate styles.
+- `ThemeStressTest`'s "strictly decreasing font sizes" invariant was restated as
+  the guarantee that still holds (no role smaller than the body copy it sits
+  above). The original assertion cannot be satisfied by this scale.
+
+### One relationship vocabulary
+
+`Relationship` is now a single enum used by both the wizard's step 1 and
+Search's filters. They were independent lists, which meant a person saved as
+`Work` could not be found by the relationship they were tagged with — a label
+that cannot be searched for is not a filter.
+
+`Relationship.fromStored` maps the values real saves actually contain
+(`Mother`, `Father`, `Sister`, `Friend`, `Spouse`, …) onto the six chips.
+**`Mother`/`Father` map to `PARENTS`, not `FAMILY`** — collapsing them would
+leave the Parents chip matching nothing anyone ever saved. `Other` matches only
+people explicitly tagged Other, never "everyone else".
+
+`SearchFilter` is `All / Family / Friends / This month`. Search's Family filter
+covers Parents too, because the concept's chip is the only place a parent could
+be reached. All four chips fit 360dp without scrolling.
+
+### What changed per screen
+
+| Screen | Change |
+|--------|--------|
+| Search | 4 concept filters (was Name/Month), match count, "Recently added" |
+| Add 1 | 6 relationship chips from the shared enum, no default selection |
+| Add 3 | "Remind me" toggle card, lead-time chips, tone chips, colours footnote; time picker moved to per-person |
+| Per-person | list of people → one screen each: 4 lead-time + 4 time chips, divider, caption, **Save** |
+| Overdue | full-width accent primary, ghost "Not this year", dropped the duplicate "Needs a moment" heading, added "Coming up" |
+
+The wizard's `relationship` default was `"Friend"`, which pre-selected a
+relationship nobody chose and gave every person saved without touching the chips
+one. It is now empty.
+
+`SaffronChipRow<T>` is the one chip row, used by tone, search, relationship,
+lead time and time. It scrolls: a wrapping row changes the height of everything
+below it, and a filter row that reflows on selection moves the list under the
+finger.
+
+Per-person changes are held as a draft and written on **Save**, not on every tap.
+A mis-tap on a write-on-change control is already in the database with no way
+back to the value that was meant.
+
+### Schema 6
+
+Adds `birthdays.cardTone`, nullable with no default, so every existing row lands
+on null and reads as "never chosen" — the card resolves it to
+`CardTone.DEFAULT`. A default of `'WARM'` would write a value the user never
+picked. `Migration5To6Test` proves birthdays and the `reminder_events` history
+both survive; the history is the one thing the app cannot rebuild, since it is
+written by the user noticing things rather than derived from their list.
+
+Verified on device: `user_version: 6`, 4 birthdays and 24 events intact.
+
+### Fixes found while verifying on device
+
+- `ReminderSummary` interpolated the `LeadTime` **enum instance**, printing
+  "9:00 AM · ONE_DAY before" instead of "1 day before". `WizardStep3Test` pins
+  it. The test that caught it also found the fallback was wrong the other way:
+  a stored 5-day offset was being described as "1 day", so the line now reports
+  the value actually stored.
+- A person in the overdue card was **also** listed under "Later this year" 250
+  days out. Both computations were individually correct and together read as a
+  bug. The rule is now `listAfterAnnouncements(birthdays, heroIds, overdueIds)`
+  in the domain layer, with `ListExclusionTest` binding to it rather than
+  reimplementing the filter inside the test.
+- The overdue window is 14 days, so a fixture dated months back shows no card at
+  all. Test fixtures must sit inside it.
+
+### Known remaining differences (approved, do not "fix")
+
+- First run shows no example people, where the concept previews two.
+- The Upcoming app bar has no settings icon, where the concept has one.
+- Sub-11sp type lifted to 11sp (above).
 
 ## Environment notes
 

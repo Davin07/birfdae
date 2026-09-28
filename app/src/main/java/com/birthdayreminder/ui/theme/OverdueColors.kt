@@ -15,23 +15,34 @@ import androidx.compose.ui.graphics.Color
  *
  * @property container the card background
  * @property onContainer the text and button colour on it
+ * @property accent the primary button's background, sitting on [container]
+ * @property onAccent the primary button's label, sitting on [accent]
  */
 @Immutable
 data class OverdueColors(
     val container: Color,
     val onContainer: Color,
+    val accent: Color,
+    val onAccent: Color,
 )
 
 val SaffronLightOverdue =
     OverdueColors(
         container = SaffronLightOverdueContainer,
         onContainer = SaffronLightOnOverdueContainer,
+        // The concept's overdue card puts its primary action on the plain
+        // error colour, which is darker than the container and reads as the
+        // one thing to do on the card.
+        accent = SaffronLightError,
+        onAccent = SaffronLightOnError,
     )
 
 val SaffronDarkOverdue =
     OverdueColors(
         container = SaffronDarkOverdueContainer,
         onContainer = SaffronDarkOnOverdueContainer,
+        accent = SaffronDarkError,
+        onAccent = SaffronDarkOnError,
     )
 
 /**

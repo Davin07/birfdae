@@ -78,6 +78,15 @@ data class Birthday(
     @Contextual
     val notificationTime: LocalTime? = null,
     /**
+     * The tone the birthday card's message is written in.
+     *
+     * Persisted so the card opens in the tone the user chose when they added
+     * the person, rather than re-asking on every visit. Stored as the enum's
+     * name; an unknown value falls back to [com.birthdayreminder.ui.card.CardTone.WARM]
+     * at read time so a value written by a newer build cannot break an older one.
+     */
+    val cardTone: String? = null,
+    /**
      * The most recent year the user explicitly said they are not celebrating
      * this person's birthday.
      *

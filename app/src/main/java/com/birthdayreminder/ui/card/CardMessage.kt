@@ -41,6 +41,21 @@ enum class CardTone(
         val DEFAULT: CardTone = SINCEREST
 
         /**
+         * Resolves a persisted tone name, falling back to [DEFAULT].
+         *
+         * The stored value is a free string on the birthday row, so it may be
+         * absent (saved before the tone existed) or unrecognised (written by a
+         * newer build, or hand-edited in a backup). Both resolve to [DEFAULT]
+         * rather than throwing, so a bad value cannot stop a card opening.
+         *
+         * @param name the persisted tone name, or null when never chosen
+         */
+        fun fromName(name: String?): CardTone {
+            if (name.isNullOrBlank()) return DEFAULT
+            return entries.firstOrNull { it.name.equals(name.trim(), ignoreCase = true) } ?: DEFAULT
+        }
+
+        /**
          * Lines that stand on their own, used when the saved personal note is
          * the thing the sender wants on the card.
          */

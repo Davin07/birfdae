@@ -79,7 +79,7 @@ class PerPersonReminderViewModelTest {
      * that suspends while doing it. Matchers are written out fully qualified
      * with an explicit type per field: a bare anyOrNull() inside a suspend
      * lambda does not constrain its own type parameter here, and the
-     * thirteen-argument call fails to resolve without it.
+     * fourteen-argument call fails to resolve without it.
      */
     private fun stubUpdate(result: UpdateBirthdayResult) {
         wheneverBlocking {
@@ -97,6 +97,7 @@ class PerPersonReminderViewModelTest {
                 isPinned = org.mockito.ArgumentMatchers.any<Boolean>(),
                 notificationOffsets = org.mockito.ArgumentMatchers.any<List<Int>>(),
                 notificationTime = org.mockito.ArgumentMatchers.any<java.time.LocalTime>(),
+                cardTone = org.mockito.ArgumentMatchers.any<String>(),
             )
         }.thenReturn(result)
     }
@@ -154,6 +155,7 @@ class PerPersonReminderViewModelTest {
                     isPinned = org.mockito.ArgumentMatchers.isNull(),
                     notificationOffsets = org.mockito.ArgumentMatchers.isNull(),
                     notificationTime = org.mockito.ArgumentMatchers.isNull(),
+                    cardTone = org.mockito.ArgumentMatchers.isNull(),
                 )
             }
         }
@@ -182,6 +184,7 @@ class PerPersonReminderViewModelTest {
                     isPinned = org.mockito.ArgumentMatchers.isNull(),
                     notificationOffsets = org.mockito.ArgumentMatchers.isNull(),
                     notificationTime = org.mockito.ArgumentMatchers.isNull(),
+                    cardTone = org.mockito.ArgumentMatchers.isNull(),
                 )
             }
         }

@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
+import com.birthdayreminder.domain.model.listAfterAnnouncements
 import com.birthdayreminder.ui.components.ConfirmationDialog
 import com.birthdayreminder.ui.components.ErrorDialog
 import com.birthdayreminder.ui.components.birfdae.HomeHeroSection
@@ -193,8 +194,13 @@ fun BirthdayListContent(
                     // because the section headings are the problem: a "Next up"
                     // list whose first row repeats the name the hero just
                     // announced reads as a bug. Everything else stays in.
+                    // The rule lives in the domain layer so it can be tested
+                    // without a screen: the overdue card, its collapsed
+                    // remainder and the hero are all announcements, and the list
+                    // must not repeat anyone they name.
                     val heroIds = uiState.hero?.people?.map { it.birthdayId }?.toSet().orEmpty()
-                    val listed = sorted.filterNot { it.birthday.id in heroIds }
+                    val overdueIds = uiState.overdue.map { it.id }.toSet()
+                    val listed = listAfterAnnouncements(sorted, heroIds, overdueIds)
                     val soon = listed.filter { it.daysUntilNext <= 30 }
                     val later = listed.filter { it.daysUntilNext > 30 }
 
@@ -217,16 +223,10 @@ fun BirthdayListContent(
                         // screen, which is the same as hiding them; the rest
                         // stay reachable through the collapsed count.
                         if (uiState.overdue.isNotEmpty()) {
-                            item(key = "overdue-header") {
-                                SectionLabel(
-                                    title =
-                                        if (uiState.overdue.size == 1) {
-                                            "Needs a moment"
-                                        } else {
-                                            "Needs a moment \u00b7 ${uiState.overdue.size} birthdays"
-                                        },
-                                )
-                            }
+                            // No section header above this card. The card's own
+                            // eyebrow already says how long ago the birthday
+                            // was, and a "Needs a moment" heading on top of it
+                            // stated the same thing twice, in weaker words.
                             item(key = "overdue-${uiState.overdue.first().id}") {
                                 val overdue = uiState.overdue.first()
                                 OverdueBirthdayCard(
@@ -242,6 +242,15 @@ fun BirthdayListContent(
                                         onSelect = onEditBirthday,
                                     )
                                 }
+                            }
+                            // The concept labels what follows a missed birthday
+                            // "Coming up", which reads as "here is what you can
+                            // still catch". "Next up" is already used for the
+                            // hero further down, and one heading meaning two
+                            // things on a single screen is worse than either
+                            // wording on its own.
+                            item(key = "overdue-then-header") {
+                                SectionLabel(title = "Coming up")
                             }
                         }
 

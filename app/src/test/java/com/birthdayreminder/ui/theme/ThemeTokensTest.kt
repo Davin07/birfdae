@@ -146,93 +146,93 @@ class ThemeTokensTest {
         // Display Small
         assertEquals(Fraunces, Typography.displaySmall.fontFamily)
         assertEquals(FontWeight.SemiBold, Typography.displaySmall.fontWeight)
-        assertEquals(30.sp, Typography.displaySmall.fontSize)
-        assertEquals(36.sp, Typography.displaySmall.lineHeight)
-        assertEquals((-0.02).em, Typography.displaySmall.letterSpacing)
+        assertEquals(22.sp, Typography.displaySmall.fontSize)
+        assertEquals(25.sp, Typography.displaySmall.lineHeight)
+        assertEquals((-0.01).em, Typography.displaySmall.letterSpacing)
 
         // Headline Large
         assertEquals(Fraunces, Typography.headlineLarge.fontFamily)
         assertEquals(FontWeight.SemiBold, Typography.headlineLarge.fontWeight)
-        assertEquals(28.sp, Typography.headlineLarge.fontSize)
-        assertEquals(34.sp, Typography.headlineLarge.lineHeight)
+        assertEquals(20.sp, Typography.headlineLarge.fontSize)
+        assertEquals(25.sp, Typography.headlineLarge.lineHeight)
         assertEquals((-0.02).em, Typography.headlineLarge.letterSpacing)
 
         // Headline Medium
         assertEquals(Fraunces, Typography.headlineMedium.fontFamily)
         assertEquals(FontWeight.SemiBold, Typography.headlineMedium.fontWeight)
-        assertEquals(24.sp, Typography.headlineMedium.fontSize)
-        assertEquals(30.sp, Typography.headlineMedium.lineHeight)
-        assertEquals((-0.01).em, Typography.headlineMedium.letterSpacing)
+        assertEquals(20.sp, Typography.headlineMedium.fontSize)
+        assertEquals(25.sp, Typography.headlineMedium.lineHeight)
+        assertEquals((-0.02).em, Typography.headlineMedium.letterSpacing)
 
         // Headline Small
         assertEquals(Fraunces, Typography.headlineSmall.fontFamily)
         assertEquals(FontWeight.SemiBold, Typography.headlineSmall.fontWeight)
         assertEquals(20.sp, Typography.headlineSmall.fontSize)
-        assertEquals(26.sp, Typography.headlineSmall.lineHeight)
+        assertEquals(25.sp, Typography.headlineSmall.lineHeight)
         assertEquals((-0.02).em, Typography.headlineSmall.letterSpacing)
 
-        // Title Large
-        assertEquals(Figtree, Typography.titleLarge.fontFamily)
+        // Title Large -- the countdown (.dy): Fraunces, 800 in the prototype
+        assertEquals(Fraunces, Typography.titleLarge.fontFamily)
         assertEquals(FontWeight.Bold, Typography.titleLarge.fontWeight)
-        assertEquals(22.sp, Typography.titleLarge.fontSize)
-        assertEquals(28.sp, Typography.titleLarge.lineHeight)
-        assertEquals(0.0.em, Typography.titleLarge.letterSpacing)
+        assertEquals(17.sp, Typography.titleLarge.fontSize)
+        assertEquals(18.sp, Typography.titleLarge.lineHeight)
+        assertEquals((0.0).em, Typography.titleLarge.letterSpacing)
 
-        // Title Medium
-        assertEquals(Figtree, Typography.titleMedium.fontFamily)
-        assertEquals(FontWeight.Bold, Typography.titleMedium.fontWeight)
+        // Title Medium -- a section heading (.h3): Fraunces, 600
+        assertEquals(Fraunces, Typography.titleMedium.fontFamily)
+        assertEquals(FontWeight.SemiBold, Typography.titleMedium.fontWeight)
         assertEquals(16.sp, Typography.titleMedium.fontSize)
-        assertEquals(24.sp, Typography.titleMedium.lineHeight)
-        assertEquals(0.01.em, Typography.titleMedium.letterSpacing)
+        assertEquals(20.sp, Typography.titleMedium.lineHeight)
+        assertEquals((0.0).em, Typography.titleMedium.letterSpacing)
 
         // Title Small
         assertEquals(Figtree, Typography.titleSmall.fontFamily)
         assertEquals(FontWeight.Bold, Typography.titleSmall.fontWeight)
         assertEquals(14.sp, Typography.titleSmall.fontSize)
-        assertEquals(20.sp, Typography.titleSmall.lineHeight)
-        assertEquals(0.01.em, Typography.titleSmall.letterSpacing)
+        assertEquals(17.sp, Typography.titleSmall.lineHeight)
+        assertEquals((0.01).em, Typography.titleSmall.letterSpacing)
 
-        // Body Large
+        // Body Large -- a text field (prototype .inp): 14px at weight 600
         assertEquals(Figtree, Typography.bodyLarge.fontFamily)
-        assertEquals(FontWeight.Normal, Typography.bodyLarge.fontWeight)
-        assertEquals(16.sp, Typography.bodyLarge.fontSize)
-        assertEquals(24.sp, Typography.bodyLarge.lineHeight)
-        assertEquals(0.01.em, Typography.bodyLarge.letterSpacing)
+        assertEquals(FontWeight.SemiBold, Typography.bodyLarge.fontWeight)
+        assertEquals(14.sp, Typography.bodyLarge.fontSize)
+        assertEquals(20.sp, Typography.bodyLarge.lineHeight)
+        assertEquals((0.01).em, Typography.bodyLarge.letterSpacing)
 
         // Body Medium
         assertEquals(Figtree, Typography.bodyMedium.fontFamily)
         assertEquals(FontWeight.Normal, Typography.bodyMedium.fontWeight)
-        assertEquals(14.sp, Typography.bodyMedium.fontSize)
-        assertEquals(20.sp, Typography.bodyMedium.lineHeight)
-        assertEquals(0.01.em, Typography.bodyMedium.letterSpacing)
+        assertEquals(12.5.sp, Typography.bodyMedium.fontSize)
+        assertEquals(19.sp, Typography.bodyMedium.lineHeight)
+        assertEquals((0.01).em, Typography.bodyMedium.letterSpacing)
 
-        // Body Small
+        // Body Small -- prototype .tiny at 10.5px, lifted to the 11sp floor
         assertEquals(Figtree, Typography.bodySmall.fontFamily)
         assertEquals(FontWeight.Normal, Typography.bodySmall.fontWeight)
-        assertEquals(12.sp, Typography.bodySmall.fontSize)
-        assertEquals(16.sp, Typography.bodySmall.lineHeight)
-        assertEquals(0.0.em, Typography.bodySmall.letterSpacing)
+        assertEquals(11.sp, Typography.bodySmall.fontSize)
+        assertEquals(15.sp, Typography.bodySmall.lineHeight)
+        assertEquals((0.02).em, Typography.bodySmall.letterSpacing)
 
         // Label Large
         assertEquals(Figtree, Typography.labelLarge.fontFamily)
         assertEquals(FontWeight.Bold, Typography.labelLarge.fontWeight)
         assertEquals(14.sp, Typography.labelLarge.fontSize)
-        assertEquals(20.sp, Typography.labelLarge.lineHeight)
-        assertEquals(0.01.em, Typography.labelLarge.letterSpacing)
+        assertEquals(18.sp, Typography.labelLarge.lineHeight)
+        assertEquals((0.01).em, Typography.labelLarge.letterSpacing)
 
         // Label Medium
         assertEquals(Figtree, Typography.labelMedium.fontFamily)
         assertEquals(FontWeight.Bold, Typography.labelMedium.fontWeight)
-        assertEquals(12.sp, Typography.labelMedium.fontSize)
+        assertEquals(12.5.sp, Typography.labelMedium.fontSize)
         assertEquals(16.sp, Typography.labelMedium.lineHeight)
-        assertEquals(0.01.em, Typography.labelMedium.letterSpacing)
+        assertEquals((0.02).em, Typography.labelMedium.letterSpacing)
 
-        // Label Small
+        // Label Small -- prototype .eyebrow at 9.5px, lifted to the 11sp floor
         assertEquals(Figtree, Typography.labelSmall.fontFamily)
         assertEquals(FontWeight.Bold, Typography.labelSmall.fontWeight)
         assertEquals(11.sp, Typography.labelSmall.fontSize)
-        assertEquals(16.sp, Typography.labelSmall.lineHeight)
-        assertEquals(0.03.em, Typography.labelSmall.letterSpacing)
+        assertEquals(15.sp, Typography.labelSmall.lineHeight)
+        assertEquals((0.03).em, Typography.labelSmall.letterSpacing)
     }
 
     @Test

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,14 +31,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.birthdayreminder.domain.model.SearchFilter
 import com.birthdayreminder.ui.components.ConfirmationDialog
 import com.birthdayreminder.ui.components.birfdae.PersonRow
 import com.birthdayreminder.ui.components.birfdae.SaffronBackground
-import com.birthdayreminder.ui.components.birfdae.SaffronChip
+import com.birthdayreminder.ui.components.birfdae.SaffronChipRow
 import com.birthdayreminder.ui.components.birfdae.SaffronSearchField
 import com.birthdayreminder.ui.components.birfdae.SaffronTokens
+import com.birthdayreminder.ui.components.birfdae.SearchResultHeadings
 import com.birthdayreminder.ui.components.birfdae.SectionHeader
-import com.birthdayreminder.ui.viewmodel.SearchType
 import com.birthdayreminder.ui.viewmodel.SearchViewModel
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
@@ -78,31 +78,32 @@ fun SearchScreen(
                     SaffronSearchField(
                         value = uiState.query,
                         onValueChange = viewModel::onQueryChanged,
-                        placeholder =
-                            if (uiState.searchType == SearchType.NAME) {
-                                "Search by name"
-                            } else {
-                                "Search by month"
-                            },
+                        placeholder = "Search by name or relationship",
                     )
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(SaffronTokens.space8)) {
-                        SaffronChip(
-                            selected = uiState.searchType == SearchType.NAME,
-                            onClick = { viewModel.onSearchTypeChanged(SearchType.NAME) },
-                            label = "Name",
-                        )
-                        SaffronChip(
-                            selected = uiState.searchType == SearchType.MONTH,
-                            onClick = { viewModel.onSearchTypeChanged(SearchType.MONTH) },
-                            label = "Month",
-                        )
-                    }
+                    // The concept's four filters, horizontally scrollable
+                    // because four labels plus padding do not fit a 360dp
+                    // screen, and a wrapping row would push the results down by
+                    // a whole line. Scrolling is the lesser cost here.
+                    SaffronChipRow(
+                        chips = SearchFilter.entries.toList(),
+                        selected = uiState.filter,
+                        labelOf = { it.label },
+                        onSelect = viewModel::onFilterChanged,
+                    )
                 }
 
                 if (uiState.results.isEmpty()) {
-                    EmptySearchResult(isFiltered = uiState.query.isNotBlank())
+                    EmptySearchResult(isFiltered = uiState.query.isNotBlank() || uiState.filter != SearchFilter.ALL)
                 } else {
+                    // The concept shows a count above the list, and a "Recently
+                    // added" heading. A bare list of people gives no sense of
+                    // how much a filter narrowed things, which is the whole
+                    // point of tapping one.
+                    SearchResultHeadings(
+                        resultCount = uiState.results.size,
+                        isFiltered = uiState.query.isNotBlank() || uiState.filter != SearchFilter.ALL,
+                    )
                     LazyColumn(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(SaffronTokens.space12),

@@ -1,7 +1,9 @@
 package com.birthdayreminder.ui.screens
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -98,7 +100,7 @@ class BirthdayListScreenTest {
                 BirthdayListContent(
                     uiState =
                         BirthdayListUiState(
-                            birthdays = listOf(mockBirthday("Test Person", 10)),
+                            birthdays = listOf(mockBirthday("Test Person", 10, id = 2L)),
                             overdue = listOf(late),
                             isLoading = false,
                         ),
@@ -106,8 +108,49 @@ class BirthdayListScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Needs a moment").assertIsDisplayed()
+        // No "Needs a moment" heading: the card's own eyebrow already says how
+        // long ago the birthday was, and the heading stated it twice in weaker
+        // words. The heading that does follow the card is the one that names
+        // what comes next.
         composeTestRule.onNodeWithText("Late Person").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Coming up").assertIsDisplayed()
+    }
+
+    @Test
+    fun doesNotRepeatAnOverduePersonInTheList() {
+        // The card says the date has passed; the list must not then show the
+        // same person as still upcoming. Both were individually correct and
+        // together read as a bug.
+        val overduePerson = mockBirthday("Late Person", 250)
+        val late =
+            com.birthdayreminder.domain.model.OverdueBirthday(
+                birthday = overduePerson.birthday,
+                occurredOn = java.time.LocalDate.now().minusDays(3),
+                daysOverdue = 3,
+            )
+
+        composeTestRule.setContent {
+            BirthdayReminderAppTheme {
+                BirthdayListContent(
+                    uiState =
+                        BirthdayListUiState(
+                            // Distinct ids: mockBirthday defaults both to
+                            // 1L, which would make the exclusion remove the
+                            // wrong person and pass for the wrong reason.
+                            birthdays =
+                                listOf(
+                                    overduePerson,
+                                    mockBirthday("Test Person", 10, id = 2L),
+                                ),
+                            overdue = listOf(late),
+                            isLoading = false,
+                        ),
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Late Person").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("Test Person").assertCountEquals(1)
     }
 
     @Test
