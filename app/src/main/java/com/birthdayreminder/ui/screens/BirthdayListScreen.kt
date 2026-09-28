@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,13 +16,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -43,15 +39,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
 import com.birthdayreminder.ui.components.ConfirmationDialog
 import com.birthdayreminder.ui.components.ErrorDialog
+import com.birthdayreminder.ui.components.birfdae.HomeHeroSection
 import com.birthdayreminder.ui.components.birfdae.OverdueBirthdayCard
 import com.birthdayreminder.ui.components.birfdae.OverdueRemainderRow
-import com.birthdayreminder.ui.components.birfdae.PersonAvatar
 import com.birthdayreminder.ui.components.birfdae.PersonRow
 import com.birthdayreminder.ui.components.birfdae.SaffronBackground
 import com.birthdayreminder.ui.components.birfdae.SaffronButton
@@ -60,7 +55,6 @@ import com.birthdayreminder.ui.components.birfdae.SectionHeader
 import com.birthdayreminder.ui.components.birfdae.SectionLabel
 import com.birthdayreminder.ui.viewmodel.BirthdayListUiState
 import com.birthdayreminder.ui.viewmodel.BirthdayListViewModel
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 
@@ -190,14 +184,19 @@ fun BirthdayListContent(
                 uiState.showEmptyState -> EmptyState(onAddBirthday = onAddBirthday, modifier = Modifier.fillMaxSize())
                 else -> {
                     val sorted = uiState.birthdays
-                    // Today's birthday leads; otherwise a pinned person; otherwise the next up.
-                    val hero =
-                        sorted.firstOrNull { it.isToday }
-                            ?: sorted.firstOrNull { it.birthday.isPinned }
-                            ?: sorted.firstOrNull()
-                    val others = if (hero != null) sorted.filter { it.id != hero.id } else sorted
-                    val soon = others.filter { it.daysUntilNext <= 30 }
-                    val later = others.filter { it.daysUntilNext > 30 }
+                    // The hero is text, not a card, so it no longer swallows a
+                    // row. It did once hold one person back to fill a hero card,
+                    // which meant the person the screen was about could be the
+                    // one missing from the list.
+                    //
+                    // The hero's own people are still excluded here, but only
+                    // because the section headings are the problem: a "Next up"
+                    // list whose first row repeats the name the hero just
+                    // announced reads as a bug. Everything else stays in.
+                    val heroIds = uiState.hero?.people?.map { it.birthdayId }?.toSet().orEmpty()
+                    val listed = sorted.filterNot { it.birthday.id in heroIds }
+                    val soon = listed.filter { it.daysUntilNext <= 30 }
+                    val later = listed.filter { it.daysUntilNext > 30 }
 
                     LazyColumn(
                         modifier = Modifier.weight(1f),
@@ -246,13 +245,11 @@ fun BirthdayListContent(
                             }
                         }
 
-                        if (hero != null) {
-                            item(key = "hero-${hero.id}") {
-                                HeroBirthdayCard(
-                                    birthday = hero,
-                                    isPinned = hero.birthday.isPinned && !hero.isToday,
-                                    isToday = hero.isToday,
-                                    onClick = { onEditBirthday(hero.id) },
+                        uiState.hero?.let { hero ->
+                            item(key = "hero") {
+                                HomeHeroSection(
+                                    hero = hero,
+                                    onSendWish = { onShareCard(hero.primaryBirthdayId) },
                                 )
                             }
                         }
@@ -414,105 +411,6 @@ private fun SwipeAction(
         contentAlignment = if (alignStart) Alignment.CenterStart else Alignment.CenterEnd,
     ) {
         content()
-    }
-}
-
-/**
- * The lead birthday, given the app's signature surface.
- *
- * @param birthday person and countdown
- * @param isPinned whether this person is pinned
- * @param isToday whether it is their birthday today
- * @param onClick opens the edit wizard
- */
-@Composable
-fun HeroBirthdayCard(
-    birthday: BirthdayWithCountdown,
-    isPinned: Boolean,
-    isToday: Boolean = false,
-    onClick: () -> Unit,
-) {
-    val label =
-        when {
-            isToday -> "Today"
-            isPinned -> "Pinned"
-            else -> "Upcoming"
-        }
-    val dateFormatter = remember { DateTimeFormatter.ofPattern("d MMMM") }
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("h:mm a") }
-    val time = birthday.birthday.notificationTime ?: LocalTime.of(9, 0)
-
-    Column(modifier = Modifier.padding(bottom = SaffronTokens.space8)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = SaffronTokens.space8),
-        ) {
-            Icon(
-                imageVector = if (isPinned) Icons.Default.PushPin else Icons.Default.Notifications,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(Modifier.width(SaffronTokens.space4))
-            Text(
-                text = label.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-
-        Surface(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-            shape = SaffronTokens.radiusCard,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(SaffronTokens.space20),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = birthday.name,
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                    Spacer(Modifier.height(SaffronTokens.space8))
-                    Text(
-                        text =
-                            if (isToday) {
-                                "Turning ${birthday.age} today"
-                            } else {
-                                "Turns ${birthday.age} on ${birthday.birthDate.format(dateFormatter)}"
-                            },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                    Spacer(Modifier.height(SaffronTokens.space4))
-                    Text(
-                        text = "Reminds at ${time.format(timeFormatter)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-
-                Spacer(Modifier.width(SaffronTokens.space12))
-
-                PersonAvatar(
-                    name = birthday.name,
-                    imageUri = birthday.birthday.imageUri,
-                    size = SaffronTokens.avatarLarge,
-                    // The hero is already primaryContainer, so the avatar needs
-                    // the surface colour to read as a distinct disc.
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
     }
 }
 

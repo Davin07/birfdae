@@ -91,6 +91,7 @@ class Migration3To4Test {
         val room =
             androidx.room.Room
                 .databaseBuilder(context, AppDatabase::class.java, TEST_DB + "2")
+                .addMigrations(*AppDatabase.ALL_MIGRATIONS)
                 .allowMainThreadQueries()
                 .build()
         val dao = room.birthdayDao()

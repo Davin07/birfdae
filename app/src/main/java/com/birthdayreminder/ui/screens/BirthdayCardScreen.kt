@@ -67,6 +67,10 @@ fun BirthdayCardScreen(
     ageTurning: Int,
     senderName: String,
     onNavigateBack: () -> Unit,
+    // Invoked after the system chooser opens. The ViewModel owns the
+    // recording so the screen stays free of repository plumbing, and so a
+    // share is counted once no matter which path triggered it.
+    onShared: (birthdayId: Long, year: Int) -> Unit = { _, _ -> },
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -213,6 +217,16 @@ fun BirthdayCardScreen(
                             runCatching { context.startActivity(Intent.createChooser(chosen, "Share card")) }
                                 .isSuccess
                         isSharing = false
+
+                        // Recorded only when the chooser actually opened. This
+                        // is a share *attempt* the app can observe, not proof
+                        // the message arrived -- the recipient's read receipt is
+                        // invisible here, so nothing in the UI may claim
+                        // delivery. The streak is built from acknowledgements
+                        // instead; this is the growth signal, kept separate.
+                        if (started) {
+                            onShared(birthday.id, (nextOccurrence ?: birthday.birthDate).year)
+                        }
 
                         if (!started) {
                             clipboard.setText(AnnotatedString(shareText))

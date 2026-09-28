@@ -36,12 +36,13 @@ class OverdueCalculatorTest {
     }
 
     @Test
-    fun `a birthday earlier today is overdue for zero days`() {
+    fun `a birthday falling today is not yet overdue`() {
         val today = LocalDate.of(2026, 9, 27)
-        val result = OverdueCalculator.overdueFor(birthday(9, 27), today)
 
-        assertNotNull(result)
-        assertEquals(0, result!!.daysOverdue)
+        // Zero days overdue is a birthday, not a missed one. Showing it as
+        // overdue put the same person in the "Needs a moment" card, the hero,
+        // and the list on the same screen.
+        assertNull(OverdueCalculator.overdueFor(birthday(9, 27), today))
     }
 
     @Test
@@ -56,7 +57,7 @@ class OverdueCalculatorTest {
         val today = LocalDate.of(2026, 9, 27)
         val days = OverdueCalculator.OVERDUE_WINDOW_DAYS.toInt()
 
-        assertNotNull(OverdueCalculator.overdueFor(birthday(9, 27 - days), today))
+        assertNotNull(OverdueCalculator.overdueFor(birthday(9, 28 - days), today))
     }
 
     @Test
@@ -76,7 +77,7 @@ class OverdueCalculatorTest {
 
         // The same person comes back into scope the following year without the
         // user doing anything.
-        val nextYear = LocalDate.of(2027, 9, 20)
+        val nextYear = LocalDate.of(2027, 9, 25)
         assertNotNull(
             "Should return in 2027",
             OverdueCalculator.overdueFor(person, nextYear),
@@ -159,7 +160,9 @@ class OverdueCalculatorTest {
         val today = LocalDate.of(2026, 9, 27)
         val window = OverdueCalculator.OVERDUE_WINDOW_DAYS.toInt()
 
-        for (daysAgo in 0..window) {
+        // Starts at one day ago: day zero is the birthday itself, which is
+        // happening rather than missed.
+        for (daysAgo in 1..window) {
             val occurrence = today.minusDays(daysAgo.toLong())
             val person = birthday(occurrence.monthValue, occurrence.dayOfMonth)
             assertNotNull(

@@ -167,6 +167,56 @@ plum card, the regular list renders a person row.
 
 ---
 
+## The text-first hero and reminder history (Milestone 8, done)
+
+The approved concept opened Home with a sentence about today, not a card. It
+also promised "You've remembered 11 of her last 11", which is a claim about the
+user, so the storage to make it true was built alongside it.
+
+- **Room schema 4→5** adds `reminder_events` — `(birthdayId, year)` unique, so
+  one birthday has one row per year. `acknowledgedAt` and `sharedAt` are
+  independent and additive: a share never clears an acknowledgement.
+- **Acknowledged is the streak; a share is not.** `GetReminderStreakUseCase`
+  counts `acknowledgedAt` only. Sharing records intent to share, which the app
+  cannot verify, so it feeds a separate `sharedYears` counter and nothing else.
+- **The denominator is earned, not asserted.** Tracked years start at
+  `BirthdayYear.firstEligibleYear`: the first birthday the app *could* have
+  reminded about. Added in March with a December birthday, that year counts;
+  added in June with a March birthday, the first chance is next March. Every
+  year after that counts whether or not a row exists — that is what makes a
+  missing row mean "not remembered" rather than "not yet due".
+- **A short history says so.** `ReminderStreak.isMeaningful` requires two
+  tracked years. Below that the hero reads "On your list since 2016" rather than
+  dressing a fresh install as a track record. Nothing in `HomeHeroCopy` can
+  produce a streak line the data does not support.
+- **Notification taps now work.** `MainActivity` reads `birthday_id` and
+  `birthday_year` on both `onCreate` and `onNewIntent`, records the
+  acknowledgement, and navigates to that person's card. Previously the intent
+  carried the id and nothing read it: the tap was a dead end that opened Home.
+  The year extra exists because an advance reminder fired in December belongs
+  to the following January's birthday.
+- `HeroBirthdayCard` is deleted. The hero is text (`HomeHeroSection`), and the
+  list no longer holds a person back to fill a card.
+
+Two bugs the device found, both now regression-tested:
+
+- **A birthday falling today was also "overdue".** `OverdueCalculator` used
+  `!isAfter(today)`, so a same-day date produced a 0-day overdue entry and the
+  person appeared in the overdue card, the hero, and the list at once. Now
+  `isBefore(today)`. Three existing tests encoded the old contract and were
+  corrected rather than worked around.
+- **A same-name person repeated under a "Next up" heading** right below a hero
+  that had just announced them. The hero's people are excluded from the list,
+  which is now the only thing that exclusion is for.
+
+**Do not read the database to check whether a write landed without the WAL.**
+`adb exec-out run-as ... cat databases/<db>` returns the main file only; a
+recent write is still in `-wal` and looks absent. Force-stopping first does not
+help — Room has not checkpointed. Pull all three files and read with the `-wal`
+and `-shm` beside the main db. This cost a long false bug hunt.
+
+---
+
 ## Environment notes
 
 - Branch from `origin/master` after `git fetch` — **never** local `master`.

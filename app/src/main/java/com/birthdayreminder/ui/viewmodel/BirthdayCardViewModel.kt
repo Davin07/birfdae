@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.birthdayreminder.data.local.entity.Birthday
 import com.birthdayreminder.data.repository.BirthdayRepository
+import com.birthdayreminder.data.repository.ReminderEventRepository
 import com.birthdayreminder.domain.usecase.CalculateCountdownUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,12 +28,31 @@ class BirthdayCardViewModel
     constructor(
         private val birthdayRepository: BirthdayRepository,
         private val calculateCountdownUseCase: CalculateCountdownUseCase,
+        private val reminderEventRepository: ReminderEventRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(BirthdayCardUiState())
         val uiState: StateFlow<BirthdayCardUiState> = _uiState.asStateFlow()
 
         private val birthdayId: Long? = savedStateHandle.get<String>("birthdayId")?.toLongOrNull()
+
+        /**
+         * Records that a card for this birthday was shared.
+         *
+         * Kept off the acknowledgement streak on purpose. Sharing is the growth
+         * signal -- it tells us whose cards actually get sent -- but it is not
+         * proof the message arrived, so it must never be counted as proof the
+         * user remembered.
+         *
+         * @param year the year the birthday falls in, so an early share is not
+         *   credited to the wrong year
+         */
+        fun recordShare(year: Int) {
+            val id = birthdayId ?: return
+            viewModelScope.launch {
+                reminderEventRepository.recordShared(id, year)
+            }
+        }
 
         private companion object {
             /**

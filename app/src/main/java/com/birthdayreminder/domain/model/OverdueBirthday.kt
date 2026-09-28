@@ -66,7 +66,11 @@ object OverdueCalculator {
         if (wasSkippedThisYear(birthday, today)) return null
 
         val thisYearOccurrence = occurrenceIn(birthday.birthDate, today.year)
-        if (thisYearOccurrence.isAfter(today)) return null
+        // A birthday that is today is not overdue, it is happening. Only a date
+        // that has already gone by counts, so this must be isBefore rather than
+        // !isAfter -- otherwise the same person shows up as both the overdue
+        // prompt and today's hero, which is what a same-day birthday did.
+        if (!thisYearOccurrence.isBefore(today)) return null
 
         val daysOverdue = ChronoUnit.DAYS.between(thisYearOccurrence, today)
         if (daysOverdue > OVERDUE_WINDOW_DAYS) return null

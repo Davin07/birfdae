@@ -34,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,8 +67,25 @@ import com.birthdayreminder.ui.viewmodel.BirthdayCardViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BirthdayApp(navController: NavHostController = rememberNavController()) {
+fun BirthdayApp(
+    navController: NavHostController = rememberNavController(),
+    // The person a notification was tapped for, or null. Consumed once, so
+    // rotating the device does not navigate again.
+    notificationBirthdayId: Long? = null,
+    onNotificationHandled: () -> Unit = {},
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+    // A tap on a birthday notification should land on that person's card.
+    // Before this existed the intent carried the id and nothing read it, so
+    // tapping a reminder just opened the app to Home.
+    LaunchedEffect(notificationBirthdayId) {
+        val id = notificationBirthdayId
+        if (id != null) {
+            navController.navigate(BirthdayNavigation.createCardRoute(id))
+            onNotificationHandled()
+        }
+    }
     val currentDestination = navBackStackEntry?.destination
     val showBottomBar =
         currentDestination?.route in
@@ -167,6 +185,7 @@ fun BirthdayApp(navController: NavHostController = rememberNavController()) {
                         ageTurning = uiState.ageTurning,
                         senderName = uiState.senderName,
                         onNavigateBack = { navController.popBackStack() },
+                        onShared = { birthdayId, year -> vm.recordShare(year) },
                     )
                 }
 

@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.birthdayreminder.domain.error.ErrorHandler
 import com.birthdayreminder.domain.error.ErrorResult
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
+import com.birthdayreminder.domain.model.HeroPerson
+import com.birthdayreminder.domain.model.HomeHero
+import com.birthdayreminder.domain.model.HomeHeroCopy
 import com.birthdayreminder.domain.model.OverdueBirthday
 import com.birthdayreminder.domain.model.OverdueCalculator
 import com.birthdayreminder.domain.usecase.AddBirthdayResult
@@ -12,6 +15,7 @@ import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
 import com.birthdayreminder.domain.usecase.DeleteBirthdayResult
 import com.birthdayreminder.domain.usecase.DeleteBirthdayUseCase
 import com.birthdayreminder.domain.usecase.GetAllBirthdaysUseCase
+import com.birthdayreminder.domain.usecase.GetReminderStreakUseCase
 import com.birthdayreminder.domain.usecase.SkipBirthdayForYearUseCase
 import com.birthdayreminder.domain.usecase.UpdateBirthdayResult
 import com.birthdayreminder.domain.usecase.UpdateBirthdayUseCase
@@ -44,6 +48,7 @@ class BirthdayListViewModel
         private val deleteBirthdayUseCase: DeleteBirthdayUseCase,
         private val skipBirthdayForYearUseCase: SkipBirthdayForYearUseCase,
         private val errorHandler: ErrorHandler,
+        private val getReminderStreakUseCase: GetReminderStreakUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(BirthdayListUiState())
         val uiState: StateFlow<BirthdayListUiState> = _uiState.asStateFlow()
@@ -93,9 +98,58 @@ class BirthdayListViewModel
                                     isLoading = false,
                                     errorResult = null,
                                 )
+                            // The hero needs a streak, which needs a database
+                            // read, so it is recomputed alongside the list
+                            // rather than derived from it.
+                            loadHero(birthdays)
                         }
                 }
         }
+
+        /**
+         * Builds the home screen hero for the current list.
+         *
+         * Read on every emission so a streak recorded moments ago -- by
+         * opening the notification, or by coming back from sharing a card --
+         * shows up without a manual refresh.
+         *
+         * @param birthdays the list, already sorted by next occurrence
+         */
+        private suspend fun loadHero(birthdays: List<BirthdayWithCountdown>) {
+            val dueToday =
+                birthdays
+                    .filter { it.isToday && !isSkipped(it) }
+                    .map { it.toHeroPerson() }
+            val nextUp = birthdays.firstOrNull { !it.isToday && !isSkipped(it) }?.toHeroPerson()
+
+            val hero =
+                if (dueToday.isEmpty() && nextUp == null) {
+                    null
+                } else {
+                    val subject = dueToday.firstOrNull() ?: nextUp!!
+                    val birthday = birthdays.first { it.birthday.id == subject.birthdayId }.birthday
+                    val streak =
+                        getReminderStreakUseCase(
+                            birthdayId = birthday.id,
+                            name = birthday.name,
+                            birthDate = birthday.birthDate,
+                            createdAt = birthday.createdAt,
+                        )
+                    HomeHeroCopy.build(dueOn = dueToday, nextUp = nextUp, streak = streak)
+                }
+
+            _uiState.value = _uiState.value.copy(hero = hero)
+        }
+
+        /** A skipped birthday is not "next up" in any sense. */
+        private fun isSkipped(item: BirthdayWithCountdown): Boolean = item.birthday.skippedYear == LocalDate.now().year
+
+        private fun BirthdayWithCountdown.toHeroPerson(): HeroPerson =
+            HeroPerson(
+                birthdayId = birthday.id,
+                name = birthday.name,
+                ageTurning = age,
+            )
 
         /**
          * Refreshes the birthday list.
@@ -498,6 +552,11 @@ data class BirthdayListUiState(
      * urgent than an upcoming one.
      */
     val overdue: List<OverdueBirthday> = emptyList(),
+    /**
+     * The home screen's opening statement, or null when there is nothing due
+     * and nothing upcoming to lead with.
+     */
+    val hero: HomeHero? = null,
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val errorResult: ErrorResult? = null,

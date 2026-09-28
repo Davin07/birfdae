@@ -11,6 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.birthdayreminder.MainActivity
 import com.birthdayreminder.R
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -54,11 +55,16 @@ class NotificationHelper
             birthdayId: Long,
             personName: String,
             age: Int? = null,
+            // The year the birthday falls in. Carried explicitly because an
+            // advance reminder can fire in the year before, and crediting the
+            // tap to the firing year would count the wrong birthday.
+            birthdayYear: Int = LocalDate.now().year,
         ) {
             val intent =
                 Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    putExtra("birthday_id", birthdayId)
+                    putExtra(MainActivity.EXTRA_BIRTHDAY_ID, birthdayId)
+                    putExtra(MainActivity.EXTRA_BIRTHDAY_YEAR, birthdayYear)
                 }
 
             val pendingIntent =
@@ -104,11 +110,15 @@ class NotificationHelper
             birthdayId: Long,
             personName: String,
             daysUntil: Int,
+            // Same reasoning as the day-of notification: the year credited is
+            // the birthday's, not the one the alarm happened to fire in.
+            birthdayYear: Int = LocalDate.now().year,
         ) {
             val intent =
                 Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    putExtra("birthday_id", birthdayId)
+                    putExtra(MainActivity.EXTRA_BIRTHDAY_ID, birthdayId)
+                    putExtra(MainActivity.EXTRA_BIRTHDAY_YEAR, birthdayYear)
                 }
 
             val pendingIntent =
