@@ -1,6 +1,7 @@
 package com.birthdayreminder.ui.card
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,8 +71,13 @@ fun BirthdayCardArtifact(
     createdAtYear: Int?,
     modifier: Modifier = Modifier,
 ) {
-    val stops = remember(birthDate) { CardGradient.forBirthDate(birthDate) }
-    val ink = CardInk
+    // The card follows the app theme, as the approved concept does. This means
+    // an exported PNG carries the sender's theme: a card exported in dark mode
+    // is deep amber with cream ink. That was a deliberate call -- the alternative
+    // is a cream card on a black screen, which read as a washed-out artefact.
+    val darkTheme = isSystemInDarkTheme()
+    val stops = remember(birthDate, darkTheme) { CardGradient.forBirthDate(birthDate, darkTheme) }
+    val ink = if (darkTheme) CardDarkInk else CardInk
     // Blend toward the card's own lightest stop. Using copy(alpha = 0.72)
     // instead leaves every muted label semi-transparent, so it picks up the
     // hue of whatever it sits on and drifts green over a pink card.
@@ -247,13 +253,20 @@ private fun onYourListSince(
 }
 
 /**
- * The card's ink.
+ * The card's ink on the light ramp.
  *
- * Fixed dark rather than themed: the card is exported to other apps and to
- * other people's eyes, so it must not depend on the sender's light/dark mode.
- * [CardGradient] guarantees this clears 4.5:1 on every one of its stops.
+ * Matches the concept's light card, which pairs the gold gradient with dark
+ * ink. [CardGradient] guarantees this clears 4.5:1 on every light-ramp stop.
  */
 internal val CardInk: Color = Color(0xFF1A1A17)
+
+/**
+ * The card's ink on the dark ramp.
+ *
+ * The concept's dark card pairs deep amber with a warm cream. Taken from its
+ * own light-mode card background so the two ramps stay one design.
+ */
+internal val CardDarkInk: Color = Color(0xFFFFFEC8)
 
 /**
  * The attribution line.

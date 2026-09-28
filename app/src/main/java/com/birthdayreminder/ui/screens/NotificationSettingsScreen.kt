@@ -54,8 +54,6 @@ import java.time.format.DateTimeFormatter
  * @param onNavigateBack kept for symmetry with the other bottom-nav destinations;
  *   Settings has nothing to go back to
  * @param onNavigateToPerPerson opens the per-person reminder overrides
- * @param onNavigateToLeadTime opens the same overrides, which is where lead
- *   time is actually edited -- there is no global default to change
  * @param onNavigateToBackup opens the backup screen
  * @param viewModel screen ViewModel
  */
@@ -65,7 +63,6 @@ import java.time.format.DateTimeFormatter
 fun NotificationSettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPerPerson: () -> Unit,
-    onNavigateToLeadTime: () -> Unit,
     onNavigateToBackup: () -> Unit,
     viewModel: NotificationSettingsViewModel = hiltViewModel(),
 ) {
@@ -140,23 +137,17 @@ fun NotificationSettingsScreen(
                             }
                         }
                     }
-
-                    // There is no global lead-time default in the data layer,
-                    // only a per-person value, so this opens the same override
-                    // screen rather than showing a number stored nowhere.
-                    SettingsRow(
-                        title = "Lead time",
-                        subtitle = "Set per person, 1 to 7 days before",
-                        showDivider = false,
-                        onClick = onNavigateToLeadTime,
-                        trailing = { Chevron() },
-                    )
                 }
 
                 SettingsGroup(title = "Your data") {
+                    // Lead time used to have its own row here, and both rows
+                    // opened the same screen. Lead time is a per-person value
+                    // with no global default, so a row that "opens the same
+                    // overrides" is a second door to one room.
                     SettingsRow(
                         title = "Per-person reminders",
-                        subtitle = "Time and lead time, per person",
+                        subtitle = "Lead time and time, for each person",
+                        showDivider = false,
                         onClick = onNavigateToPerPerson,
                         trailing = { Chevron() },
                     )
@@ -167,16 +158,6 @@ fun NotificationSettingsScreen(
                         showDivider = false,
                         onClick = onNavigateToBackup,
                         trailing = { Chevron() },
-                    )
-                }
-
-                SettingsGroup(title = "Appearance") {
-                    SettingsToggleRow(
-                        title = "Use wallpaper colours",
-                        subtitle = "Off \u2014 the brand palette is fixed",
-                        checked = uiState.isMaterialYouEnabled,
-                        onCheckedChange = { viewModel.toggleMaterialYou(it) },
-                        showDivider = false,
                     )
                 }
 

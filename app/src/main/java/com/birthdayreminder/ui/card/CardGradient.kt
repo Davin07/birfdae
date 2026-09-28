@@ -10,37 +10,63 @@ import kotlin.math.pow
  * Deterministic, birth-data-derived gradient for the shareable birthday card.
  *
  * The card is a *gift to the recipient*, so it has to look good enough to send
- * to someone. That creates a hard constraint: the gradient carries dark ink,
- * and a colourful gradient can easily push contrast under WCAG AA.
+ * to someone. That creates a hard constraint: the gradient carries ink, and a
+ * colourful gradient can easily push contrast under WCAG AA.
  *
  * ## The rule
  *
  * Variety comes from **hue only**. Lightness is pinned to a narrow band whose
- * *darkest* stop still clears [LUMINANCE_FLOOR]. This is the lesson from the v2
- * prototype, where the card quote measured 1.71:1 against a dark gradient end
- * before the ramp was reoriented.
+ * *darkest* stop still clears the ink-contrast floor. This is the lesson from
+ * the v2 prototype, where the card quote measured 1.71:1 against a dark
+ * gradient end before the ramp was reoriented.
  *
  * A test walks all 372 month/day seeds and asserts the invariant, so the
  * constraint cannot silently regress as colours are tuned.
  *
  * Colours are built in HSL rather than HCT: HSL maps directly onto the
  * lightness knob this file needs, and it ships with Compose without a
- * dependency. Saturation stays low so the result reads as tinted paper stock
- * rather than a saturated graphic.
+ * dependency.
+ *
+ * ## Two ramps, not one
+ *
+ * The concept defines this card in both themes, and so does this: a card in
+ * dark mode is deep amber with light ink, not a cream one with dark ink. The
+ * hue logic is shared -- both bands sit in the same warm family, H 27..37 --
+ * so only the lightness band, the floor and the ink change between them.
+ *
+ * The earlier single light band was a deliberate, and wrong, call: capping
+ * saturation at 0.42 to read as "tinted paper stock" turned the approved gold
+ * ramp into beige. The concept's own light stops sit at S 0.73..1.00.
  */
 object CardGradient {
     /**
-     * Darkest allowed relative luminance for a gradient stop.
+     * Darkest allowed relative luminance for a stop in the **light** ramp.
      *
      * Dark ink on these gradients needs roughly this much luminance behind it
      * to clear 4.5:1, so it is enforced rather than eyeballed.
      */
     const val LUMINANCE_FLOOR: Double = 0.38
 
+    /**
+     * Brightest allowed relative luminance for a stop in the **dark** ramp.
+     *
+     * The mirror of [LUMINANCE_FLOOR]. Light ink needs a ceiling rather than a
+     * floor, and capping it is what keeps the darkest warm hue from washing
+     * out into the card's own page background.
+     */
+    const val DARK_LUMINANCE_CEILING: Double = 0.13
+
     /** Contrast the card's body ink must achieve against its own stop. */
     const val MIN_CONTRAST: Double = 4.5
 
-    private const val MAX_SATURATION = 0.42f
+    /**
+     * Ceiling on generated saturation.
+     *
+     * Was 0.42, which desaturated the approved gold ramp into beige. The
+     * concept's own stops reach S 1.00, so this leaves room for the seeded
+     * ramp to actually read as the colour it was designed as.
+     */
+    private const val MAX_SATURATION = 0.92f
 
     /**
      * Width of the hue arc the generated gradients are allowed to roam.
@@ -77,9 +103,18 @@ object CardGradient {
     private const val MAX_SEED = 403f
 
     // Lightness steps for the three stops, lightest to darkest.
-    private const val L_LIGHTEST = 0.88f
-    private const val L_MIDDLE = 0.76f
+    //
+    // Both bands are measured off the concept: its light ramp runs
+    // L 0.90 -> 0.57 and its dark ramp L 0.16 -> 0.27. The dark band is
+    // narrower because there is much less room to work with once the ink has
+    // to stay legible on top.
+    private const val L_LIGHTEST = 0.90f
+    private const val L_MIDDLE = 0.78f
     private const val L_DARKEST = 0.66f
+
+    private const val L_DARK_RAMP_DARKEST = 0.20f
+    private const val L_DARK_RAMP_MIDDLE = 0.24f
+    private const val L_DARK_RAMP_LIGHTEST = 0.29f
 
     private const val LIGHTNESS_STEP = 0.04f
     private const val MAX_LIGHTNESS_STEPS = 12
@@ -95,7 +130,10 @@ object CardGradient {
      * @return three colours ordered lightest to darkest, for a top-left to
      *   bottom-right [androidx.compose.ui.graphics.Brush.linearGradient]
      */
-    fun forBirthDate(birthDate: LocalDate): List<Color> {
+    fun forBirthDate(
+        birthDate: LocalDate,
+        darkTheme: Boolean = false,
+    ): List<Color> {
         val seed = birthDate.monthValue * 31 + birthDate.dayOfMonth
         // Map the seed range straight onto the arc, with no modulo. Bucketing
         // by `seed % n` collapses birthdays onto the same colour, and with a
@@ -104,8 +142,16 @@ object CardGradient {
         // map keeps all 372 seeds distinct and spreads the months evenly.
         val spread = (seed - MIN_SEED) / (MAX_SEED - MIN_SEED).toFloat() - 0.5f
         val hue = HUE_CENTER + spread * HUE_ARC
-        val saturation = 0.26f + (seed % 5) * 0.035f // 0.26..0.40
-        return forHueAndSaturation(hue, saturation)
+        // Saturation varies a little per seed so two people in the same warm
+        // family are not literally the same colour, but it stays in the range
+        // the concept uses rather than the desaturated one it used before.
+        val saturation =
+            if (darkTheme) {
+                0.62f + (seed % 5) * 0.055f // 0.62..0.84
+            } else {
+                0.70f + (seed % 5) * 0.055f // 0.70..0.92
+            }
+        return forHueAndSaturation(hue, saturation, darkTheme)
     }
 
     /**
@@ -118,32 +164,77 @@ object CardGradient {
      *
      * @param hue base hue in degrees; wrapped into 0 until less than 360
      * @param saturation HSL saturation; clamped to 0 through [MAX_SATURATION]
-     * @return three colours ordered lightest to darkest
+     * @param darkTheme whether to build the concept's dark ramp (light ink)
+     *   rather than its light ramp (dark ink)
+     * @return three colours ordered as [forBirthDate] orders them
      */
     fun forHueAndSaturation(
         hue: Float,
         saturation: Float,
+        darkTheme: Boolean = false,
     ): List<Color> {
         val safeHue = wrapHue(hue)
         val safeSaturation = saturation.coerceIn(0f, MAX_SATURATION)
 
-        return listOf(L_LIGHTEST, L_MIDDLE, L_DARKEST).map { lightness ->
-            // Raise lightness, holding hue, until the stop clears the floor.
-            // Dropping saturation alongside it matters: some hues stay dark
-            // while saturated even at high lightness, and the floor would not hold.
-            var candidateLightness = lightness
-            var candidateSaturation = safeSaturation
-            var guard = 0
-            while (
-                relativeLuminance(hsl(safeHue, candidateSaturation, candidateLightness)) < LUMINANCE_FLOOR &&
-                guard < MAX_LIGHTNESS_STEPS
-            ) {
-                candidateLightness = (candidateLightness + LIGHTNESS_STEP).coerceAtMost(1f)
-                candidateSaturation = (candidateSaturation * 0.94f).coerceAtLeast(0f)
-                guard++
-            }
-            hsl(safeHue, candidateSaturation, candidateLightness)
+        if (darkTheme) {
+            return listOf(L_DARK_RAMP_DARKEST, L_DARK_RAMP_MIDDLE, L_DARK_RAMP_LIGHTEST)
+                .map { lightness -> clampDarkStop(safeHue, safeSaturation, lightness) }
         }
+
+        return listOf(L_LIGHTEST, L_MIDDLE, L_DARKEST).map { lightness ->
+            clampLightStop(safeHue, safeSaturation, lightness)
+        }
+    }
+
+    /**
+     * Raises lightness until the stop clears the dark-ink floor.
+     *
+     * Saturation is dropped alongside it: some hues stay dark while saturated
+     * even at high lightness, and the floor would not otherwise hold.
+     */
+    private fun clampLightStop(
+        hue: Float,
+        saturation: Float,
+        lightness: Float,
+    ): Color {
+        var candidateLightness = lightness
+        var candidateSaturation = saturation
+        var guard = 0
+        while (
+            relativeLuminance(hsl(hue, candidateSaturation, candidateLightness)) < LUMINANCE_FLOOR &&
+            guard < MAX_LIGHTNESS_STEPS
+        ) {
+            candidateLightness = (candidateLightness + LIGHTNESS_STEP).coerceAtMost(1f)
+            candidateSaturation = (candidateSaturation * 0.94f).coerceAtLeast(0f)
+            guard++
+        }
+        return hsl(hue, candidateSaturation, candidateLightness)
+    }
+
+    /**
+     * Lowers lightness until the stop clears the light-ink ceiling.
+     *
+     * Same reasoning as [clampLightStop] with the direction reversed: a warm
+     * hue can still be too bright for cream ink once saturated, so the ramp
+     * walks back down and sheds saturation until the ceiling holds.
+     */
+    private fun clampDarkStop(
+        hue: Float,
+        saturation: Float,
+        lightness: Float,
+    ): Color {
+        var candidateLightness = lightness
+        var candidateSaturation = saturation
+        var guard = 0
+        while (
+            relativeLuminance(hsl(hue, candidateSaturation, candidateLightness)) > DARK_LUMINANCE_CEILING &&
+            guard < MAX_LIGHTNESS_STEPS
+        ) {
+            candidateLightness = (candidateLightness - LIGHTNESS_STEP).coerceAtLeast(0f)
+            candidateSaturation = (candidateSaturation * 0.94f).coerceAtLeast(0f)
+            guard++
+        }
+        return hsl(hue, candidateSaturation, candidateLightness)
     }
 
     /**

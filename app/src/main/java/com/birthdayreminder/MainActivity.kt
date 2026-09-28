@@ -12,7 +12,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -46,15 +45,11 @@ class MainActivity : ComponentActivity() {
         consumeNotificationIntent(intent)
 
         setContent {
-            val isMaterialYouEnabled by settingsRepository.isMaterialYouEnabled.collectAsState(initial = false)
             // Follow the system light/dark setting. This used to be hard-coded
             // to true, which made the app dark-only.
             val useDarkTheme = isSystemInDarkTheme()
 
-            BirthdayReminderAppTheme(
-                darkTheme = useDarkTheme,
-                dynamicColor = isMaterialYouEnabled,
-            ) {
+            BirthdayReminderAppTheme(darkTheme = useDarkTheme) {
                 RequestNotificationPermission()
 
                 BirthdayApp(

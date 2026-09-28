@@ -1,18 +1,14 @@
 package com.birthdayreminder.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -108,34 +104,16 @@ val DarkColorScheme = SaffronDarkColorScheme
 @Composable
 fun BirthdayReminderAppTheme(
     darkTheme: Boolean = true,
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme =
-        when {
-            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                val context = LocalContext.current
-                val dynamic = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-                val baseScheme = if (darkTheme) SaffronDarkColorScheme else SaffronLightColorScheme
-
-                baseScheme.copy(
-                    primary = dynamic.primary,
-                    onPrimary = dynamic.onPrimary,
-                    primaryContainer = dynamic.primaryContainer,
-                    onPrimaryContainer = dynamic.onPrimaryContainer,
-                    secondary = dynamic.secondary,
-                    onSecondary = dynamic.onSecondary,
-                    secondaryContainer = dynamic.secondaryContainer,
-                    onSecondaryContainer = dynamic.onSecondaryContainer,
-                    tertiary = dynamic.tertiary,
-                    onTertiary = dynamic.onTertiary,
-                    tertiaryContainer = dynamic.tertiaryContainer,
-                    onTertiaryContainer = dynamic.onTertiaryContainer,
-                )
-            }
-            darkTheme -> SaffronDarkColorScheme
-            else -> SaffronLightColorScheme
-        }
+    // Fixed Saffron in both themes. Dynamic (wallpaper-derived) colour was
+    // removed rather than merely defaulted off: it replaced the primary and
+    // secondary roles with whatever the user's wallpaper happened to be, and
+    // every colour in this app -- the card gradient, the overdue warm-urgent
+    // pair, the contrast guarantees those rest on -- is authored against the
+    // Saffron values. A palette that changes per device would silently
+    // invalidate all of it.
+    val colorScheme = if (darkTheme) SaffronDarkColorScheme else SaffronLightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
