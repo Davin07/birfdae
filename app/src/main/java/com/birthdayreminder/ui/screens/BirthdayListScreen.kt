@@ -50,6 +50,7 @@ import com.birthdayreminder.domain.model.BirthdayWithCountdown
 import com.birthdayreminder.ui.components.ConfirmationDialog
 import com.birthdayreminder.ui.components.ErrorDialog
 import com.birthdayreminder.ui.components.birfdae.OverdueBirthdayCard
+import com.birthdayreminder.ui.components.birfdae.OverdueRemainderRow
 import com.birthdayreminder.ui.components.birfdae.PersonAvatar
 import com.birthdayreminder.ui.components.birfdae.PersonRow
 import com.birthdayreminder.ui.components.birfdae.SaffronBackground
@@ -211,16 +212,37 @@ fun BirthdayListContent(
                         // Overdue comes before the hero: a birthday already
                         // missed is more pressing than one still upcoming, and
                         // the countdown flow cannot surface it.
+                        //
+                        // Only the first is expanded. Three or four full cards
+                        // pushed the hero and every upcoming row off the
+                        // screen, which is the same as hiding them; the rest
+                        // stay reachable through the collapsed count.
                         if (uiState.overdue.isNotEmpty()) {
                             item(key = "overdue-header") {
-                                SectionLabel(title = "Needs a moment")
+                                SectionLabel(
+                                    title =
+                                        if (uiState.overdue.size == 1) {
+                                            "Needs a moment"
+                                        } else {
+                                            "Needs a moment \u00b7 ${uiState.overdue.size} birthdays"
+                                        },
+                                )
                             }
-                            items(uiState.overdue, key = { "overdue-${it.id}" }) { overdue ->
+                            item(key = "overdue-${uiState.overdue.first().id}") {
+                                val overdue = uiState.overdue.first()
                                 OverdueBirthdayCard(
                                     overdue = overdue,
                                     onSendBelatedWish = { onShareCard(overdue.id) },
                                     onNotThisYear = { onSkipBirthday(overdue.id) },
                                 )
+                            }
+                            if (uiState.overdue.size > 1) {
+                                item(key = "overdue-more") {
+                                    OverdueRemainderRow(
+                                        remaining = uiState.overdue.drop(1),
+                                        onSelect = onEditBirthday,
+                                    )
+                                }
                             }
                         }
 

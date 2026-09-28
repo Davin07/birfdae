@@ -10,6 +10,7 @@ object BirthdayNavigation {
     const val ADD_EDIT_BIRTHDAY = "add_edit_birthday"
     const val NOTIFICATION_SETTINGS = "notification_settings"
     const val BACKUP = "backup"
+    const val PER_PERSON_REMINDERS = "per_person_reminders"
 
     // The shareable birthday card. This is the growth surface, so it gets its
     // own route rather than living inside the edit screen.

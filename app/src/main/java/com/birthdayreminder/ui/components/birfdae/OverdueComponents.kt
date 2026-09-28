@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import com.birthdayreminder.domain.model.OverdueBirthday
+import com.birthdayreminder.ui.theme.LocalOverdueColors
 
 /**
  * A missed birthday, with a decision attached.
@@ -38,10 +40,12 @@ fun OverdueBirthdayCard(
     onNotThisYear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val overdueColors = LocalOverdueColors.current
+
     SurfaceCard(
         modifier = modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        containerColor = overdueColors.container,
+        contentColor = overdueColors.onContainer,
     ) {
         Column(modifier = Modifier.padding(SaffronTokens.space16)) {
             Text(
@@ -122,3 +126,59 @@ fun overdueHeadline(daysOverdue: Int): String =
         in 2..6 -> "$daysOverdue DAYS AGO"
         else -> "OVERDUE"
     }
+
+/**
+ * The overdue birthdays that are not shown as a full card.
+ *
+ * A single quiet row rather than a list: the point of the collapsed state is
+ * that the rest are less urgent than the one on screen, and rendering them
+ * with the same weight would undo that. Every name is still a tap target, so
+ * none of them becomes unreachable.
+ *
+ * @param remaining the overdue birthdays after the first
+ * @param onSelect opens that person
+ */
+@Composable
+fun OverdueRemainderRow(
+    remaining: List<OverdueBirthday>,
+    onSelect: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SurfaceCard(
+        modifier = modifier.fillMaxWidth(),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(modifier = Modifier.padding(SaffronTokens.space16)) {
+            Text(
+                text = if (remaining.size == 1) "1 more" else "${remaining.size} more",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(SaffronTokens.space4))
+            remaining.forEach { overdue ->
+                Surface(
+                    onClick = { onSelect(overdue.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = SaffronTokens.space12),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = overdue.birthday.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            text = overdueHeadline(overdue.daysOverdue),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

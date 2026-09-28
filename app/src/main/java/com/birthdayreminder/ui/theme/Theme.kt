@@ -9,6 +9,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -151,9 +152,16 @@ fun BirthdayReminderAppTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content,
-    )
+    // Overdue has its own warm-urgent pair, keyed off darkTheme rather than a
+    // ColorScheme equality check, which would break the moment either scheme
+    // gained a role.
+    CompositionLocalProvider(
+        LocalOverdueColors provides if (darkTheme) SaffronDarkOverdue else SaffronLightOverdue,
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content,
+        )
+    }
 }

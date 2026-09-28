@@ -57,6 +57,7 @@ import com.birthdayreminder.ui.screens.BirthdayCardScreen
 import com.birthdayreminder.ui.screens.BirthdayListScreen
 import com.birthdayreminder.ui.screens.CalendarScreen
 import com.birthdayreminder.ui.screens.NotificationSettingsScreen
+import com.birthdayreminder.ui.screens.PerPersonReminderScreen
 import com.birthdayreminder.ui.screens.SearchScreen
 import com.birthdayreminder.ui.viewmodel.BirthdayCardViewModel
 
@@ -203,7 +204,24 @@ fun BirthdayApp(navController: NavHostController = rememberNavController()) {
                 composable(BirthdayNavigation.NOTIFICATION_SETTINGS) {
                     NotificationSettingsScreen(
                         onNavigateBack = { navController.popBackStack() },
-                        navController = navController,
+                        // Lead time is per person too, so both rows open the
+                        // same list rather than a global default that is not
+                        // stored anywhere.
+                        onNavigateToPerPerson = {
+                            navController.navigate(BirthdayNavigation.PER_PERSON_REMINDERS)
+                        },
+                        onNavigateToLeadTime = {
+                            navController.navigate(BirthdayNavigation.PER_PERSON_REMINDERS)
+                        },
+                        onNavigateToBackup = {
+                            navController.navigate(BirthdayNavigation.BACKUP)
+                        },
+                    )
+                }
+
+                composable(BirthdayNavigation.PER_PERSON_REMINDERS) {
+                    PerPersonReminderScreen(
+                        onNavigateBack = { navController.popBackStack() },
                     )
                 }
 

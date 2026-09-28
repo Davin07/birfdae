@@ -104,3 +104,13 @@ val SaffronDarkOutlineVariant = Color(0xFF614000)
 val SaffronDarkInverseSurface = Color(0xFFFFDDB1)
 val SaffronDarkInverseOnSurface = Color(0xFF442B00)
 val SaffronDarkScrim = Color(0xFF000000)
+
+// --- Overdue -----------------------------------------------------------------
+// The plan calls overdue "warm-urgent, not alarming red" (§5.4), so it sits in
+// the rosewood family rather than reusing tertiary, which the tonal palette
+// generated as plum. A missed birthday should read as something to act on, not
+// as an error state and not as a different product.
+val SaffronLightOverdueContainer = Color(0xFFFFE0B8)
+val SaffronLightOnOverdueContainer = Color(0xFF2A1700)
+val SaffronDarkOverdueContainer = Color(0xFF5C3A00)
+val SaffronDarkOnOverdueContainer = Color(0xFFFFE0B8)

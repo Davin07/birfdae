@@ -2,6 +2,7 @@ package com.birthdayreminder.domain.model
 
 import com.birthdayreminder.data.local.entity.Birthday
 import java.time.LocalDate
+import java.time.Period
 import java.time.temporal.ChronoUnit
 
 /**
@@ -22,8 +23,15 @@ data class OverdueBirthday(
     val name: String get() = birthday.name
     val id: Long get() = birthday.id
 
-    /** The age the person turned on [occurredOn]. */
-    val ageTurned: Int = occurredOn.year - birthday.birthDate.year
+    /**
+     * The age the person turned on [occurredOn].
+     *
+     * Uses the same arithmetic as SafeDateCalculator.calculateAge rather than
+     * subtracting years, because a plain year difference is not the age someone
+     * has reached: 29 February in a common year clamps to 28 February, and a
+     * birth date later in the year than [occurredOn] has not come round yet.
+     */
+    val ageTurned: Int = Period.between(birthday.birthDate, occurredOn).years
 }
 
 /**
