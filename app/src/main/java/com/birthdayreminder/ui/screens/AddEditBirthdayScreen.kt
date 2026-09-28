@@ -154,15 +154,20 @@ fun AddEditBirthdayScreen(
             }
 
             // Bottom Action Bar
-            Box(
+            Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // The button stays disabled until the step is valid, but the
                 // reason is always stated above it. A disabled control with no
                 // explanation is the most common complaint in form review.
+                //
+                // A Column, not a Box: as siblings in a Box the message and the
+                // button occupied the same place and the message rendered
+                // *inside* the button, half-legible on its disabled fill.
                 val stepError = viewModel.currentStepError()
 
                 if (stepError != null) {
@@ -171,7 +176,10 @@ fun AddEditBirthdayScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = SaffronTokens.space8),
                     )
                 }
 
