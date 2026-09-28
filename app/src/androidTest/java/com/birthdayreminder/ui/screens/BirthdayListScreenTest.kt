@@ -1,162 +1,82 @@
 package com.birthdayreminder.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.birthdayreminder.HiltTestActivity
 import com.birthdayreminder.ui.theme.BirthdayReminderAppTheme
 import com.birthdayreminder.ui.viewmodel.BirthdayListUiState
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * [BirthdayListScreen] injects its own ViewModel, so this needs the Hilt host.
+ *
+ * The previous version used `createComposeRule` (no Hilt component) and
+ * asserted pre-redesign copy -- "Birthdays", "Add Birthday", "No birthdays yet"
+ * and "Add your first birthday to get started!" none of which the Saffron
+ * screen renders any more. Assertions below match the current copy.
+ */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class BirthdayListScreenTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
 
-    @Test
-    fun birthdayListScreen_displaysTitle() {
-        composeTestRule.setContent {
-            BirthdayReminderAppTheme {
-                BirthdayListScreen(
-                    onNavigateToAddBirthday = {},
-                    onNavigateToEditBirthday = {},
-                )
-            }
-        }
+    @get:Rule(order = 1)
+    val composeTestRule = createAndroidComposeRule<HiltTestActivity>()
 
-        composeTestRule.onNodeWithText("Birthdays").assertIsDisplayed()
+    @Before
+    fun setUp() {
+        hiltRule.inject()
     }
 
     @Test
-    fun birthdayListScreen_displaysAddBirthdayButton() {
-        composeTestRule.setContent {
-            BirthdayReminderAppTheme {
-                BirthdayListScreen(
-                    onNavigateToAddBirthday = {},
-                    onNavigateToEditBirthday = {},
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText("Add Birthday").assertIsDisplayed()
-    }
-
-    @Test
-    fun birthdayListScreen_callsOnNavigateToAddBirthday_whenFabClicked() {
-        var addBirthdayClicked = false
-
-        composeTestRule.setContent {
-            BirthdayReminderAppTheme {
-                BirthdayListScreen(
-                    onNavigateToAddBirthday = { addBirthdayClicked = true },
-                    onNavigateToEditBirthday = {},
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText("Add Birthday").performClick()
-
-        assert(addBirthdayClicked)
-    }
-
-    @Test
-    fun birthdayListScreen_displaysLoadingIndicator_whenIsLoadingIsTrue() {
+    fun displaysUpcomingHeading() {
         composeTestRule.setContent {
             BirthdayReminderAppTheme {
                 BirthdayListContent(
-                    uiState = BirthdayListUiState(isLoading = true),
-                    onRefresh = {},
-                    onEditBirthday = {},
-                    onDeleteBirthday = {},
-                    onClearError = {},
+                    uiState = BirthdayListUiState(birthdays = emptyList(), isLoading = false),
                 )
             }
         }
 
-        composeTestRule.onNodeWithText("Loading birthdays...").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Upcoming").assertIsDisplayed()
     }
 
     @Test
-    fun birthdayListScreen_showsDeleteConfirmation_whenBirthdayToDeleteExists() {
-        // Given
-        val birthdayToDelete = createMockBirthdayWithCountdown("Delete Me", 20)
-
-        // When
-        composeTestRule.setContent {
-            BirthdayReminderAppTheme {
-                // Testing confirmation dialog, which is in BirthdayListScreen, not BirthdayListContent.
-                // But BirthdayListScreen needs ViewModel injection which is hard to mock in simple compose tests without HiltTestRule properly set up.
-                // The test below attempts to test BirthdayListScreen logic but uses BirthdayListScreen composable directly
-                // which uses hiltViewModel(). This might fail if Hilt isn't set up for the test.
-                // Assuming Hilt is set up or we can test logic via Content.
-                // But Dialog is in Screen, not Content.
-
-                // If we want to test Content only:
-                BirthdayListContent(
-                    uiState =
-                        BirthdayListUiState(
-                            birthdays = listOf(birthdayToDelete),
-                        ),
-                    onRefresh = {},
-                    onEditBirthday = {},
-                    // We just check if this is clickable
-                    onDeleteBirthday = {},
-                    onClearError = {},
-                )
-            }
-        }
-
-        // This test was originally testing the Dialog.
-        // The Dialog is part of BirthdayListScreen, which wraps Content.
-        // If we can't easily test Screen because of ViewModel, we should skip Dialog test here
-        // or rely on a different test structure.
-        // However, I will stick to testing what I can in Content.
-
-        composeTestRule.onNodeWithText("Delete Me").assertIsDisplayed()
-    }
-
-    @Test
-    fun birthdayListScreen_displaysEmptyState_whenNoBirthdays() {
+    fun displaysEmptyState_whenNoBirthdays() {
         composeTestRule.setContent {
             BirthdayReminderAppTheme {
                 BirthdayListContent(
-                    uiState =
-                        BirthdayListUiState(
-                            birthdays = emptyList(),
-                            isLoading = false,
-                        ),
-                    onRefresh = {},
-                    onEditBirthday = {},
-                    onDeleteBirthday = {},
-                    onClearError = {},
+                    uiState = BirthdayListUiState(birthdays = emptyList(), isLoading = false),
                 )
             }
         }
 
         composeTestRule.onNodeWithText("No birthdays yet").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Add your first birthday to get started!").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("Add the people you'd be sad to forget. About fifteen seconds each.")
+            .assertIsDisplayed()
     }
 
     @Test
-    fun birthdayListScreen_displaysBirthdayCards_whenBirthdaysExist() {
-        // Given
-        val birthday = createMockBirthdayWithCountdown("Test Person", 10)
-
+    fun displaysBirthday_whenBirthdaysExist() {
         composeTestRule.setContent {
             BirthdayReminderAppTheme {
                 BirthdayListContent(
                     uiState =
                         BirthdayListUiState(
-                            birthdays = listOf(birthday),
+                            birthdays = listOf(mockBirthday("Test Person", 10)),
                             isLoading = false,
                         ),
-                    onRefresh = {},
-                    onEditBirthday = {},
-                    onDeleteBirthday = {},
-                    onClearError = {},
                 )
             }
         }
@@ -164,13 +84,56 @@ class BirthdayListScreenTest {
         composeTestRule.onNodeWithText("Test Person").assertIsDisplayed()
     }
 
-    private fun createMockBirthdayWithCountdown(
+    @Test
+    fun displaysTheOverdueSection_whenABirthdayHasPassed() {
+        val late =
+            com.birthdayreminder.domain.model.OverdueBirthday(
+                birthday = mockBirthday("Late Person", 0).birthday,
+                occurredOn = java.time.LocalDate.now().minusDays(3),
+                daysOverdue = 3,
+            )
+
+        composeTestRule.setContent {
+            BirthdayReminderAppTheme {
+                BirthdayListContent(
+                    uiState =
+                        BirthdayListUiState(
+                            birthdays = listOf(mockBirthday("Test Person", 10)),
+                            overdue = listOf(late),
+                            isLoading = false,
+                        ),
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Needs a moment").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Late Person").assertIsDisplayed()
+    }
+
+    @Test
+    fun callsOnAddBirthday_whenTheEmptyStateIsTapped() {
+        var addTapped = false
+
+        composeTestRule.setContent {
+            BirthdayReminderAppTheme {
+                BirthdayListContent(
+                    uiState = BirthdayListUiState(birthdays = emptyList(), isLoading = false),
+                    onAddBirthday = { addTapped = true },
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Add your first birthday").performClick()
+
+        assertTrue(addTapped)
+    }
+
+    private fun mockBirthday(
         name: String,
         daysUntilNext: Int,
-        isToday: Boolean = false,
         id: Long = 1L,
-    ): com.birthdayreminder.domain.model.BirthdayWithCountdown {
-        val birthday =
+    ) = com.birthdayreminder.domain.model.BirthdayWithCountdown(
+        birthday =
             com.birthdayreminder.data.local.entity.Birthday(
                 id = id,
                 name = name,
@@ -179,14 +142,10 @@ class BirthdayListScreenTest {
                 notificationsEnabled = true,
                 advanceNotificationDays = 0,
                 createdAt = java.time.LocalDateTime.now(),
-            )
-
-        return com.birthdayreminder.domain.model.BirthdayWithCountdown(
-            birthday = birthday,
-            daysUntilNext = daysUntilNext,
-            nextOccurrence = java.time.LocalDate.now().plusDays(daysUntilNext.toLong()),
-            isToday = isToday,
-            age = 30,
-        )
-    }
+            ),
+        daysUntilNext = daysUntilNext,
+        nextOccurrence = java.time.LocalDate.now().plusDays(daysUntilNext.toLong()),
+        isToday = daysUntilNext == 0,
+        age = 30,
+    )
 }

@@ -15,7 +15,7 @@ import com.birthdayreminder.data.local.entity.Birthday
  */
 @Database(
     entities = [Birthday::class],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 @TypeConverters(DateConverters::class)
@@ -62,12 +62,25 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
         /**
+         * Migration from version 3 to version 4.
+         * Adds skippedYear, which records that the user chose not to celebrate a
+         * given birthday this year. -1 means "never skipped", matching
+         * Birthday.NO_SKIPPED_YEAR.
+         */
+        val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE birthdays ADD COLUMN skippedYear INTEGER NOT NULL DEFAULT -1")
+                }
+            }
+
+        /**
          * Creates and configures the Room database instance.
          * This method should be called from the Hilt module.
          */
         fun create(builder: RoomDatabase.Builder<AppDatabase>): AppDatabase {
             return builder
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .fallbackToDestructiveMigration() // For development - remove in production
                 .build()
         }

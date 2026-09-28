@@ -154,13 +154,56 @@ class AddEditBirthdayViewModel
             _uiState.update { it.copy(notificationTime = time) }
         }
 
+        /**
+         * Advances the wizard, validating the step being left first.
+         *
+         * Previously this just incremented, so a user who typed an invalid name
+         * either met a disabled Continue with no explanation, or discovered the
+         * problem on step 3 when the use case rejected the save. Validation now
+         * runs per step and lands inline on the field that caused it.
+         *
+         * Form data is never cleared here, so backing out of a step preserves
+         * everything already entered.
+         */
         fun nextStep() {
-            _uiState.update { it.copy(step = it.step + 1) }
+            val current = _uiState.value
+            val stepError = validateStep(current.step, current)
+            if (stepError != null) {
+                _uiState.update { it.withFieldError(current.step, stepError) }
+                return
+            }
+            _uiState.update { it.copy(step = it.step + 1, nameError = null, birthDateError = null, notesError = null) }
         }
 
         fun previousStep() {
             _uiState.update { if (it.step > 1) it.copy(step = it.step - 1) else it }
         }
+
+        /**
+         * Why the wizard cannot leave the current step, or null if it can.
+         *
+         * Surfaced next to the Continue button so a disabled control always
+         * comes with a reason.
+         */
+        fun currentStepError(): String? = _uiState.value.currentStepError(birthdayValidator)
+
+        /**
+         * Validates one step of the wizard.
+         *
+         * @param step the 1-based step number
+         * @param state the current form state
+         * @return an error to show, or null when the step may be left
+         */
+        private fun validateStep(
+            step: Int,
+            state: AddEditBirthdayUiState,
+        ): String? =
+            when (step) {
+                1 -> birthdayValidator.validateName(state.name)
+                2 -> birthdayValidator.validateBirthDate(state.birthDate)
+                3 -> birthdayValidator.validateNotes(state.notes)
+                else -> null
+            }
 
         fun saveBirthday() {
             val currentState = _uiState.value
@@ -341,4 +384,38 @@ data class AddEditBirthdayUiState(
 
     val errorMessage: String? get() = errorResult?.message
     val hasError: Boolean get() = errorResult != null
+
+    /**
+     * Routes a step's validation failure to the field that caused it.
+     *
+     * Step 1 owns the name, step 2 the birth date, step 3 the notes, so the
+     * error lands under the right input instead of in a generic banner.
+     *
+     * @param step the 1-based step that failed
+     * @param message the message from `BirthdayValidator`
+     */
+    fun withFieldError(
+        step: Int,
+        message: String,
+    ): AddEditBirthdayUiState =
+        when (step) {
+            1 -> copy(nameError = message)
+            2 -> copy(birthDateError = message)
+            3 -> copy(notesError = message)
+            else -> this
+        }
+
+    /**
+     * The validation error for the current step, if any.
+     *
+     * Used by the wizard's Continue button so it can explain itself instead of
+     * sitting disabled with no reason.
+     */
+    fun currentStepError(validator: BirthdayValidator): String? =
+        when (step) {
+            1 -> validator.validateName(name)
+            2 -> validator.validateBirthDate(birthDate)
+            3 -> validator.validateNotes(notes)
+            else -> null
+        }
 }

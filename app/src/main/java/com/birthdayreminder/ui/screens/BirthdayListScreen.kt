@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
 import com.birthdayreminder.ui.components.ConfirmationDialog
 import com.birthdayreminder.ui.components.ErrorDialog
+import com.birthdayreminder.ui.components.birfdae.OverdueBirthdayCard
 import com.birthdayreminder.ui.components.birfdae.PersonAvatar
 import com.birthdayreminder.ui.components.birfdae.PersonRow
 import com.birthdayreminder.ui.components.birfdae.SaffronBackground
@@ -80,7 +81,7 @@ import kotlin.math.abs
 fun BirthdayListScreen(
     onNavigateToAddBirthday: () -> Unit,
     onNavigateToEditBirthday: (Long) -> Unit,
-    onShareCard: (Long) -> Unit,
+    onShareCard: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: BirthdayListViewModel = hiltViewModel(),
 ) {
@@ -96,6 +97,7 @@ fun BirthdayListScreen(
             onDeleteBirthday = { birthday -> birthdayToDelete = birthday },
             onPinBirthday = { birthday -> viewModel.togglePin(birthday.id) },
             onShareCard = onShareCard,
+            onSkipBirthday = viewModel::skipForThisYear,
             onClearError = viewModel::clearError,
             modifier = Modifier.fillMaxSize(),
             birthdayToDelete = birthdayToDelete,
@@ -135,6 +137,7 @@ fun BirthdayListScreen(
  * @param onDeleteBirthday requests deletion; the caller confirms it
  * @param onPinBirthday toggles the pin flag
  * @param onShareCard opens the shareable card for a person id
+ * @param onSkipBirthday records that a missed birthday is not being celebrated
  * @param onClearError dismisses an error
  * @param birthdayToDelete pending deletion, used to snap swipe rows back
  * @param modifier applied to the body
@@ -143,13 +146,14 @@ fun BirthdayListScreen(
 @Composable
 fun BirthdayListContent(
     uiState: BirthdayListUiState,
-    onRefresh: () -> Unit,
-    onEditBirthday: (Long) -> Unit,
-    onAddBirthday: () -> Unit,
-    onDeleteBirthday: (BirthdayWithCountdown) -> Unit,
-    onPinBirthday: (BirthdayWithCountdown) -> Unit,
-    onShareCard: (Long) -> Unit,
-    onClearError: () -> Unit,
+    onRefresh: () -> Unit = {},
+    onEditBirthday: (Long) -> Unit = {},
+    onAddBirthday: () -> Unit = {},
+    onDeleteBirthday: (BirthdayWithCountdown) -> Unit = {},
+    onPinBirthday: (BirthdayWithCountdown) -> Unit = {},
+    onShareCard: (Long) -> Unit = {},
+    onSkipBirthday: (Long) -> Unit = {},
+    onClearError: () -> Unit = {},
     birthdayToDelete: BirthdayWithCountdown? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -204,6 +208,22 @@ fun BirthdayListContent(
                                 bottom = SaffronTokens.navBarHeight + SaffronTokens.space24,
                             ),
                     ) {
+                        // Overdue comes before the hero: a birthday already
+                        // missed is more pressing than one still upcoming, and
+                        // the countdown flow cannot surface it.
+                        if (uiState.overdue.isNotEmpty()) {
+                            item(key = "overdue-header") {
+                                SectionLabel(title = "Needs a moment")
+                            }
+                            items(uiState.overdue, key = { "overdue-${it.id}" }) { overdue ->
+                                OverdueBirthdayCard(
+                                    overdue = overdue,
+                                    onSendBelatedWish = { onShareCard(overdue.id) },
+                                    onNotThisYear = { onSkipBirthday(overdue.id) },
+                                )
+                            }
+                        }
+
                         if (hero != null) {
                             item(key = "hero-${hero.id}") {
                                 HeroBirthdayCard(
@@ -517,7 +537,7 @@ private fun ErrorState(
  */
 @Composable
 private fun EmptyState(
-    onAddBirthday: () -> Unit,
+    onAddBirthday: () -> Unit = {},
     modifier: Modifier,
 ) {
     Box(modifier, contentAlignment = Alignment.Center) {

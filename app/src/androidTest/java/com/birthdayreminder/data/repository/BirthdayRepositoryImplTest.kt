@@ -36,7 +36,7 @@ class BirthdayRepositoryImplTest {
             ).allowMainThreadQueries().build()
 
         birthdayDao = database.birthdayDao()
-        repository = BirthdayRepositoryImpl(birthdayDao, ErrorHandler())
+        repository = BirthdayRepositoryImpl(birthdayDao, database, ErrorHandler())
     }
 
     @After

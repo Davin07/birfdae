@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!--
+            Hilt-aware host for Compose UI tests. It lives in src/debug so it
+            is merged into the app APK: an activity declared only in the
+            androidTest APK runs in the test process, and the runner then fails
+            with "resolved to different process".
+
+            No android:theme on purpose: the test supplies its own theme via
+            BirthdayReminderAppTheme, and the androidTest APK cannot resolve the
+            app's style resources anyway.
+        -->
+        <activity
+            android:name="com.birthdayreminder.HiltTestActivity"
+            android:exported="false" />
+    </application>
+</manifest>

@@ -160,6 +160,21 @@ fun AddEditBirthdayScreen(
                         .fillMaxWidth()
                         .padding(24.dp),
             ) {
+                // The button stays disabled until the step is valid, but the
+                // reason is always stated above it. A disabled control with no
+                // explanation is the most common complaint in form review.
+                val stepError = viewModel.currentStepError()
+
+                if (stepError != null) {
+                    Text(
+                        text = stepError,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
                 SaffronButton(
                     onClick = {
                         if (uiState.step < 3) {
@@ -307,6 +322,18 @@ fun Step2Date(
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground,
         )
+
+        // The date picker already refuses future years, so this is the
+        // "pick a date at all" case. It needs saying out loud, because the
+        // Continue button is disabled until a date exists.
+        uiState.birthDateError?.let { message ->
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+        }
 
         // Selected Date Card
         SurfaceCard(modifier = Modifier.fillMaxWidth()) {
@@ -533,6 +560,8 @@ fun Step3Personalization(
                 label = "Notes",
                 placeholder = "Gift ideas, preferences...",
                 minLines = 3,
+                isError = uiState.notesError != null,
+                errorMessage = uiState.notesError,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

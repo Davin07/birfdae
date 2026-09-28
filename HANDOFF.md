@@ -1,7 +1,7 @@
 # Birf Dae — Saffron UI Overhaul: Agent Handoff Document
 
-> Updated: 2026-09-27, after Hermes took over implementation.
-> Supersedes the previous state: Milestones 1–3 are now **done and committed**.
+> Updated: 2026-09-28. **All five milestones are done and committed.**
+> The Saffron overhaul is complete and verified on a device.
 
 ---
 
@@ -15,9 +15,11 @@ Branch: `design/saffron-ui-overhaul` (base `origin/master` @ 8b78d52, v1.0.24)
 | 2 | `BirfDae` component suite | `581ba67` | Done, 18 components |
 | 3 | Screen migration, Lumina retired | `2100759`, `ff59731` | Done, all 6 screens + nav |
 | 4 | Birthday Card (the viral artifact) | `12fd209` | Done |
-| 5 | Overdue / validation edge states | — | **Not started** |
+| 5 | Overdue / validation edge states | this commit | Done, verified on device |
 
-`./gradlew build` is clean: ktlint, Android lint, 107 unit tests, 0 failures.
+`./gradlew build` is clean: ktlint, Android lint, **138 unit tests**, 0 failures.
+`./gradlew connectedDebugAndroidTest` is **76 tests, 0 failures** — the whole
+instrumented source set now compiles and runs, which it did not before.
 
 Acceptance criteria currently met:
 - [x] `gradlew build` + `test` pass clean
@@ -27,7 +29,11 @@ Acceptance criteria currently met:
 - [x] dark theme verified on a real device (emulator-5554, Pixel 7, Android 36)
 - [x] darkest gradient stop clears the luminance floor across all 372 seeds
 - [x] WhatsApp absent path exercised - PNG written, no crash
-- [ ] overdue state, validation errors — **Milestone 5**
+- [x] overdue state, validation errors — Milestone 5
+- [x] Room 3→4 migration verified on a real device: 12 existing rows preserved,
+      `skippedYear` defaults to -1
+- [x] all three wizard steps validate before advancing; Continue stays disabled
+      with the reason shown
 
 ---
 
@@ -128,12 +134,23 @@ Route `birthday_card/{birthdayId}`, reached from a share button on every row.
 Keep these together: the composable and the renderer read the same gradient and
 the same `attributionLine`, which is the only reason preview and share match.
 
-### Next: Milestone 5
+## The overdue + validation states (Milestone 5, done)
 
-- Overdue state: warm-urgent, "Send a belated wish" + "Not this year", both
-  required.
-- Inline validation errors wired to `BirthdayValidator.kt`, Continue stays
-  disabled, valid form data preserved.
+- `domain/model/OverdueBirthday.kt` — occurrence, day count, `ageTurned`. A
+  date already passed this year, and only that.
+- `domain/usecase/SkipBirthdayForYearUseCase.kt` — persists the year through
+  the existing repository update path; no new DAO query.
+- `ui/components/birfdae/OverdueComponents.kt` — the warm-plum card. It reads
+  as urgent, not alarming: "OVERDUE" / "3 DAYS AGO" / "YESTERDAY".
+- Room schema 3→4 adds `Birthday.skippedYear` (`-1` = never skipped).
+  Verified on-device against a real database, not just via MigrationTestHelper.
+- `AddEditBirthdayViewModel.nextStep()` validates the step being left before
+  advancing, and routes the message to the field that caused it via
+  `withFieldError`.
+
+`overdue` is a **separate list** on `BirthdayListUiState`, not a negative
+`daysUntilNext` in `birthdays`. The two feed different UI: overdue renders the
+plum card, the regular list renders a person row.
 
 ---
 
@@ -152,3 +169,17 @@ the same `attributionLine`, which is the only reason preview and share match.
   before screenshotting.
 - `KEYCODE_BACK` on the root screen exits the app, so avoid it when just
   trying to dismiss a dialog.
+- **The Room database is `databases/birthday_reminder_database`**, with a
+  `-wal`/`-shm` pair. Not `birthday_reminder.db` — writing to a name like that
+  creates a stray file the app never reads, and the UI keeps showing the old
+  data with no error anywhere.
+- **Do not trust `adb exec-out run-as ... cat` on a live WAL database** to check
+  what the app wrote; the copy can come back truncated and read as "the write
+  never happened". Assert persistence through an instrumented test against a
+  real Room DB, or by restarting the app and looking at the UI. Both confirmed
+  the skip write is correct.
+- The instrumented source set had **never compiled** before this work, so its
+  tests asserted pre-redesign copy. Hilt-backed Compose tests need a host
+  activity in `src/debug` (not `src/androidTest`) plus an Application-swapping
+  `HiltTestRunner`; see the `android-cli-dev-workflow` skill's
+  `references/hilt-compose-testing.md`.

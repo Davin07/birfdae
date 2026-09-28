@@ -5,11 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.birthdayreminder.domain.error.ErrorHandler
 import com.birthdayreminder.domain.error.ErrorResult
 import com.birthdayreminder.domain.model.BirthdayWithCountdown
+import com.birthdayreminder.domain.model.OverdueBirthday
+import com.birthdayreminder.domain.model.OverdueCalculator
 import com.birthdayreminder.domain.usecase.AddBirthdayResult
 import com.birthdayreminder.domain.usecase.AddBirthdayUseCase
 import com.birthdayreminder.domain.usecase.DeleteBirthdayResult
 import com.birthdayreminder.domain.usecase.DeleteBirthdayUseCase
 import com.birthdayreminder.domain.usecase.GetAllBirthdaysUseCase
+import com.birthdayreminder.domain.usecase.SkipBirthdayForYearUseCase
 import com.birthdayreminder.domain.usecase.UpdateBirthdayResult
 import com.birthdayreminder.domain.usecase.UpdateBirthdayUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDate
@@ -38,6 +42,7 @@ class BirthdayListViewModel
         private val addBirthdayUseCase: AddBirthdayUseCase,
         private val updateBirthdayUseCase: UpdateBirthdayUseCase,
         private val deleteBirthdayUseCase: DeleteBirthdayUseCase,
+        private val skipBirthdayForYearUseCase: SkipBirthdayForYearUseCase,
         private val errorHandler: ErrorHandler,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(BirthdayListUiState())
@@ -84,6 +89,7 @@ class BirthdayListViewModel
                             _uiState.value =
                                 _uiState.value.copy(
                                     birthdays = birthdays,
+                                    overdue = computeOverdue(birthdays),
                                     isLoading = false,
                                     errorResult = null,
                                 )
@@ -117,6 +123,7 @@ class BirthdayListViewModel
                             _uiState.value =
                                 _uiState.value.copy(
                                     birthdays = birthdays,
+                                    overdue = computeOverdue(birthdays),
                                     isRefreshing = false,
                                     errorResult = null,
                                 )
@@ -414,6 +421,44 @@ class BirthdayListViewModel
             }
         }
 
+        /**
+         * Records that the user is not celebrating this birthday this year.
+         *
+         * The overdue card has no dismiss, because a dismiss that does not
+         * persist brings the same prompt back on the next launch.
+         *
+         * @param birthdayId the person being skipped
+         */
+        fun skipForThisYear(birthdayId: Long) {
+            viewModelScope.launch {
+                try {
+                    if (skipBirthdayForYearUseCase(birthdayId)) {
+                        // Drop it from the prompt immediately rather than
+                        // waiting for the database flow to round-trip.
+                        _uiState.update { it.copy(overdue = it.overdue.filterNot { o -> o.id == birthdayId }) }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to skip birthday for this year")
+                    _uiState.update { it.copy(errorResult = errorHandler.createErrorResult(e, "skip birthday")) }
+                }
+            }
+        }
+
+        /**
+         * Works out which birthdays are currently overdue.
+         *
+         * The countdown flow always rolls forward to the next occurrence, so a
+         * date that has already passed is invisible to it. Overdue is derived
+         * here from the same rows, and is sorted most-recently-missed first.
+         *
+         * @param birthdays the loaded birthdays with countdowns
+         * @return the ones needing acknowledgement, oldest miss first
+         */
+        private fun computeOverdue(birthdays: List<BirthdayWithCountdown>): List<OverdueBirthday> =
+            birthdays
+                .mapNotNull { OverdueCalculator.overdueFor(it.birthday) }
+                .sortedByDescending { it.daysOverdue }
+
         fun togglePin(birthdayId: Long) {
             viewModelScope.launch {
                 try {
@@ -447,12 +492,18 @@ class BirthdayListViewModel
  */
 data class BirthdayListUiState(
     val birthdays: List<BirthdayWithCountdown> = emptyList(),
+    /**
+     * Birthdays whose date has passed and which the user has not yet
+     * acknowledged. Surfaced above the list, because a missed birthday is more
+     * urgent than an upcoming one.
+     */
+    val overdue: List<OverdueBirthday> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val errorResult: ErrorResult? = null,
     val operationInProgress: Boolean = false,
 ) {
-    val isEmpty: Boolean get() = birthdays.isEmpty() && !isLoading && !isRefreshing
+    val isEmpty: Boolean get() = birthdays.isEmpty() && overdue.isEmpty() && !isLoading && !isRefreshing
     val hasError: Boolean get() = errorResult != null
     val showEmptyState: Boolean get() = isEmpty && !hasError
     val errorMessage: String? get() = errorResult?.message
