@@ -1,7 +1,9 @@
 # Birf Dae — Saffron UI Overhaul: Agent Handoff Document
 
-> Updated: 2026-09-28. **All five milestones are done and committed.**
-> The Saffron overhaul is complete and verified on a device.
+> Updated: 2026-09-28. **All five milestones are done, and the plan-vs-prototype
+> fidelity pass that followed is also committed.** Milestone completion is not
+> design completion: the card was missing three features the plan called for,
+> and several screens still diverged from the approved concept.
 
 ---
 
@@ -15,9 +17,11 @@ Branch: `design/saffron-ui-overhaul` (base `origin/master` @ 8b78d52, v1.0.24)
 | 2 | `BirfDae` component suite | `581ba67` | Done, 18 components |
 | 3 | Screen migration, Lumina retired | `2100759`, `ff59731` | Done, all 6 screens + nav |
 | 4 | Birthday Card (the viral artifact) | `12fd209` | Done |
-| 5 | Overdue / validation edge states | this commit | Done, verified on device |
+| 5 | Overdue / validation edge states | `1d3a2dd` | Done, verified on device |
+| 6 | Card tone chips, re-roll, save image | `db85fba` | Done, verified on device |
+| 7 | Screen fidelity vs the approved concept | `507b978`, `3aab686`, `e04da65`, `f010459` | Done, verified on device |
 
-`./gradlew build` is clean: ktlint, Android lint, **138 unit tests**, 0 failures.
+`./gradlew build` is clean: ktlint, Android lint, **174 unit tests**, 0 failures.
 `./gradlew connectedDebugAndroidTest` is **76 tests, 0 failures** — the whole
 instrumented source set now compiles and runs, which it did not before.
 
@@ -34,6 +38,15 @@ Acceptance criteria currently met:
       `skippedYear` defaults to -1
 - [x] all three wizard steps validate before advancing; Continue stays disabled
       with the reason shown
+- [x] card: Warm / Funny / Sincerest / Short tone chips, words-only re-roll, and
+      a real MediaStore save to `Pictures/Birf Dae/`
+- [x] card gradient constrained to a 96° arc centred on hue 10°, so no birthday
+      lands on lilac
+- [x] Settings reads as flat rows under Reminders / Your data / Appearance
+- [x] per-person reminder overrides exist and are reachable from Settings
+- [x] overdue collapses to one card plus a tappable remainder, so the hero and
+      the upcoming rows stay on screen
+- [x] Search shows everyone on load instead of reporting an empty list
 
 ---
 
@@ -183,3 +196,25 @@ plum card, the regular list renders a person row.
   activity in `src/debug` (not `src/androidTest`) plus an Application-swapping
   `HiltTestRunner`; see the `android-cli-dev-workflow` skill's
   `references/hilt-compose-testing.md`.
+- `connectedDebugAndroidTest` **uninstalls the app** when it finishes, and it
+  drives the emulator while it runs. Every seeded database and every screenshot
+  is invalid afterwards: reinstall, relaunch once so Room creates the file, then
+  seed, then relaunch again. A "no data" reading right after a test run is this,
+  not a lost write.
+- **A rejected `write_file` is silent if you do not read the result.** The tool
+  refuses to overwrite a file last seen through a paginated `read_file`, and
+  reports it in the return value only. A splice built with `read_file` +
+  `write_file` looked like it succeeded and silently changed nothing; check
+  `verified` / `error` on every write, or use `patch` for surgical edits.
+- **ktlintFormat runs first and strips imports it thinks are unused**, which
+  includes imports for code you are about to add. Add the import *after* the
+  usage exists, or re-add it and compile immediately, or you chase an
+  "unresolved reference" that was a formatting side effect.
+- **Mocking a suspend function with thirteen defaulted parameters is a trap.**
+  `whenever(mock.suspendFn(...))` cannot work, because building the stub would
+  invoke the suspend call; use `wheneverBlocking { }` and `verifyBlocking(mock)
+  { }` from mockito-kotlin, with every field passed by name so its type is
+  constrained.
+- `stateIn(WhileSubscribed)` returns the initial value until something collects,
+  so a test reading `.value` sees empty. Collect the flow in the test rather
+  than changing the ViewModel to suit the test.
