@@ -23,6 +23,14 @@ class SearchViewModel
         private val _uiState = MutableStateFlow(SearchUiState())
         val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
+        init {
+            // The screen has no "run a search" action, so the initial load has
+            // to happen here. Without it the list stays empty until the user
+            // types, and opening Search reads as "no birthdays yet" even when
+            // the home screen is full of people.
+            performSearch()
+        }
+
         fun onQueryChanged(query: String) {
             _uiState.value = _uiState.value.copy(query = query)
             performSearch()
@@ -45,8 +53,20 @@ class SearchViewModel
             val type = _uiState.value.searchType
 
             viewModelScope.launch {
+                // An empty query means "show me everyone", not "show nobody".
+                // Returning empty here made the screen read "No birthdays yet"
+                // while the home screen listed the same people, which reads as
+                // data loss rather than as a filter.
                 if (query.isBlank()) {
-                    _uiState.value = _uiState.value.copy(results = emptyList())
+                    birthdayRepository.getAllBirthdays().collectLatest { birthdays ->
+                        _uiState.value =
+                            _uiState.value.copy(
+                                results =
+                                    birthdays
+                                        .map { calculateCountdownUseCase.calculateCountdown(it) }
+                                        .sortedBy { it.daysUntilNext },
+                            )
+                    }
                     return@launch
                 }
 
