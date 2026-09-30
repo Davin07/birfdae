@@ -95,6 +95,11 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.appcompat:appcompat:1.6.1")
 
+    // Launch splash. Without it, cold start flashed the default window
+    // background before Compose drew -- the last place the old branding
+    // was still visible.
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
     // Compose BOM and UI dependencies
     implementation(platform("androidx.compose:compose-bom:2024.02.01"))
     implementation("androidx.compose.ui:ui")

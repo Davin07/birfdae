@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.birthdayreminder.data.settings.SettingsRepository
 import com.birthdayreminder.ui.BirthdayApp
@@ -40,6 +41,9 @@ class MainActivity : ComponentActivity() {
     private var notificationBirthdayId by mutableStateOf<Long?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Must run before super.onCreate. On Android 12+ the platform
+        // splash is already showing; this is the pre-12 fallback.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         consumeNotificationIntent(intent)

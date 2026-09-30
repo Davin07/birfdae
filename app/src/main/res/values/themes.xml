@@ -7,4 +7,18 @@
     </style>
 
     <style name="Theme.BirthdayReminderApp" parent="Base.Theme.BirthdayReminderApp" />
+
+    <!--
+      Launch splash.
+
+      The window background is the concept's light card cream, so the splash
+      dissolves into the first Compose frame with no visible seam. The icon is
+      the same mark as the launcher, so the app introduces itself with one
+      image rather than a generic Android glyph.
+    -->
+    <style name="Theme.BirthdayReminderApp.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/saffron_light_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.BirthdayReminderApp</item>
+    </style>
 </resources>
