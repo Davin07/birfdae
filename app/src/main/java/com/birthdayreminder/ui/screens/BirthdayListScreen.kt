@@ -243,15 +243,6 @@ fun BirthdayListContent(
                                     )
                                 }
                             }
-                            // The concept labels what follows a missed birthday
-                            // "Coming up", which reads as "here is what you can
-                            // still catch". "Next up" is already used for the
-                            // hero further down, and one heading meaning two
-                            // things on a single screen is worse than either
-                            // wording on its own.
-                            item(key = "overdue-then-header") {
-                                SectionLabel(title = "Coming up")
-                            }
                         }
 
                         uiState.hero?.let { hero ->

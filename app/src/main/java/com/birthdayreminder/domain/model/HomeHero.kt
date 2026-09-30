@@ -81,7 +81,7 @@ object HomeHeroCopy {
 
         return HomeHero(
             people = people,
-            eyebrow = if (isToday) "Today" else "Next up",
+            eyebrow = if (isToday) "Today" else "Coming up",
             headline = headlineFor(people),
             supportingLine = supportingLineFor(people, streak, isToday),
             primaryBirthdayId = people.first().birthdayId,
@@ -122,8 +122,9 @@ object HomeHeroCopy {
                 1 -> "turns ${people[0].ageTurning}"
                 else -> "turn ${people.map { it.ageTurning }.joinToString(" and ")}"
             }
-        val lead = if (isToday) "Today" else "Coming up"
-
+        // No "Today turns 31" / "Coming up turns 66" lead here: the hero's
+        // eyebrow is the label for that, and the line repeated it verbatim
+        // directly underneath.
         val detail =
             when {
                 streak != null && streak.isMeaningful ->
@@ -132,9 +133,9 @@ object HomeHeroCopy {
 
                 streak != null -> "On your list since ${streak.firstTrackedYear}."
 
-                else -> lead
+                else -> ""
             }
 
-        return "$lead $ages. $detail"
+        return if (detail.isEmpty()) "$ages." else "$ages. $detail"
     }
 }
