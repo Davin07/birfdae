@@ -8,6 +8,50 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
 }
 
+/**
+ * Release signing.
+ *
+ * The keystore is read from Gradle properties or the environment, never from a
+ * file in the repository. Both of these work:
+ *
+ *   ~/.gradle/gradle.properties  (local, outside the repo)
+ *     BIRFDAE_KEYSTORE_PATH=/path/to/birfdae_keystore
+ *     BIRFDAE_STORE_PASSWORD=...
+ *     BIRFDAE_KEY_PASSWORD=...
+ *     BIRFDAE_KEY_ALIAS=key0
+ *
+ *   environment variables of the same name (CI)
+ *
+ * When those are absent the release build is simply left unsigned, which is
+ * what it did before. A contributor with no keystore can still run
+ * `assembleRelease`; they get an artifact that will not install, and no
+ * confusing failure. The signing step is applied only when a keystore file
+ * actually exists, so a wrong path does not masquerade as a missing one.
+ */
+val birfdaeKeystore: String? =
+    providers.gradleProperty("BIRFDAE_KEYSTORE_PATH").orNull
+        ?: providers.environmentVariable("BIRFDAE_KEYSTORE_PATH").orNull
+
+val birfdaeStorePassword: String? =
+    providers.gradleProperty("BIRFDAE_STORE_PASSWORD").orNull
+        ?: providers.environmentVariable("BIRFDAE_STORE_PASSWORD").orNull
+
+val birfdaeKeyPassword: String? =
+    providers.gradleProperty("BIRFDAE_KEY_PASSWORD").orNull
+        ?: providers.environmentVariable("BIRFDAE_KEY_PASSWORD").orNull
+
+val birfdaeKeyAlias: String? =
+    providers.gradleProperty("BIRFDAE_KEY_ALIAS").orNull
+        ?: providers.environmentVariable("BIRFDAE_KEY_ALIAS").orNull
+
+val birfdaeKeystoreFile = birfdaeKeystore?.let { file(it) }
+
+val birfdaeHasReleaseSigning =
+    birfdaeKeystoreFile?.isFile == true &&
+        birfdaeStorePassword != null &&
+        birfdaeKeyPassword != null &&
+        birfdaeKeyAlias != null
+
 android {
     namespace = "com.birthdayreminder"
     compileSdk = 34
@@ -27,6 +71,21 @@ android {
         }
     }
 
+    signingConfigs {
+        if (birfdaeHasReleaseSigning) {
+            create("release") {
+                storeFile = birfdaeKeystoreFile
+                storePassword = birfdaeStorePassword
+                keyPassword = birfdaeKeyPassword
+                keyAlias = birfdaeKeyAlias
+                // v1 is required for minSdk 21 devices; v2 covers 24+ and is
+                // what Android 7 and later actually verify.
+                enableV1Signing = true
+                enableV2Signing = true
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -35,6 +94,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Attached only when the keystore is present. Without this the
+            // build silently produces an unsigned artifact, which is exactly
+            // the bug being fixed -- so it is opt-in, never opt-out.
+            if (birfdaeHasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
