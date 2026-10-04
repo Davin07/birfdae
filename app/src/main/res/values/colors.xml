@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- The concept's light card background, #FFECCD's page colour. -->
+    <color name="saffron_light_background">#FFFFF8F3</color>
 </resources>

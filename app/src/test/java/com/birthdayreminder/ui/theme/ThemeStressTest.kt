@@ -7,7 +7,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.isSpecified
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -225,85 +224,73 @@ class ThemeStressTest {
     }
 
     // -------------------------------------------------------------------------
-    // Objective 2: Empirically test theme toggling and dynamic color logic
+    // Objective 2: the theme is a pure function of the system setting
+    //
+    // These replaced a test that reimplemented dynamic (wallpaper-derived)
+    // colour resolution locally. Once the feature was deleted the test was
+    // exercising a code path the app no longer had, so it would have kept
+    // passing while proving nothing. The invariant worth pinning is that
+    // nothing can vary the scheme any more.
     // -------------------------------------------------------------------------
 
     @Test
-    fun `empirical verification - theme toggling darkTheme true vs false yields correct schemes`() {
-        fun resolveTheme(
-            darkTheme: Boolean,
-            dynamicColor: Boolean,
-            sdkInt: Int,
-        ): ColorScheme {
-            return when {
-                dynamicColor && sdkInt >= 31 -> {
-                    // Simulation of dynamic color resolution
-                    val base = if (darkTheme) SaffronDarkColorScheme else SaffronLightColorScheme
-                    base.copy()
-                }
-                darkTheme -> SaffronDarkColorScheme
-                else -> SaffronLightColorScheme
+    fun `the two schemes are distinct and each is the authored one`() {
+        // The theme now has one input: the system light/dark setting. There is
+        // no longer any way for a scheme to be substituted, so all that is
+        // left to verify is that each branch hands back the authored values
+        // and that the two are genuinely different palettes.
+        assertNotEquals(
+            "the light and dark schemes must not be the same palette",
+            SaffronLightColorScheme,
+            SaffronDarkColorScheme,
+        )
+        assertEquals(
+            "light background is the authored value",
+            SaffronLightBackground,
+            SaffronLightColorScheme.background,
+        )
+        assertEquals(
+            "dark background is the authored value",
+            SaffronDarkBackground,
+            SaffronDarkColorScheme.background,
+        )
+        assertTrue(
+            "Light theme background luminance > 0.8",
+            SaffronLightColorScheme.background.luminance() > 0.8f,
+        )
+        assertTrue(
+            "Dark theme background luminance < 0.2",
+            SaffronDarkColorScheme.background.luminance() < 0.2f,
+        )
+    }
+
+    @Test
+    fun `both schemes carry the full authored token set`() {
+        for ((label, scheme) in listOf("light" to SaffronLightColorScheme, "dark" to SaffronDarkColorScheme)) {
+            val tokens = extractAllTokens(scheme)
+            assertEquals("$label scheme must have exactly 36 tokens", 36, tokens.size)
+            for ((name, color) in tokens) {
+                assertNotNull("$label token $name must not be null", color)
+                assertNotEquals("$label token $name must not be Unspecified", Color.Unspecified, color)
             }
         }
-
-        // Standard light theme
-        val lightResolved = resolveTheme(darkTheme = false, dynamicColor = false, sdkInt = 34)
-        assertEquals(SaffronLightColorScheme, lightResolved)
-        assertTrue("Light theme background luminance > 0.8", lightResolved.background.luminance() > 0.8f)
-
-        // Standard dark theme
-        val darkResolved = resolveTheme(darkTheme = true, dynamicColor = false, sdkInt = 34)
-        assertEquals(SaffronDarkColorScheme, darkResolved)
-        assertTrue("Dark theme background luminance < 0.2", darkResolved.background.luminance() < 0.2f)
-
-        // Dynamic color on older Android (SDK < 31) must safely fallback to static saffron schemes
-        val fallbackLight = resolveTheme(darkTheme = false, dynamicColor = true, sdkInt = 29)
-        assertEquals(SaffronLightColorScheme, fallbackLight)
-
-        val fallbackDark = resolveTheme(darkTheme = true, dynamicColor = true, sdkInt = 29)
-        assertEquals(SaffronDarkColorScheme, fallbackDark)
     }
 
     @Test
-    fun `empirical verification - dynamic color copy operation preserves all 36 tokens`() {
-        val mockDynamicPrimary = Color(0xFF123456)
-        val mockDynamicSecondary = Color(0xFF654321)
-
-        val dynamicModified =
-            SaffronLightColorScheme.copy(
-                primary = mockDynamicPrimary,
-                secondary = mockDynamicSecondary,
-            )
-
-        val tokens = extractAllTokens(dynamicModified)
-        assertEquals("Dynamic scheme copy must still have exactly 36 tokens", 36, tokens.size)
-        assertEquals("Primary overridden", mockDynamicPrimary, dynamicModified.primary)
-        assertEquals("Secondary overridden", mockDynamicSecondary, dynamicModified.secondary)
-        assertEquals("Background preserved", SaffronLightColorScheme.background, dynamicModified.background)
-        assertEquals("Surface preserved", SaffronLightColorScheme.surface, dynamicModified.surface)
-        assertEquals("Error preserved as M3 red", SaffronLightColorScheme.error, dynamicModified.error)
-
-        for ((name, color) in tokens) {
-            assertNotNull("Dynamic token $name must not be null", color)
-            assertNotEquals("Dynamic token $name must not be Unspecified", Color.Unspecified, color)
-        }
-    }
-
-    @Test
-    fun `empirical verification - system bar polarity matches background luminance`() {
-        // Light background -> requires dark system bar icons (!darkTheme = true)
-        val lightBg = SaffronLightColorScheme.background
-        assertTrue("Light background luminance is high", lightBg.luminance() > 0.5f)
-        val lightThemeDark = false
-        val lightIconsPolarity = !lightThemeDark
-        assertTrue("Light theme sets isAppearanceLightStatusBars to true", lightIconsPolarity)
-
-        // Dark background -> requires light system bar icons (!darkTheme = false)
-        val darkBg = SaffronDarkColorScheme.background
-        assertTrue("Dark background luminance is low", darkBg.luminance() < 0.5f)
-        val darkThemeDark = true
-        val darkIconsPolarity = !darkThemeDark
-        assertFalse("Dark theme sets isAppearanceLightStatusBars to false", darkIconsPolarity)
+    fun `primary is the authored saffron in both themes`() {
+        // Dynamic colour replaced exactly these roles with the wallpaper's
+        // hues. Pinning them means a reintroduction shows up as a test failure
+        // rather than as a palette nobody approved.
+        assertEquals(
+            "light primary must be the authored saffron",
+            SaffronLightPrimary,
+            SaffronLightColorScheme.primary,
+        )
+        assertEquals(
+            "dark primary must be the authored saffron",
+            SaffronDarkPrimary,
+            SaffronDarkColorScheme.primary,
+        )
     }
 
     // -------------------------------------------------------------------------

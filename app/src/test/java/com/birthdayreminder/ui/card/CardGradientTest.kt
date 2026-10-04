@@ -28,8 +28,13 @@ class CardGradientTest {
     /** The saffron/amber end of the arc. */
     private val goldEndHue = 60f
 
-    /** The ink the card draws its body copy in. */
+    /** The ink the card draws its body copy in on the light ramp. */
     private val cardInk = Color(0xFF1A1A17)
+
+    /**
+     * The ink on the dark ramp. Cream, as the concept's dark card uses.
+     */
+    private val cardDarkInk = Color(0xFFFFFEC8)
 
     /**
      * Every month/day combination, which is the entire input space of
@@ -60,6 +65,23 @@ class CardGradientTest {
     }
 
     @Test
+    fun `every seed keeps the dark ramp below the luminance ceiling`() {
+        val failures =
+            allBirthSeeds().mapNotNull { date ->
+                val brightest =
+                    CardGradient.forBirthDate(date, darkTheme = true)
+                        .maxBy { CardGradient.relativeLuminance(it) }
+                val lum = CardGradient.relativeLuminance(brightest)
+                if (lum > CardGradient.DARK_LUMINANCE_CEILING) "$date -> $lum" else null
+            }
+
+        assertTrue(
+            "Stops above the ceiling:\n${failures.take(10).joinToString("\n")}",
+            failures.isEmpty(),
+        )
+    }
+
+    @Test
     fun `card ink clears AA against every stop of every seed`() {
         val failures =
             allBirthSeeds().mapNotNull { date ->
@@ -72,6 +94,43 @@ class CardGradientTest {
         assertTrue(
             "Stops under 4.5:1:\n${failures.take(10).joinToString("\n")}",
             failures.isEmpty(),
+        )
+    }
+
+    @Test
+    fun `dark card ink clears AA against every stop of every dark ramp`() {
+        val failures =
+            allBirthSeeds().mapNotNull { date ->
+                CardGradient.forBirthDate(date, darkTheme = true).mapNotNull { stop ->
+                    val ratio = CardGradient.contrastRatio(cardDarkInk, stop)
+                    if (ratio < CardGradient.MIN_CONTRAST) "$date -> ${"%.2f".format(ratio)}" else null
+                }
+            }.flatten()
+
+        assertTrue(
+            "Stops under 4.5:1:\n${failures.take(10).joinToString("\n")}",
+            failures.isEmpty(),
+        )
+    }
+
+    @Test
+    fun `the two ramps use different inks and different bands`() {
+        val date = LocalDate.of(1995, 9, 28)
+        val light = CardGradient.forBirthDate(date)
+        val dark = CardGradient.forBirthDate(date, darkTheme = true)
+
+        val lightMax = light.maxBy { CardGradient.relativeLuminance(it) }
+        val darkMax = dark.maxBy { CardGradient.relativeLuminance(it) }
+
+        // A cream card on a black screen is the bug this replaced, so the two
+        // ramps must be unambiguously on opposite sides of mid-luminance.
+        assertTrue(
+            "light ramp should be bright, was ${CardGradient.relativeLuminance(lightMax)}",
+            CardGradient.relativeLuminance(lightMax) > 0.5,
+        )
+        assertTrue(
+            "dark ramp should be dim, was ${CardGradient.relativeLuminance(darkMax)}",
+            CardGradient.relativeLuminance(darkMax) < 0.2,
         )
     }
 

@@ -3,6 +3,7 @@ package com.birthdayreminder.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -29,6 +31,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -425,45 +429,49 @@ private fun ConflictStrategyDialog(
     onDismiss: () -> Unit,
     onStrategySelected: (ConflictStrategy) -> Unit,
 ) {
+    // Held locally so the choice is only committed on confirm. Writing it
+    // straight to a field would make a stray tap destructive.
+    var selected by remember { mutableStateOf(ConflictStrategy.SKIP) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Import Conflicts",
+                text = "Some birthdays already exist",
                 style = MaterialTheme.typography.headlineSmall,
             )
         },
         text = {
-            Text("Some birthdays in the backup file already exist. How would you like to handle these conflicts?")
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    "The backup contains birthdays that are already in the app. " +
+                        "What should happen to those?",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(8.dp))
+                StrategyOption(
+                    label = "Keep what you have",
+                    description = "Skip the duplicates from the backup",
+                    selected = selected == ConflictStrategy.SKIP,
+                    onSelect = { selected = ConflictStrategy.SKIP },
+                )
+                StrategyOption(
+                    label = "Use the backup",
+                    description = "Overwrite the existing birthdays",
+                    selected = selected == ConflictStrategy.OVERWRITE,
+                    onSelect = { selected = ConflictStrategy.OVERWRITE },
+                )
+                StrategyOption(
+                    label = "Combine them",
+                    description = "Keep the existing details, add the rest",
+                    selected = selected == ConflictStrategy.MERGE,
+                    onSelect = { selected = ConflictStrategy.MERGE },
+                )
+            }
         },
         confirmButton = {
-            Column {
-                // Skip option
-                TextButton(
-                    onClick = {
-                        onStrategySelected(ConflictStrategy.SKIP)
-                    },
-                ) {
-                    Text("Skip existing birthdays")
-                }
-
-                // Overwrite option
-                TextButton(
-                    onClick = {
-                        onStrategySelected(ConflictStrategy.OVERWRITE)
-                    },
-                ) {
-                    Text("Overwrite existing birthdays")
-                }
-
-                // Merge option
-                TextButton(
-                    onClick = {
-                        onStrategySelected(ConflictStrategy.MERGE)
-                    },
-                ) {
-                    Text("Merge with existing birthdays")
-                }
+            TextButton(onClick = { onStrategySelected(selected) }) {
+                Text("Import")
             }
         },
         dismissButton = {
@@ -475,8 +483,45 @@ private fun ConflictStrategyDialog(
 }
 
 /**
- * Maps a typed backup error to a user-friendly message.
+ * One selectable strategy row. A radio button is used rather than a chip
+ * because these are mutually exclusive answers to a question, not filters.
  */
+@Composable
+private fun StrategyOption(
+    label: String,
+    description: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .selectable(
+                    selected = selected,
+                    onClick = onSelect,
+                    role = Role.RadioButton,
+                )
+                .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
 private fun backupErrorMessage(error: BackupError): String {
     return when (error) {
         is BackupError.Storage ->

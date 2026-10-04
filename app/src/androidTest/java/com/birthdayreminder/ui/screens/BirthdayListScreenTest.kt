@@ -108,12 +108,12 @@ class BirthdayListScreenTest {
             }
         }
 
-        // No "Needs a moment" heading: the card's own eyebrow already says how
-        // long ago the birthday was, and the heading stated it twice in weaker
-        // words. The heading that does follow the card is the one that names
-        // what comes next.
+        // Neither "Needs a moment" nor "Coming up" follows the card. The
+        // card's own eyebrow says how long ago the birthday was, and "Coming
+        // up" introduced nothing -- the hero sat under it and then said the
+        // same word again in its own eyebrow.
         composeTestRule.onNodeWithText("Late Person").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Coming up").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Coming up").assertDoesNotExist()
     }
 
     @Test

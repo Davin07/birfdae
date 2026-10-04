@@ -225,12 +225,9 @@ fun BirthdayApp(
                     NotificationSettingsScreen(
                         onNavigateBack = { navController.popBackStack() },
                         // Lead time is per person too, so both rows open the
-                        // same list rather than a global default that is not
-                        // stored anywhere.
+                        // There is no global lead-time default, only a per-person value,
+                        // so the one row goes to that list.
                         onNavigateToPerPerson = {
-                            navController.navigate(BirthdayNavigation.PER_PERSON_REMINDERS)
-                        },
-                        onNavigateToLeadTime = {
                             navController.navigate(BirthdayNavigation.PER_PERSON_REMINDERS)
                         },
                         onNavigateToBackup = {

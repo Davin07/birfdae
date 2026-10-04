@@ -54,7 +54,7 @@ class HomeHeroCopyTest {
     }
 
     @Test
-    fun `nothing today falls back to Next up, as agreed`() {
+    fun `nothing today falls back to the Coming up eyebrow`() {
         val hero =
             HomeHeroCopy.build(
                 dueOn = emptyList(),
@@ -62,9 +62,42 @@ class HomeHeroCopyTest {
                 streak = null,
             )
 
-        assertEquals("Next up", hero?.eyebrow)
+        // "Coming up" was a section heading that introduced nothing, and the
+        // hero's own eyebrow said "Next up" while the list heading below said
+        // it again. The heading is gone, so the eyebrow takes the freed word
+        // and no single word labels two different things on this screen.
+        assertEquals("Coming up", hero?.eyebrow)
         assertEquals("Karthik", hero?.headline)
         assertFalse(hero!!.isToday)
+    }
+
+    @Test
+    fun `the supporting line does not repeat the eyebrow`() {
+        val withStreak =
+            HomeHeroCopy.build(
+                dueOn = listOf(person(1, "Amma", 55)),
+                nextUp = null,
+                streak = streak("Amma", 3, 4),
+            )
+        val withoutHistory =
+            HomeHeroCopy.build(
+                dueOn = listOf(person(1, "Amma", 55)),
+                nextUp = null,
+                streak = null,
+            )
+
+        // The line used to read "Today turns 55. You've remembered 3 of Amma's
+        // last 4." with "Today" in the eyebrow directly above it.
+        for (hero in listOfNotNull(withStreak, withoutHistory)) {
+            val eyebrowWord = hero.eyebrow.lowercase()
+            assertFalse(
+                "supporting line repeats the eyebrow: ${hero.supportingLine}",
+                hero.supportingLine.lowercase().startsWith(eyebrowWord),
+            )
+        }
+        // The age stays -- it is the fact the line exists to carry. What
+        // went is the "Today"/"Coming up" lead in front of it.
+        assertEquals("turns 55. You've remembered 3 of Amma's last 4.", withStreak?.supportingLine)
     }
 
     @Test

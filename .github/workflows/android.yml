@@ -93,7 +93,12 @@ jobs:
             apk_name: app-debug.apk
           - build_type: release
             task: assembleRelease
-            apk_name: app-release-unsigned.apk
+            # Signed builds are named app-release.apk; unsigned ones keep the
+            # -unsigned suffix. The upload step resolves whichever exists, so
+            # a run without secrets still produces an artifact rather than
+            # failing on a missing path.
+            apk_name: app-release.apk
+            unsigned_name: app-release-unsigned.apk
     
     steps:
       - name: Checkout code
@@ -147,8 +152,32 @@ jobs:
         with:
           arguments: ktlintCheck
 
+      - name: Restore release keystore
+        if: >-
+          matrix.build_type == 'release' &&
+          github.event_name != 'pull_request' &&
+          (github.ref_name == 'main' || github.ref_name == 'master')
+        env:
+          KEYSTORE_B64: ${{ secrets.BIRFDAE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::BIRFDAE_KEYSTORE_BASE64 is not set. The release build"
+            echo "::error::on master must be signed. Add the secret, or push to a"
+            echo "::error::branch to get an unsigned build."
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/birfdae_keystore"
+          chmod 600 "$RUNNER_TEMP/birfdae_keystore"
+
       - name: Build with Gradle
         if: steps.check-build-type.outputs.should_run == 'true'
+        env:
+          # Present only on master, and never for a pull request, so the
+          # signing config only attaches on the one path that should sign.
+          BIRFDAE_KEYSTORE_PATH: ${{ runner.temp }}/birfdae_keystore
+          BIRFDAE_STORE_PASSWORD: ${{ secrets.BIRFDAE_STORE_PASSWORD }}
+          BIRFDAE_KEY_PASSWORD: ${{ secrets.BIRFDAE_KEY_PASSWORD }}
+          BIRFDAE_KEY_ALIAS: ${{ secrets.BIRFDAE_KEY_ALIAS }}
         uses: gradle/gradle-build-action@v2
         with:
           arguments: ${{ matrix.task }}
@@ -167,12 +196,28 @@ jobs:
       #     target: google_apis
       #     script: ./gradlew connectedCheck
 
+      - name: Resolve APK path
+        if: steps.check-build-type.outputs.should_run == 'true'
+        id: apk-path
+        run: |
+          DIR="app/build/outputs/apk/${{ matrix.build_type }}"
+          if [ -f "$DIR/${{ matrix.apk_name }}" ]; then
+            echo "path=$DIR/${{ matrix.apk_name }}" >> $GITHUB_OUTPUT
+            echo "signed=true" >> $GITHUB_OUTPUT
+          elif [ -f "$DIR/${{ matrix.unsigned_name }}" ]; then
+            echo "path=$DIR/${{ matrix.unsigned_name }}" >> $GITHUB_OUTPUT
+            echo "signed=false" >> $GITHUB_OUTPUT
+          else
+            echo "::error::No APK found in $DIR"
+            exit 1
+          fi
+
       - name: Upload APK artifact
         if: github.actor != 'nektos/act' && steps.check-build-type.outputs.should_run == 'true' && needs.determine-build-type.outputs.upload_artifacts == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-${{ matrix.build_type }}-${{ github.sha }}-${{ github.run_number }}
-          path: app/build/outputs/apk/${{ matrix.build_type }}/${{ matrix.apk_name }}
+          path: ${{ steps.apk-path.outputs.path }}
           retention-days: 30
 
   deploy:
@@ -196,10 +241,20 @@ jobs:
         if: github.ref_name == 'main' || github.ref_name == 'master'
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*.apk
+          # Only the signed release. This used to be artifacts/**/*.apk, which
+          # put an unsigned release and a 19 MB debug build on every Release --
+          # three files, two of them useless, and the debug one signed with a
+          # key that is public knowledge.
+          files: |
+            artifacts/app-release-*/*.apk
           tag_name: v1.0.${{ github.run_number }}
           name: Release v1.0.${{ github.run_number }}
-          body: Automatic release created by GitHub Actions
+          body: |
+            Automatic release created by GitHub Actions.
+
+            `birfdae-${{ github.run_number }}.apk` is signed with the release key.
+            Android will not install an update signed with a different key, so
+            installing over an existing debug build requires uninstalling first.
           draft: false
           prerelease: false
           generate_release_notes: true

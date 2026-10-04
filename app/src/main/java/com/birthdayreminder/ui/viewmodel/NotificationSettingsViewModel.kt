@@ -15,7 +15,6 @@ import javax.inject.Inject
 data class NotificationSettingsUiState(
     val areNotificationsEnabled: Boolean = false,
     val isLoading: Boolean = false,
-    val isMaterialYouEnabled: Boolean = false,
     val defaultHour: Int = 9,
     val defaultMinute: Int = 0,
 )
@@ -33,11 +32,6 @@ class NotificationSettingsViewModel
         init {
             checkNotificationPermission()
             viewModelScope.launch {
-                settingsRepository.isMaterialYouEnabled.collect { enabled ->
-                    _uiState.update { it.copy(isMaterialYouEnabled = enabled) }
-                }
-            }
-            viewModelScope.launch {
                 settingsRepository.defaultNotificationTime.collect { (h, m) ->
                     _uiState.update { it.copy(defaultHour = h, defaultMinute = m) }
                 }
@@ -53,12 +47,6 @@ class NotificationSettingsViewModel
 
         fun refreshNotificationStatus() {
             checkNotificationPermission()
-        }
-
-        fun toggleMaterialYou(enabled: Boolean) {
-            viewModelScope.launch {
-                settingsRepository.setMaterialYouEnabled(enabled)
-            }
         }
 
         fun updateDefaultTime(

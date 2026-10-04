@@ -14,22 +14,22 @@
 
     <!-- Flame, sitting on the cake. Teardrop: round at the base, pointed at the top. -->
     <path
-        android:fillColor="#FF4A1F00"
+        android:fillColor="#FFFFFEC8"
         android:pathData="M54,24 C58.8,31 61.5,35.5 61.5,40 C61.5,44.7 58.2,48.5 54,48.5 C49.8,48.5 46.5,44.7 46.5,40 C46.5,35.5 49.2,31 54,24 Z" />
 
     <!-- Plate. -->
     <path
-        android:fillColor="#FF4A1F00"
+        android:fillColor="#FFFFFEC8"
         android:pathData="M26,86 L82,86 C83.1,86 84,86.9 84,88 C84,89.1 83.1,90 82,90 L26,90 C24.9,90 24,89.1 24,88 C24,86.9 24.9,86 26,86 Z" />
 
     <!-- Lower tier. -->
     <path
-        android:fillColor="#FF4A1F00"
+        android:fillColor="#FFFFFEC8"
         android:pathData="M33,58 L75,58 C77.2,58 79,59.8 79,62 L79,83 C79,85.2 77.2,87 75,87 L33,87 C30.8,87 29,85.2 29,83 L29,62 C29,59.8 30.8,58 33,58 Z" />
 
     <!-- Upper tier, narrower, sitting proud of the lower one. -->
     <path
-        android:fillColor="#FF4A1F00"
+        android:fillColor="#FFFFFEC8"
         android:pathData="M38.5,58 L38.5,50 C38.5,48.3 39.8,47 41.5,47 L66.5,47 C68.2,47 69.5,48.3 69.5,50 L69.5,58 Z" />
 
     <!--
@@ -37,11 +37,11 @@
       dark cake composites to mud; this is a real colour instead.
     -->
     <path
-        android:fillColor="#FFFFD696"
+        android:fillColor="#FFFFE4B0"
         android:pathData="M29,63 C33,60.5 37,65.5 41,63 C45,60.5 49,65.5 53,63 C57,60.5 61,65.5 65,63 C69,60.5 73,65 79,62.5 L79,69 C73,71 69,66.5 65,69 C61,71.5 57,66.5 53,69 C49,71.5 45,66.5 41,69 C37,71.5 33,66.5 29,69 Z" />
 
     <!-- Three sprinkles, the only detail that survives at launcher size. -->
-    <path android:fillColor="#FF4A1F00" android:pathData="M44,74 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0 Z" />
-    <path android:fillColor="#FF4A1F00" android:pathData="M54,76 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0 Z" />
-    <path android:fillColor="#FF4A1F00" android:pathData="M64,74 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0 Z" />
+    <path android:fillColor="#FFFFFEC8" android:pathData="M44,74 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0 Z" />
+    <path android:fillColor="#FFFFFEC8" android:pathData="M54,76 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0 Z" />
+    <path android:fillColor="#FFFFFEC8" android:pathData="M64,74 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0 Z" />
 </vector>

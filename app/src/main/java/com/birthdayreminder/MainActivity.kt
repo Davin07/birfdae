@@ -9,14 +9,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.birthdayreminder.data.settings.SettingsRepository
 import com.birthdayreminder.ui.BirthdayApp
@@ -41,20 +40,25 @@ class MainActivity : ComponentActivity() {
     private var notificationBirthdayId by mutableStateOf<Long?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Must run before super.onCreate. On Android 12+ the platform
+        // splash is already showing; this is the pre-12 fallback.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         consumeNotificationIntent(intent)
 
         setContent {
-            val isMaterialYouEnabled by settingsRepository.isMaterialYouEnabled.collectAsState(initial = false)
-            // Follow the system light/dark setting. This used to be hard-coded
-            // to true, which made the app dark-only.
-            val useDarkTheme = isSystemInDarkTheme()
-
-            BirthdayReminderAppTheme(
-                darkTheme = useDarkTheme,
-                dynamicColor = isMaterialYouEnabled,
-            ) {
+            // Light only, deliberately.
+            //
+            // This followed the system setting until the dark palette was
+            // reviewed and rejected: saffron on near-black is not a pairing
+            // anyone had signed off on, and shipping a half-approved dark
+            // theme is worse than shipping none.
+            //
+            // The dark scheme and its 39 tokens are still in Color.kt and the
+            // dark card ramp still has its contrast tests. Re-enabling this is
+            // one line if dark ever comes back -- the work is not thrown away.
+            BirthdayReminderAppTheme(darkTheme = false) {
                 RequestNotificationPermission()
 
                 BirthdayApp(
