@@ -9,7 +9,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,11 +48,17 @@ class MainActivity : ComponentActivity() {
         consumeNotificationIntent(intent)
 
         setContent {
-            // Follow the system light/dark setting. This used to be hard-coded
-            // to true, which made the app dark-only.
-            val useDarkTheme = isSystemInDarkTheme()
-
-            BirthdayReminderAppTheme(darkTheme = useDarkTheme) {
+            // Light only, deliberately.
+            //
+            // This followed the system setting until the dark palette was
+            // reviewed and rejected: saffron on near-black is not a pairing
+            // anyone had signed off on, and shipping a half-approved dark
+            // theme is worse than shipping none.
+            //
+            // The dark scheme and its 39 tokens are still in Color.kt and the
+            // dark card ramp still has its contrast tests. Re-enabling this is
+            // one line if dark ever comes back -- the work is not thrown away.
+            BirthdayReminderAppTheme(darkTheme = false) {
                 RequestNotificationPermission()
 
                 BirthdayApp(

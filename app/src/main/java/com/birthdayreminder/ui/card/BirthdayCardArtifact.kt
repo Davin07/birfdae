@@ -1,7 +1,6 @@
 package com.birthdayreminder.ui.card
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,13 +70,16 @@ fun BirthdayCardArtifact(
     createdAtYear: Int?,
     modifier: Modifier = Modifier,
 ) {
-    // The card follows the app theme, as the approved concept does. This means
-    // an exported PNG carries the sender's theme: a card exported in dark mode
-    // is deep amber with cream ink. That was a deliberate call -- the alternative
-    // is a cream card on a black screen, which read as a washed-out artefact.
-    val darkTheme = isSystemInDarkTheme()
-    val stops = remember(birthDate, darkTheme) { CardGradient.forBirthDate(birthDate, darkTheme) }
-    val ink = if (darkTheme) CardDarkInk else CardInk
+    // Always the light ramp, regardless of the phone's setting.
+    //
+    // The app is light-only, so a card that went dark when exported from a
+    // dark-mode phone would no longer match the app it came from. One less
+    // thing that varies between two people looking at the same birthday.
+    //
+    // CardGradient still carries the dark ramp and its contrast tests; it is
+    // simply not requested here.
+    val stops = remember(birthDate) { CardGradient.forBirthDate(birthDate, darkTheme = false) }
+    val ink = CardInk
     // Blend toward the card's own lightest stop. Using copy(alpha = 0.72)
     // instead leaves every muted label semi-transparent, so it picks up the
     // hue of whatever it sits on and drifts green over a pink card.
