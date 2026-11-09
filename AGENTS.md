@@ -132,3 +132,26 @@ directly. If you are in `cmd.exe` or PowerShell, use `gradlew.bat` (no `./` pref
 - **Sanitization**: Sanitize user input in validators (trim whitespace, normalize spaces)
 - **Date handling**: Always use `java.time.LocalDate` for dates, never legacy `java.util.Date`
 - **IDs**: Use `Long` for database IDs, handle auto-generated IDs appropriately
+
+## Environment traps (verified on device)
+
+- **Live WAL databases:** `adb exec-out run-as … cat databases/<db>` reads only the main file; a
+  recent write still sits in `-wal` and looks absent. Pull `db`, `-wal` and `-shm` together, or assert
+  through an instrumented test or an app restart.
+- **`connectedDebugAndroidTest` uninstalls the app** when it finishes and drives the emulator while it
+  runs. Reinstall, relaunch and re-seed before judging data or screenshots; "no data" right after a
+  test run is this, not a lost write.
+- **`ktlintFormat` runs before compilation and strips imports it thinks are unused**, including imports
+  for code you are about to add. Add the import after the usage exists, or compile immediately after.
+- **Hilt-backed Compose tests need a host Activity in `src/debug`**, not `src/androidTest`, plus an
+  Application-swapping runner. `app/src/debug/java/com/birthdayreminder/HiltTestActivity.kt` exists.
+- **Mocking a suspend function with defaulted parameters:** `whenever(mock.suspendFn(...))` builds the
+  stub by invoking the call. Use `wheneverBlocking { }` / `verifyBlocking(mock) { }` and pass every
+  field by name.
+- **`stateIn(WhileSubscribed)` returns the initial value until something collects**; a test reading
+  `.value` sees empty. Collect the flow in the test.
+- **`gradlew` is pinned to LF** (`.gitattributes`). Branch from `origin/master` after `git fetch`; a
+  stale local `master` breaks the build with a mangled classpath error.
+- **`KEYCODE_BACK` on the root screen exits the app** — do not use it to dismiss a dialog in device
+  automation.
+- **ffmpeg wants `C:/…` paths**; an MSYS `/c/…` path is reported as "No such file or directory".
